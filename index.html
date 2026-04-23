@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>SUBRATA RACE CLUB</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a12;--gold:#ffd700;--red:#ff3333;--green:#33ff66;--napoli:#00aadd;--white:#ddeeff;--gray:#556677;--f:\'Press Start 2P\',monospace}
+body{font-family:'Press Start 2P',monospace;background:var(--bg);color:var(--white);min-height:100vh;overflow-x:hidden}
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.07) 3px,rgba(0,0,0,.07) 4px);pointer-events:none;z-index:9999}
+.screen{display:none;min-height:100vh;padding:20px;animation:fadeIn .35s ease}
+.screen.active{display:flex;flex-direction:column;align-items:center}
+@keyframes fadeIn{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}
+.btn{font-family:'Press Start 2P',monospace;font-size:11px;padding:12px 18px;background:var(--gold);color:#000;border:none;cursor:pointer;box-shadow:4px 4px 0 #000,-2px -2px 0 #886600;transition:transform .1s,box-shadow .1s}
+.btn:hover{transform:translate(-2px,-2px);box-shadow:6px 6px 0 #000,-2px -2px 0 #886600}
+.btn:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
+.btn-red{background:var(--red);box-shadow:4px 4px 0 #000,-2px -2px 0 #880000}
+.btn-red:hover{box-shadow:6px 6px 0 #000,-2px -2px 0 #880000}
+.btn-napoli{background:var(--napoli);color:#fff;box-shadow:4px 4px 0 #000,-2px -2px 0 #005577}
+.btn-napoli:hover{box-shadow:6px 6px 0 #000,-2px -2px 0 #005577}
+.btn-green{background:var(--green);color:#000;box-shadow:4px 4px 0 #000,-2px -2px 0 #006622}
+.btn-green:hover{box-shadow:6px 6px 0 #000,-2px -2px 0 #006622}
+
+/* INTRO */
+#screen-intro{justify-content:center;text-align:center;background:radial-gradient(ellipse at center,#1a0a2e 0%,var(--bg) 70%)}
+.intro-title{font-size:clamp(18px,4vw,36px);color:var(--gold);text-shadow:4px 4px 0 #000,0 0 30px rgba(255,215,0,.4);line-height:1.6;letter-spacing:2px;animation:glitch 9s infinite}
+@keyframes glitch{0%,88%,100%{text-shadow:4px 4px 0 #000,0 0 30px rgba(255,215,0,.4);transform:translate(0)}89%{text-shadow:-3px 0 red,3px 0 cyan,4px 4px 0 #000;transform:translate(-2px,0)}90%{text-shadow:3px 0 red,-3px 0 cyan,4px 4px 0 #000;transform:translate(2px,0)}91%{text-shadow:4px 4px 0 #000;transform:translate(0)}}
+.intro-sub{font-size:7px;color:var(--gray);margin:10px 0 24px;letter-spacing:1px}
+.num4{font-size:72px;color:var(--napoli);opacity:.25;cursor:pointer;display:inline-block;user-select:none;margin:14px 0;text-shadow:0 0 20px var(--napoli);transition:all .15s}
+.num4:hover{opacity:.45;transform:scale(1.06)}
+@keyframes fourPop{0%{transform:scale(1)}40%{transform:scale(1.4);opacity:1;color:#fff}100%{transform:scale(1)}}
+.intro-footer{font-size:6px;color:#334;margin-top:24px;line-height:2.4}
+
+/* DISCLAIMER */
+#screen-disclaimer{justify-content:center}
+.disc-box{border:3px solid var(--gold);box-shadow:6px 6px 0 #000;padding:28px;max-width:600px;width:100%;margin:20px 0}
+.disc-title{font-size:10px;color:var(--red);text-align:center;margin-bottom:18px;animation:blink 1s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.disc-p{font-size:6.5px;line-height:2.2;margin-bottom:10px}
+.disc-list{list-style:none;font-size:6.5px;line-height:2.8;margin:14px 0}
+.disc-list li::before{content:'► ';color:var(--gold)}
+.disc-fine{font-size:5.5px;color:#445;margin-top:12px;line-height:2}
+
+/* SCREEN HEADERS */
+.screen-title{font-size:clamp(12px,2.5vw,20px);color:var(--gold);text-align:center;margin:18px 0 8px;text-shadow:3px 3px 0 #000}
+.screen-sub{font-size:6.5px;color:var(--gray);text-align:center;margin-bottom:18px}
+
+/* CARS GRID */
+#screen-cars{width:100%;max-width:1200px;margin:0 auto}
+.cars-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;width:100%;padding:8px}
+.car-card{border:3px solid #2a2a3a;background:#0f0f1e;padding:14px;cursor:pointer;position:relative;box-shadow:4px 4px 0 #000;transition:all .15s}
+.car-card:hover{border-color:var(--gold);transform:translate(-3px,-3px);box-shadow:7px 7px 0 #000;background:#161630}
+.car-card.tesla{border-color:#2a2a2a;opacity:.65}
+.car-card.tesla:hover{border-color:var(--red);opacity:1}
+.car-card.easter{display:none}
+.car-card.easter.show{display:block;border-color:var(--napoli);animation:fadeIn .5s}
+.car-icon{font-size:38px;text-align:center;display:block;margin-bottom:10px}
+.car-name{font-size:8px;color:var(--gold);text-align:center;margin-bottom:7px}
+.car-desc{font-size:6px;color:var(--gray);text-align:center;line-height:1.9;margin-bottom:10px}
+.laps-b{position:absolute;top:7px;right:7px;font-size:5px;background:#1a1a2a;color:var(--green);padding:3px 5px;border:1px solid #333}
+.stat-r{margin:3px 0}
+.stat-l{font-size:5px;color:#558;margin-bottom:2px}
+.stat-bar{height:5px;background:#111;border:1px solid #222}
+.stat-fill{height:100%}
+.tip{position:absolute;bottom:-26px;left:50%;transform:translateX(-50%);font-size:5.5px;color:var(--red);white-space:nowrap;opacity:0;transition:opacity .3s;pointer-events:none;z-index:10}
+.car-card:hover .tip{opacity:1}
+.car-card.f812:hover .tip{opacity:0}
+.f812tip{position:absolute;bottom:-26px;left:50%;transform:translateX(-50%);font-size:5.5px;color:var(--red);white-space:nowrap;opacity:0;pointer-events:none;z-index:10}
+
+/* TRACKS */
+#screen-tracks{width:100%;max-width:1000px;margin:0 auto}
+.tracks-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;width:100%;padding:8px}
+.track-card{border:3px solid #2a2a2a;background:#0f0f1e;padding:14px;min-height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.track-card.locked{cursor:not-allowed;opacity:.55}
+.track-card.locked.clickable{cursor:pointer;opacity:.65}
+.track-card.locked.clickable:hover{border-color:#555;opacity:.85}
+.track-card.open{border-color:var(--green);cursor:pointer;box-shadow:0 0 18px rgba(51,255,102,.25),4px 4px 0 #000;animation:pulseG 2s infinite}
+@keyframes pulseG{0%,100%{box-shadow:0 0 18px rgba(51,255,102,.25),4px 4px 0 #000}50%{box-shadow:0 0 36px rgba(51,255,102,.5),4px 4px 0 #000}}
+.track-card.open:hover{transform:translate(-3px,-3px);box-shadow:0 0 36px rgba(51,255,102,.7),7px 7px 0 #000}
+.track-flag{font-size:22px;margin-bottom:7px}
+.track-lock{font-size:20px;margin-bottom:6px}
+.track-name{font-size:7.5px;color:var(--white);margin-bottom:7px}
+.track-msg{font-size:5.5px;color:#556;line-height:1.9}
+.track-badge{font-size:5.5px;background:var(--green);color:#000;padding:3px 6px;margin-top:6px;animation:blink .8s infinite}
+@keyframes arrowM{0%,100%{transform:translateX(0)}50%{transform:translateX(6px)}}
+.track-arrow{font-size:18px;color:var(--red);animation:arrowM .7s infinite;margin-bottom:6px}
+.back-btn{font-family:'Press Start 2P',monospace;font-size:7px;background:transparent;border:2px solid var(--gray);color:var(--gray);padding:7px 12px;cursor:pointer;align-self:flex-start;margin-bottom:8px}
+.back-btn:hover{border-color:var(--white);color:var(--white)}
+
+/* RESULT */
+#screen-result{justify-content:center;text-align:center;background:linear-gradient(135deg,#0a0a12 0%,#0a2030 100%)}
+#confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:100}
+.res-lbl{font-size:8.5px;color:var(--gray);margin-bottom:8px;letter-spacing:3px}
+.res-icon{font-size:76px;margin:16px 0;animation:floatY 3s ease-in-out infinite}
+@keyframes floatY{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+.res-name{font-size:clamp(14px,4vw,30px);color:var(--gold);text-shadow:4px 4px 0 #000,0 0 40px rgba(255,215,0,.7);margin:16px 0;animation:glitch 5s infinite}
+.res-track{font-size:7.5px;color:var(--napoli);margin-bottom:18px}
+.res-msgs{max-width:480px;margin:0 auto 18px}
+.res-msg{font-size:6.5px;line-height:2.8;margin:3px 0}
+.res4{font-size:56px;color:var(--napoli);text-shadow:0 0 28px var(--napoli);animation:s4 4s ease-in-out infinite;display:inline-block}
+@keyframes s4{0%,100%{transform:rotate(0) scale(1)}25%{transform:rotate(6deg) scale(1.1)}75%{transform:rotate(-6deg) scale(1.1)}}
+.res-fine{font-size:5px;color:#334;margin-top:24px;line-height:2.4}
+
+/* BSOD */
+#screen-bsod{background:#0000aa!important;color:#aaa;justify-content:center;padding:40px}
+.bsod-hl{background:#aaa;color:#0000aa;font-size:16px;padding:3px 8px;font-family:'Courier New',monospace;font-weight:bold}
+.bsod-body{font-family:'Courier New',monospace;font-size:13px;line-height:1.7;max-width:640px}
+
+/* PIERO */
+#screen-piero{justify-content:center;text-align:center;background:radial-gradient(ellipse at center,#0d200a 0%,var(--bg) 70%)}
+.piero-icon{font-size:76px;margin:18px 0}
+.piero-title{font-size:14px;color:#88ff44;text-shadow:3px 3px 0 #000;margin-bottom:18px}
+.piero-body{font-size:7.5px;line-height:2.8;max-width:380px}
+
+/* MODALS */
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:1000;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:20px}
+.modal.active{display:flex;animation:fadeIn .4s}
+.modal-title{font-size:clamp(12px,3vw,20px);color:var(--gold);margin-bottom:16px}
+.modal-body{font-size:7px;color:var(--white);line-height:2.8;max-width:480px;margin-bottom:18px}
+.pene-svg{width:180px;height:280px;margin:8px auto;display:block}
+
+/* OVERLAYS */
+#napo-ov{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:2000;text-align:center;pointer-events:none;display:none}
+#napo-ov.show{display:block;animation:celeb 3.2s forwards}
+@keyframes celeb{0%{opacity:0;transform:translate(-50%,-50%) scale(.4)}20%{opacity:1;transform:translate(-50%,-50%) scale(1.15)}80%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(1)}}
+.napo-txt{font-size:38px}
+.napo-sub{font-family:'Press Start 2P',monospace;font-size:14px;color:var(--napoli);text-shadow:2px 2px #000;margin-top:8px}
+
+#access-ov{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);font-size:clamp(18px,5vw,36px);color:var(--green);text-shadow:0 0 28px var(--green);z-index:500;text-align:center;pointer-events:none;display:none}
+#access-ov.show{display:block;animation:acc 2s forwards}
+@keyframes acc{0%{opacity:0;transform:translate(-50%,-50%) scale(.4)}30%{opacity:1;transform:translate(-50%,-50%) scale(1.1)}75%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(1)}}
+
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#0f0f1e;border:2px solid var(--napoli);color:var(--napoli);font-size:6.5px;padding:10px 16px;z-index:8000;line-height:2;text-align:center;opacity:0;transition:opacity .4s;pointer-events:none}
+#toast.show{opacity:1}
+#boat{position:fixed;bottom:-160px;right:-60px;font-size:130px;opacity:0;transition:opacity 3s,bottom 3s;pointer-events:none;z-index:1;transform:rotate(-12deg)}
+#boat.visible{opacity:.08;bottom:-30px}
+#footer-lnk{font-size:5px;color:#222;text-align:center;padding:14px;cursor:pointer;user-select:none;transition:color .3s}
+#footer-lnk:hover{color:#444}
+@media(max-width:600px){.cars-grid{grid-template-columns:repeat(2,1fr)}.tracks-grid{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<canvas id="confetti"></canvas>
+<div id="boat">🚢</div>
+
+<div id="napo-ov">
+  <div class="napo-txt">⚽🔵⚪🔵⚽</div>
+  <div class="napo-sub">FORZA NAPOLI!</div>
+  <div class="napo-sub" style="font-size:10px;margin-top:6px;">4 SCUDETTI · CAMPIONI D'ITALIA</div>
+</div>
+<div id="access-ov">✅ ACCESSO CONCESSO<br><span style="font-size:.45em;color:#aaa;">Sistema Subrata autorizzato</span></div>
+<div id="toast">🔓 GARAGE SEGRETO SBLOCCATO<br>PANDA VERDE + NAVE CARGO DISPONIBILI</div>
+
+<!-- ═══ INTRO ═══ -->
+<section id="screen-intro" class="screen active">
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;z-index:1;padding:20px">
+    <div id="logo-area" style="cursor:pointer;user-select:none">
+      <div class="intro-title">🏎️ SUBRATA<br>RACE CLUB 🏁</div>
+      <div class="intro-sub">PRESENTED BY SUBRATAAL™ · EST. 2024</div>
+    </div>
+    <div style="font-size:6px;color:#334;margin-bottom:16px">[ CLICCA IL LOGO 4 VOLTE PER UN SEGRETO ]</div>
+    <div class="num4" id="num4">4</div>
+    <div style="margin:22px 0">
+      <button class="btn" id="btn-start">🚀 AVVIA IL MOTORE, BLITZ</button>
+    </div>
+    <div class="intro-footer">
+      Powered by idrocarburi · No Tesla allowed · SubrataPal approved<br>
+      v4.4.4 · © 2026 Subrata Race Club · Tutti i giri riservati<br>
+      <span style="color:#0a0a12;font-size:5px">↑↑↓↓←→←→BA</span>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ DISCLAIMER ═══ -->
+<section id="screen-disclaimer" class="screen">
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%">
+    <div class="disc-box">
+      <div class="disc-title">⚠️ AVVERTENZA LEGALE ⚠️</div>
+      <p class="disc-p">Questo gioco è stato prodotto da persone che capiscono di macchine tanto quanto SubrataPal capisce di fare gol di testa. Le informazioni contenute potrebbero essere inaccurate, esagerate, o semplicemente inventate. Probabilmente tutte e tre.</p>
+      <ul class="disc-list">
+        <li>Nessun animale è stato maltrattato durante la produzione. Solo Blitz.</li>
+        <li>Il numero 4 appare esattamente 44 volte in questo gioco. Non è un caso.</li>
+        <li>ForZa NaPoLi · 4 Scudetti · Lo sai già.</li>
+        <li>In caso d'incidente, la Nave MSC Subrata I non può intervenire.</li>
+        <li>La Panda verde menta di Piero NON è disponibile come auto da pista.</li>
+        <li>Leclerc non ha letto questo disclaimer. Monaco è sua e basta.</li>
+        <li>Le Tesla non sono macchine. Sono iPad con le ruote.</li>
+      </ul>
+      <p class="disc-fine">Accettando, dichiari di essere Blitz, di amare gli idrocarburi, e di essere consapevole che ogni scelta è già stata decisa dal Subrata Race Club dal 2024. Il numero di giri effettivi è soggetto a disponibilità. Buona fortuna. Ti servirà.</p>
+      <div style="text-align:center;margin-top:22px">
+        <button class="btn" id="btn-disclaimer">HO CAPITO TUTTO<br><span style="font-size:6.5px">(non ho capito niente)</span></button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ CAR SELECT ═══ -->
+<section id="screen-cars" class="screen">
+  <div class="screen-title">🏎️ SCEGLI LA TUA BESTIA</div>
+  <div class="screen-sub">scegli saggiamente · o almeno meglio del solito, blitz</div>
+  <div class="cars-grid" id="cars-grid">
+
+    <!-- Ferrari 458 -->
+    <div class="car-card" data-car="f458">
+      <div class="laps-b">2 GIRI</div>
+      <span class="car-icon">🏎️</span>
+      <div class="car-name">Ferrari 458 Italia</div>
+      <div class="car-desc">Urla come SubrataPal dopo un gol. Solo più intonata.</div>
+      <div class="stat-r"><div class="stat-l">POTENZA</div><div class="stat-bar"><div class="stat-fill" style="width:92%;background:#33ff66"></div></div></div>
+      <div class="stat-r"><div class="stat-l">STILE</div><div class="stat-bar"><div class="stat-fill" style="width:95%;background:#33ff66"></div></div></div>
+      <div class="stat-r"><div class="stat-l">EGO PILOTA</div><div class="stat-bar"><div class="stat-fill" style="width:72%;background:#ffd700"></div></div></div>
+    </div>
+
+    <!-- Ferrari 488 -->
+    <div class="car-card" data-car="f488">
+      <div class="laps-b">2 GIRI</div>
+      <span class="car-icon">🏎️</span>
+      <div class="car-name">Ferrari 488 GTB</div>
+      <div class="car-desc">Più veloce del portafoglio di Blitz. Non è difficile.</div>
+      <div class="stat-r"><div class="stat-l">POTENZA</div><div class="stat-bar"><div class="stat-fill" style="width:96%;background:#33ff66"></div></div></div>
+      <div class="stat-r"><div class="stat-l">STILE</div><div class="stat-bar"><div class="stat-fill" style="width:91%;background:#33ff66"></div></div></div>
+      <div class="stat-r"><div class="stat-l">EGO PILOTA</div><div class="stat-bar"><div class="stat-fill" style="width:78%;background:#ffd700"></div></div></div>
+    </div>
+
+    <!-- Ferrari Portofino -->
+    <div class="car-card" data-car="fpf">
+      <div class="laps-b">2 GIRI</div>
+      <span class="car-icon">🏎️</span>
+      <div class="car-name">Ferrari Portofino</div>
+      <div class="car-desc">Cabrio. Come andare in mare, ma su asfalto.</div>
+      <div class="stat-r"><div class="stat-l">POTENZA</div><div class="stat-bar"><div class="stat-fill" style="width:85%;background:#ffd700"></div></div></div>
+      <div class="stat-r"><div class="stat-l">STILE</div><div class="stat-bar"><div class="stat-fill" style="width:98%;background:#33ff66"></div></div></div>
+      <div class="stat-r"><div class="stat-l">EGO PILOTA</div><div class="stat-bar"><div class="stat-fill" style="width:88%;background:#ffd700"></div></div></div>
+    </div>
+
+    <!-- Porsche 991 -->
+    <div class="car-card" data-car="pgt3">
+      <div class="laps-b">2 GIRI</div>
+      <span class="car-icon">🐢</span>
+      <div class="car-name">Porsche 991 GT3 RS</div>
+      <div class="car-desc">Non è italiana, ma fa abbastanza rumore da perdonarla.</div>
+      <div class="stat-r"><div class="stat-l">POTENZA</div><div class="stat-bar"><div class="stat-fill" style="width:94%;background:#33ff66"></div></div></div>
+      <div class="stat-r"><div class="stat-l">STILE</div><div class="stat-bar"><div class="stat-fill" style="width:87%;background:#ffd700"></div></div></div>
+      <div class="stat-r"><div class="stat-l">EGO PILOTA</div><div class="stat-bar"><div class="stat-fill" style="width:80%;background:#ffd700"></div></div></div>
+    </div>
+
+    <!-- Ferrari 812 - SPECIAL -->
+    <div class="car-card f812" data-car="f812">
+      <div class="laps-b">1 GIRO</div>
+      <span class="car-icon">🏎️</span>
+      <div class="car-name">Ferrari 812 Superfast</div>
+      <div class="car-desc">Leclerc ne ha una. Tu no. Goditela per 1 giro.</div>
+      <div class="stat-r"><div class="stat-l">POTENZA</div><div class="stat-bar"><div class="stat-fill" style="width:99%;background:#33ff66"></div></div></div>
+      <div class="stat-r"><div class="stat-l">STILE</div><div class="stat-bar"><div class="stat-fill" style="width:96%;background:#33ff66"></div></div></div>
+      <div class="stat-r"><div class="stat-l">EGO PILOTA</div><div class="stat-bar"><div class="stat-fill" style="width:99%;background:#33ff66"></div></div></div>
+      <div class="f812tip" id="f812tip">Questa è la preferita di Leclerc. Non te la meriti.</div>
+    </div>
+
+    <!-- Alfa Giulia -->
+    <div class="car-card" data-car="alfa">
+      <div class="laps-b">2 GIRI</div>
+      <span class="car-icon">🍀</span>
+      <div class="car-name">Alfa Giulia QV</div>
+      <div class="car-desc">Italiana, arrabbiata, bella. Come il Napoli in trasferta.</div>
+      <div class="stat-r"><div class="stat-l">POTENZA</div><div class="stat-bar"><div class="stat-fill" style="width:88%;background:#ffd700"></div></div></div>
+      <div class="stat-r"><div class="stat-l">STILE</div><div class="stat-bar"><div class="stat-fill" style="width:90%;background:#ffd700"></div></div></div>
+      <div class="stat-r"><div class="stat-l">EGO PILOTA</div><div class="stat-bar"><div class="stat-fill" style="width:84%;background:#ffd700"></div></div></div>
+    </div>
+
+    <!-- Lambo Evo -->
+    <div class="car-card" data-car="hevo">
+      <div class="laps-b">1 GIRO</div>
+      <span class="car-icon">🐂</span>
+      <div class="car-name">Lamborghini Huracán Evo</div>
+      <div class="car-desc">Il toro inferocito. Come SubrataPal con la VAR contro.</div>
+      <div class="stat-r"><div class="stat-l">POTENZA</div><div class="stat-bar"><div class="stat-fill" style="width:95%;background:#33ff66"></div></div></div>
+      <div class="stat-r"><div class="stat-l">STILE</div><div class="stat-bar"><div class="stat-fill" style="width:93%;background:#33ff66"></div></div></div>
+      <div class="stat-r"><div class="stat-l">EGO PILOTA</div><div class="stat-bar"><div class="stat-fill" style="width:90%;background:#ffd700"></div></div></div>
+    </div>
+
+    <!-- Lambo STO -->
+    <div class="car-card" data-car="hsto">
+      <div class="laps-b">1 GIRO</div>
+      <span class="car-icon">🐂</span>
+      <div class="car-name">Lamborghini Huracán STO</div>
+      <div class="car-desc">STO = Soldi Tanti Ovviamente. Sì, si nota.</div>
+      <div class="stat-r"><div class="stat-l">POTENZA</div><div class="stat-bar"><div class="stat-fill" style="width:97%;background:#33ff66"></div></div></div>
+      <div class="stat-r"><div class="stat-l">STILE</div><div class="stat-bar"><div class="stat-fill" style="width:95%;background:#33ff66"></div></div></div>
+      <div class="stat-r"><div class="stat-l">EGO PILOTA</div><div class="stat-bar"><div class="stat-fill" style="width:93%;background:#33ff66"></div></div></div>
+    </div>
+
+    <!-- Lambo Tecnica -->
+    <div class="car-card" data-car="htec">
+      <div class="laps-b">1 GIRO</div>
+      <span class="car-icon">🐂</span>
+      <div class="car-name">Lamborghini Huracán Tecnica</div>
+      <div class="car-desc">L'ultima Huracán. Goditi il carbonio prima dell'elettrico.</div>
+      <div class="stat-r"><div class="stat-l">POTENZA</div><div class="stat-bar"><div class="stat-fill" style="width:96%;background:#33ff66"></div></div></div>
+      <div class="stat-r"><div class="stat-l">STILE</div><div class="stat-bar"><div class="stat-fill" style="width:94%;background:#33ff66"></div></div></div>
+      <div class="stat-r"><div class="stat-l">EGO PILOTA</div><div class="stat-bar"><div class="stat-fill" style="width:91%;background:#ffd700"></div></div></div>
+    </div>
+
+    <!-- Ferrari F8 -->
+    <div class="car-card" data-car="f8t">
+      <div class="laps-b">1 GIRO</div>
+      <span class="car-icon">🏎️</span>
+      <div class="car-name">Ferrari F8 Tributo</div>
+      <div class="car-desc">Tributo al V8. Il motore urla. Blitz probabilmente pure.</div>
+      <div class="stat-r"><div class="stat-l">POTENZA</div><div class="stat-bar"><div class="stat-fill" style="width:93%;background:#33ff66"></div></div></div>
+      <div class="stat-r"><div class="stat-l">STILE</div><div class="stat-bar"><div class="stat-fill" style="width:92%;background:#33ff66"></div></div></div>
+      <div class="stat-r"><div class="stat-l">EGO PILOTA</div><div class="stat-bar"><div class="stat-fill" style="width:81%;background:#ffd700"></div></div></div>
+    </div>
+
+    <!-- McLaren -->
+    <div class="car-card" data-car="mc450">
+      <div class="laps-b">1 GIRO</div>
+      <span class="car-icon">🧡</span>
+      <div class="car-name">McLaren 450S</div>
+      <div class="car-desc">Come l'ex di qualcuno. Va veloce, ma non si può tenere.</div>
+      <div class="stat-r"><div class="stat-l">POTENZA</div><div class="stat-bar"><div class="stat-fill" style="width:90%;background:#ffd700"></div></div></div>
+      <div class="stat-r"><div class="stat-l">STILE</div><div class="stat-bar"><div class="stat-fill" style="width:89%;background:#ffd700"></div></div></div>
+      <div class="stat-r"><div class="stat-l">EGO PILOTA</div><div class="stat-bar"><div class="stat-fill" style="width:77%;background:#ffd700"></div></div></div>
+      <div class="tip">Come l'ex. Bella. Veloce. Non tua.</div>
+    </div>
+
+    <!-- Tesla - TRAP (always visible) -->
+    <div class="car-card tesla" data-car="tesla">
+      <div class="laps-b" style="color:var(--red)">∞ (silenzio)</div>
+      <span class="car-icon">🔋</span>
+      <div class="car-name">Tesla Model 3</div>
+      <div class="car-desc">Un iPad con le ruote. Blitz, non osare.</div>
+      <div class="stat-r"><div class="stat-l">POTENZA</div><div class="stat-bar"><div class="stat-fill" style="width:3%;background:#888"></div></div></div>
+      <div class="stat-r"><div class="stat-l">STILE</div><div class="stat-bar"><div class="stat-fill" style="width:2%;background:#888"></div></div></div>
+      <div class="stat-r"><div class="stat-l">EGO PILOTA</div><div class="stat-bar"><div class="stat-fill" style="width:1%;background:#ff3333"></div></div></div>
+      <div class="tip">⚠️ CONTIENE ELETTRONI</div>
+    </div>
+
+    <!-- Panda - EASTER EGG -->
+    <div class="car-card easter" data-car="panda" id="card-panda">
+      <div class="laps-b" style="color:var(--napoli)">INTOCCABILE</div>
+      <span class="car-icon">🚗</span>
+      <div class="car-name">Fiat Panda 4×4</div>
+      <div class="car-desc" style="color:#88ff44">Verde menta · di Piero · NON SI TOCCA</div>
+      <div class="stat-r"><div class="stat-l">POTENZA</div><div class="stat-bar"><div class="stat-fill" style="width:4%;background:#ffd700"></div></div></div>
+      <div class="stat-r"><div class="stat-l">STILE</div><div class="stat-bar"><div class="stat-fill" style="width:100%;background:#33ff66"></div></div></div>
+      <div class="stat-r"><div class="stat-l">EGO DI PIERO</div><div class="stat-bar"><div class="stat-fill" style="width:44%;background:var(--napoli)"></div></div></div>
+      <div class="tip">👁️ Piero sta guardando.</div>
+    </div>
+
+    <!-- Nave - EASTER EGG -->
+    <div class="car-card easter" data-car="nave" id="card-nave">
+      <div class="laps-b" style="color:var(--napoli)">0 GIRI</div>
+      <span class="car-icon">🚢</span>
+      <div class="car-name">MSC Subrata I</div>
+      <div class="car-desc">44.000 ton. Non entra in pista ma ci ha provato.</div>
+      <div class="stat-r"><div class="stat-l">POTENZA</div><div class="stat-bar"><div class="stat-fill" style="width:44%;background:var(--napoli)"></div></div></div>
+      <div class="stat-r"><div class="stat-l">STILE</div><div class="stat-bar"><div class="stat-fill" style="width:44%;background:var(--napoli)"></div></div></div>
+      <div class="stat-r"><div class="stat-l">TONNELLATE</div><div class="stat-bar"><div class="stat-fill" style="width:44%;background:var(--napoli)"></div></div></div>
+      <div class="tip">🚢 SUBRATA SHIPPING CO.</div>
+    </div>
+
+  </div><!-- end cars-grid -->
+  <div id="footer-lnk">subrataal · napoli · numero 4 · © subrata race club 2026</div>
+</section>
+
+<!-- ═══ TRACK SELECT ═══ -->
+<section id="screen-tracks" class="screen">
+  <button class="back-btn" id="btn-back-tracks">◄ TORNA ALLE MACCHINE</button>
+  <div class="screen-title">🗺️ SCEGLI IL TRACCIATO</div>
+  <div class="screen-sub" id="track-sub">scegli dove sfrecciare, campione</div>
+  <div class="tracks-grid">
+
+    <div class="track-card locked">
+      <div class="track-flag">🇲🇨</div>
+      <div class="track-lock">🔒</div>
+      <div class="track-name">Monaco</div>
+      <div class="track-msg">Prenotato da Leclerc.<br>Fatti i cazzi tuoi.</div>
+    </div>
+
+    <div class="track-card locked">
+      <div class="track-flag">🇮🇹</div>
+      <div class="track-lock">🔒</div>
+      <div class="track-name">Monza</div>
+      <div class="track-msg">Chiuso. Leclerc ha distrutto<br>il guard rail al T1. Di nuovo.</div>
+    </div>
+
+    <div class="track-card locked">
+      <div class="track-flag">🇩🇪</div>
+      <div class="track-lock">🔒</div>
+      <div class="track-name">Nürburgring</div>
+      <div class="track-msg">Patente B non accettata.<br>Patente C nemmeno.</div>
+    </div>
+
+    <div class="track-card locked">
+      <div class="track-flag">🇬🇧</div>
+      <div class="track-lock">🔒</div>
+      <div class="track-name">Silverstone</div>
+      <div class="track-msg">Brexit.<br>Non esiste più.</div>
+    </div>
+
+    <div class="track-card locked">
+      <div class="track-flag">🇯🇵</div>
+      <div class="track-lock">🔒</div>
+      <div class="track-name">Suzuka</div>
+      <div class="track-msg">Troppo lontano.<br>Costa come una nave cargo.</div>
+    </div>
+
+    <div class="track-card locked">
+      <div class="track-flag">🔵</div>
+      <div class="track-lock">🔒</div>
+      <div class="track-name">SSC Napoli Arena</div>
+      <div class="track-msg">Riservato ai Campioni.<br>4 Scudetti richiesti.</div>
+    </div>
+
+    <!-- Pene circuit - clickable locked -->
+    <div class="track-card locked clickable" id="btn-pene">
+      <div class="track-flag">🍆</div>
+      <div class="track-lock">🔒</div>
+      <div class="track-name">Circuito Romano</div>
+      <div class="track-msg">In costruzione.<br>Apertura: mai.</div>
+    </div>
+
+    <!-- The ONE unlocked track -->
+    <div class="track-card open" id="btn-gianni">
+      <div class="track-flag">🏁</div>
+      <div class="track-arrow">▶▶▶</div>
+      <div class="track-name">A.N. Gianni De Luca</div>
+      <div class="track-badge">✅ THE ONLY CHOICE</div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══ RESULT ═══ -->
+<section id="screen-result" class="screen">
+  <div style="z-index:1;text-align:center;padding:20px;max-width:640px">
+    <div class="res-lbl">IL SUBRATA RACE CLUB PRESENTA:</div>
+    <div class="res-icon" id="res-icon">🏎️</div>
+    <div class="res-lbl" style="font-size:7.5px;margin-top:8px">BLITZ HA SCELTO:</div>
+    <div class="res-name" id="res-name">FERRARI 458</div>
+    <div class="res-track">📍 AUTODROMO NAZIONALE GIANNI DE LUCA</div>
+    <div class="res-msgs">
+      <div class="res-msg">✅ SubrataPal è fiero di te.</div>
+      <div class="res-msg">🔴 Charles Leclerc è geloso. Molto.</div>
+      <div class="res-msg">⚽ Il Napoli ha già festeggiato per te.</div>
+      <div class="res-msg">🚢 La MSC Subrata I ha suonato la sirena.</div>
+      <div class="res-msg">🚗 La Panda di Piero è al sicuro.</div>
+    </div>
+    <div style="margin:16px 0"><span class="res4">4</span></div>
+    <div style="margin:18px 0;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <button class="btn-napoli btn" id="share-btn">📤 CONDIVIDI</button>
+      <button class="btn btn-red" id="btn-change">🔄 CAMBIA IDEA</button>
+    </div>
+    <div class="res-fine">
+      © 2026 Subrata Race Club · Vivi veloci · Muori a idrocarburi<br>
+      "Non basta scegliere la macchina giusta. Bisogna anche saperla guidare.<br>
+      Blitz non sa farlo." — SubrataPal, 2026<br><br>
+      🔵⚪ FORZA NAPOLI 🔵⚪ · il numero è il <span style="color:var(--napoli)">4</span>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ BSOD ═══ -->
+<section id="screen-bsod" class="screen">
+  <div style="text-align:left;max-width:680px;width:100%;padding:20px">
+    <div class="bsod-hl">Windows Race Edition</div><br><br>
+    <div class="bsod-body">
+      <p>Un problema ha costretto Blitz a fermarsi.</p><br>
+      <p>STOP: 0x000000EV (ELECTRIC_VEHICLE_DETECTED)</p><br>
+      <p>*** IDROCARB.SYS — Address F4554C41 base at F4554C41</p><br>
+      <p>ERRORE CRITICO: TESLA MODEL 3 SELEZIONATA</p><br>
+      <p>Blitz ha toccato un'auto elettrica.<br>
+      Il sistema nervoso centrale ha rifiutato di continuare.<br>
+      Il motore termico del suo cuore si è fermato.<br><br>
+      Diagnosi: Blitz non stava bene nemmeno prima.<br>
+      Causa: Ignoranza volontaria delle leggi dell'Idrocarburismo.<br>
+      Soluzione: Tornare indietro. Scegliere un'auto VERA.<br><br>
+      "La Tesla non è una macchina. E' un iPad con le ruote." — SubrataPal, 2026<br><br>
+      Se questo e' il tuo primo errore di oggi:<br>
+      Riavvia il cervello e premi CONTINUA.<br><br>
+      Se hai selezionato la Tesla intenzionalmente:<br>
+      Ci dispiace. Non c'e' rimedio. Ti vogliamo bene lo stesso.</p>
+    </div><br><br>
+    <button class="btn" id="btn-bsod-back">► RIAVVIA CERVELLO</button>
+  </div>
+</section>
+
+<!-- ═══ PIERO ═══ -->
+<section id="screen-piero" class="screen">
+  <div style="text-align:center;z-index:1">
+    <div class="piero-icon">🚗</div>
+    <div class="piero-title">NO. NO. NO.</div>
+    <div class="piero-body">
+      Piero ha chiamato.<br><br>
+      La Panda verde menta<br>
+      NON. SI. TOCCA.<br><br>
+      Quella macchina e' sacra.<br>
+      E' il gioiello del Subrata.<br>
+      E' il veicolo preferito<br>
+      da ogni persona di cultura.<br><br>
+      Tu non sei pronto.<br><br>
+      <span style="font-size:5.5px;color:#445">
+        Torna indietro e scegli qualcosa<br>
+        che almeno faccia VROOOOM.
+      </span>
+    </div>
+    <br><br>
+    <button class="btn-green btn" id="btn-piero-back">◄ RISPETTA LA PANDA</button>
+  </div>
+</section>
+
+<!-- ═══ MODAL: KONAMI ═══ -->
+<div class="modal" id="modal-konami">
+  <div class="modal-title">🎮 CHEAT CODE ATTIVATO!</div>
+  <div style="font-size:56px;margin:8px 0">⚽</div>
+  <div class="modal-body">
+    SUBRATAAL e' stato sbloccato come pilota ufficiale.<br><br>
+    SubrataPal e' entrato nel box.<br>
+    Ha guardato le macchine.<br>
+    Ha detto: "Quella rossa ce la faccio anch'io".<br>
+    Non ce la fa.<br><br>
+    In ogni caso: FORZA NAPOLI 🔵⚪<br>
+    4 SCUDETTI · IL NUMERO E' IL 4<br><br>
+    <span style="font-size:5.5px;color:#445">
+      PS: Il tracciato e' ancora bloccato. Neanche il cheat code cambia il circuito.
+    </span>
+  </div>
+  <button class="btn" id="btn-close-konami">► CONTINUA (senza SubrataPal)</button>
+</div>
+
+<!-- ═══ MODAL: PENE CIRCUIT ═══ -->
+<div class="modal" id="modal-pene">
+  <div class="modal-title">🚧 CIRCUITO IN COSTRUZIONE</div>
+  <svg class="pene-svg" viewBox="0 0 100 160" xmlns="http://www.w3.org/2000/svg">
+    <rect x="36" y="75" width="28" height="75" rx="4" fill="#1a1a2e" stroke="#555" stroke-width="2"/>
+    <ellipse cx="50" cy="68" rx="20" ry="24" fill="#1a1a2e" stroke="#555" stroke-width="2"/>
+    <ellipse cx="50" cy="76" rx="22" ry="6" fill="#1a1a2e" stroke="#555" stroke-width="2"/>
+    <rect x="41" y="76" width="18" height="73" rx="2" fill="none" stroke="#ffd700" stroke-width="1.2" stroke-dasharray="5 3"/>
+    <ellipse cx="50" cy="66" rx="14" ry="17" fill="none" stroke="#ffd700" stroke-width="1.2" stroke-dasharray="5 3"/>
+    <line x1="36" y1="120" x2="64" y2="120" stroke="#fff" stroke-width="2.5" stroke-dasharray="5 4"/>
+    <text x="50" y="118" text-anchor="middle" font-size="4" fill="#aaa" font-family="monospace">S/F</text>
+    <ellipse cx="36" cy="140" rx="5" ry="5" fill="#333" stroke="#555"/>
+    <ellipse cx="64" cy="140" rx="5" ry="5" fill="#333" stroke="#555"/>
+    <text x="50" y="157" text-anchor="middle" font-size="5" fill="#556" font-family="monospace">CIRCUITO ROMANO</text>
+  </svg>
+  <div class="modal-body">
+    Circuito del Cazzo Internazionale<br>
+    Lunghezza: abbastanza<br>
+    Curve: due, ovviamente<br>
+    Omologazione FIA: in attesa dal 2019<br><br>
+    <span style="font-size:5.5px;color:#445">
+      "Non e' il piu' lungo, ma e' il piu' memorabile." — Anonimo, Box 4
+    </span>
+  </div>
+  <button class="btn btn-red" id="btn-close-pene">► CHIUDI (sei una persona seria)</button>
+</div>
+
+<script>
+// ── State ──
+const S={
+  screen:'intro', selectedCar:null,
+  easterUnlocked:false,
+  konamiSeq:[], konamiDone:false,
+  boatTimer:null, f812Timer:null,
+  _lc:0,_lt:null,
+  _4c:0,_4t:null,
+  _fc:0,_ft:null,
+};
+const KONAMI=['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
+
+// car name lookup
+const CAR_NAMES={
+  f458:'Ferrari 458 Italia', f488:'Ferrari 488 GTB', fpf:'Ferrari Portofino',
+  pgt3:'Porsche 991 GT3 RS', f812:'Ferrari 812 Superfast', alfa:'Alfa Giulia QV',
+  hevo:'Lamborghini Huracán Evo', hsto:'Lamborghini Huracán STO',
+  htec:'Lamborghini Huracán Tecnica', f8t:'Ferrari F8 Tributo',
+  mc450:'McLaren 450S', tesla:'Tesla Model 3',
+  panda:'Fiat Panda 4x4 Verde Menta', nave:'MSC Subrata I',
+};
+const CAR_ICONS={
+  f458:'🏎️', f488:'🏎️', fpf:'🏎️', pgt3:'🐢', f812:'🏎️', alfa:'🍀',
+  hevo:'🐂', hsto:'🐂', htec:'🐂', f8t:'🏎️', mc450:'🧡',
+  tesla:'🔋', panda:'🚗', nave:'🚢',
+};
+
+// ── Screen management ──
+function showScreen(id){
+  // Clear confetti canvas when leaving result
+  var cv=document.getElementById('confetti');
+  var cx=cv.getContext('2d');
+  cx.clearRect(0,0,cv.width,cv.height);
+  document.querySelectorAll('.screen').forEach(function(s){
+    s.classList.remove('active');
+    s.style.display='none';
+  });
+  var t=document.getElementById('screen-'+id);
+  if(!t)return;
+  t.style.display='flex'; t.classList.add('active'); S.screen=id;
+  onEnter(id);
+}
+
+function onEnter(id){
+  if(id==='cars'){startBoatTimer();}
+  if(id==='tracks'){
+    clearBoatTimer();
+    var el=document.getElementById('track-sub');
+    if(S.selectedCar){
+      el.textContent='HAI SCELTO: '+CAR_NAMES[S.selectedCar].toUpperCase()+' - ORA SCEGLI IL TRACCIATO';
+    }
+  }
+  if(id==='result'){
+    clearBoatTimer();
+    var ic=document.getElementById('res-icon');
+    var nm=document.getElementById('res-name');
+    ic.textContent=S.selectedCar?CAR_ICONS[S.selectedCar]:'🏎️';
+    nm.textContent=S.selectedCar?CAR_NAMES[S.selectedCar].toUpperCase():'???';
+    startConfetti();
+  }
+}
+
+// ── Button wiring ──
+document.getElementById('btn-start').addEventListener('click',function(){showScreen('disclaimer');});
+document.getElementById('btn-disclaimer').addEventListener('click',function(){showScreen('cars');});
+document.getElementById('btn-back-tracks').addEventListener('click',function(){showScreen('cars');});
+document.getElementById('btn-bsod-back').addEventListener('click',function(){showScreen('cars');});
+document.getElementById('btn-piero-back').addEventListener('click',function(){showScreen('cars');});
+document.getElementById('btn-change').addEventListener('click',function(){showScreen('cars');});
+document.getElementById('btn-close-konami').addEventListener('click',function(){closeModal('modal-konami');});
+document.getElementById('btn-close-pene').addEventListener('click',function(){closeModal('modal-pene');});
+document.getElementById('btn-pene').addEventListener('click',function(){openModal('modal-pene');});
+document.getElementById('btn-gianni').addEventListener('click',function(){showAccessAnim();setTimeout(function(){showScreen('result');},2000);});
+document.getElementById('share-btn').addEventListener('click',shareResult);
+document.getElementById('btn-back-tracks').addEventListener('click',function(){showScreen('cars');});
+
+// ── Car card clicks ──
+document.querySelectorAll('.car-card').forEach(function(card){
+  card.addEventListener('click',function(){
+    var id=card.dataset.car;
+    if(id==='tesla'){showScreen('bsod');return;}
+    if(id==='panda'){showScreen('piero');return;}
+    if(id==='nave'){alert('La MSC Subrata I non puo affrontare il tracciato.\nMancano 44km di canale.');return;}
+    S.selectedCar=id;
+    showScreen('tracks');
+  });
+});
+
+// ── Ferrari 812 hover 4s easter egg ──
+var f812card=document.querySelector('.car-card.f812');
+if(f812card){
+  f812card.addEventListener('mouseenter',function(){
+    S.f812Timer=setTimeout(function(){
+      var m=document.getElementById('f812tip');
+      if(m)m.style.opacity='1';
+    },4000);
+  });
+  f812card.addEventListener('mouseleave',function(){
+    clearTimeout(S.f812Timer);
+    var m=document.getElementById('f812tip');
+    if(m)m.style.opacity='0';
+  });
+}
+
+// ── Logo x4 easter egg ──
+document.getElementById('logo-area').addEventListener('click',function(){
+  S._lc++;
+  clearTimeout(S._lt);
+  S._lt=setTimeout(function(){S._lc=0;},2000);
+  if(S._lc>=4){S._lc=0;unlockEaster();}
+});
+
+function unlockEaster(){
+  if(S.easterUnlocked)return;
+  S.easterUnlocked=true;
+  document.getElementById('card-panda').classList.add('show');
+  document.getElementById('card-nave').classList.add('show');
+  var t=document.getElementById('toast');
+  t.classList.add('show');
+  setTimeout(function(){t.classList.remove('show');},3400);
+}
+
+// ── Number 4 x4 → Napoli celebration ──
+document.getElementById('num4').addEventListener('click',function(e){
+  e.stopPropagation();
+  var el=document.getElementById('num4');
+  el.style.animation='none';
+  void el.offsetWidth;
+  el.style.animation='fourPop .35s';
+  S._4c++;
+  clearTimeout(S._4t);
+  S._4t=setTimeout(function(){S._4c=0;},3000);
+  if(S._4c>=4){S._4c=0;napoliCeleb();}
+});
+
+function napoliCeleb(){
+  var el=document.getElementById('napo-ov');
+  el.classList.remove('show');
+  void el.offsetWidth;
+  el.classList.add('show');
+  setTimeout(function(){el.classList.remove('show');},3400);
+}
+
+// ── Konami code ──
+document.addEventListener('keydown',function(e){
+  S.konamiSeq.push(e.key);
+  if(S.konamiSeq.length>KONAMI.length)S.konamiSeq.shift();
+  if(JSON.stringify(S.konamiSeq)===JSON.stringify(KONAMI)&&!S.konamiDone){
+    S.konamiDone=true;
+    openModal('modal-konami');
+  }
+});
+
+// ── Footer subrataal x4 ──
+document.getElementById('footer-lnk').addEventListener('click',function(){
+  S._fc++;
+  clearTimeout(S._ft);
+  S._ft=setTimeout(function(){S._fc=0;},2000);
+  if(S._fc>=4){
+    S._fc=0;
+    var el=document.getElementById('footer-lnk');
+    el.textContent='SUBRATAAL HA SEGNATO - NAPOLI 4-0 - SUBRATA RACE CLUB';
+    el.style.color='var(--napoli)';
+    setTimeout(function(){
+      el.textContent='subrataal - napoli - numero 4 - © subrata race club 2026';
+      el.style.color='#222';
+    },4000);
+  }
+});
+
+// ── 44s boat ──
+function startBoatTimer(){
+  clearBoatTimer();
+  S.boatTimer=setTimeout(function(){
+    if(S.screen==='cars')document.getElementById('boat').classList.add('visible');
+  },44000);
+}
+function clearBoatTimer(){
+  clearTimeout(S.boatTimer);
+  document.getElementById('boat').classList.remove('visible');
+}
+
+// ── Modals ──
+function openModal(id){document.getElementById(id).classList.add('active');}
+function closeModal(id){document.getElementById(id).classList.remove('active');}
+
+// ── Access granted anim ──
+function showAccessAnim(){
+  var el=document.getElementById('access-ov');
+  el.classList.remove('show');
+  void el.offsetWidth;
+  el.classList.add('show');
+  setTimeout(function(){el.classList.remove('show');},2100);
+}
+
+// ── Confetti ──
+function startConfetti(){
+  var cv=document.getElementById('confetti');
+  var cx=cv.getContext('2d');
+  cv.width=window.innerWidth; cv.height=window.innerHeight;
+  var cols=['#ffd700','#00aadd','#ffffff','#ff3333','#33ff66','#ff8800'];
+  var pieces=[];
+  for(var i=0;i<130;i++){
+    pieces.push({
+      x:Math.random()*cv.width, y:Math.random()*cv.height-cv.height,
+      w:Math.random()*9+3, h:Math.random()*4+2,
+      col:cols[Math.floor(Math.random()*cols.length)],
+      vx:Math.random()*2-1, vy:Math.random()*3+1.5,
+      angle:Math.random()*Math.PI*2, av:Math.random()*.1-.05,
+    });
+  }
+  function loop(){
+    if(S.screen!=='result')return;
+    cx.clearRect(0,0,cv.width,cv.height);
+    for(var i=0;i<pieces.length;i++){
+      var p=pieces[i];
+      p.x+=p.vx; p.y+=p.vy; p.angle+=p.av;
+      if(p.y>cv.height){p.y=-10;p.x=Math.random()*cv.width;}
+      cx.save(); cx.translate(p.x,p.y); cx.rotate(p.angle);
+      cx.fillStyle=p.col; cx.fillRect(-p.w/2,-p.h/2,p.w,p.h);
+      cx.restore();
+    }
+    requestAnimationFrame(loop);
+  }
+  loop();
+}
+
+// ── Share ──
+function shareResult(){
+  var name=S.selectedCar?CAR_NAMES[S.selectedCar]:'???';
+  var txt='Ho scelto la '+name+' al Subrata Race Club! Autodromo Nazionale Gianni De Luca mi aspetta. #SubrataRaceClub #ForZaNaPoLi';
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(txt).then(function(){
+      var b=document.getElementById('share-btn');
+      var o=b.textContent;
+      b.textContent='COPIATO!';
+      setTimeout(function(){b.textContent=o;},2200);
+    });
+  } else {
+    alert(txt);
+  }
+}
+</script>
+</body>
+</html>
