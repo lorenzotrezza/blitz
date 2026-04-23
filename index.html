@@ -47,27 +47,41 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 .screen-title{font-size:clamp(12px,2.5vw,20px);color:var(--gold);text-align:center;margin:18px 0 8px;text-shadow:3px 3px 0 #000}
 .screen-sub{font-size:6.5px;color:var(--gray);text-align:center;margin-bottom:18px}
 
-/* CARS GRID */
-#screen-cars{width:100%;max-width:1200px;margin:0 auto}
-.cars-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;width:100%;padding:8px}
-.car-card{border:3px solid #2a2a3a;background:#0f0f1e;padding:14px;cursor:pointer;position:relative;box-shadow:4px 4px 0 #000;transition:all .15s}
-.car-card:hover{border-color:var(--gold);transform:translate(-3px,-3px);box-shadow:7px 7px 0 #000;background:#161630}
-.car-card.tesla{border-color:#2a2a2a;opacity:.65}
-.car-card.tesla:hover{border-color:var(--red);opacity:1}
-.car-card.easter{display:none}
-.car-card.easter.show{display:block;border-color:var(--napoli);animation:fadeIn .5s}
-.car-icon{font-size:38px;text-align:center;display:block;margin-bottom:10px}
-.car-name{font-size:8px;color:var(--gold);text-align:center;margin-bottom:7px}
-.car-desc{font-size:6px;color:var(--gray);text-align:center;line-height:1.9;margin-bottom:10px}
-.laps-b{position:absolute;top:7px;right:7px;font-size:5px;background:#1a1a2a;color:var(--green);padding:3px 5px;border:1px solid #333}
+/* CAR SLIDESHOW */
+#screen-cars{width:100%;max-width:1180px;margin:0 auto}
+.car-carousel{width:100%;display:grid;grid-template-columns:70px minmax(0,1fr) 70px;gap:14px;align-items:center;padding:8px}
+.car-arrow{font-family:'Press Start 2P',monospace;border:3px solid #2a2a3a;background:#0f0f1e;color:var(--gold);height:112px;cursor:pointer;box-shadow:4px 4px 0 #000;font-size:20px;transition:all .15s}
+.car-arrow:hover{border-color:var(--gold);transform:translate(-2px,-2px);box-shadow:6px 6px 0 #000;background:#161630}
+.car-stage{border:4px solid #2a2a3a;background:linear-gradient(145deg,#101020 0%,#080811 100%);box-shadow:8px 8px 0 #000;min-height:520px;padding:20px;position:relative;overflow:hidden}
+.car-stage::before{content:'';position:absolute;inset:10px;border:1px dashed rgba(255,215,0,.14);pointer-events:none}
+.car-stage.tesla{border-color:#442;box-shadow:8px 8px 0 #000,0 0 24px rgba(255,51,51,.15)}
+.car-stage.easter{border-color:var(--napoli);box-shadow:8px 8px 0 #000,0 0 28px rgba(0,170,221,.22)}
+.car-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;position:relative;z-index:1}
+.slide-count,.laps-b{font-size:6px;background:#151525;border:1px solid #333;color:var(--green);padding:6px 8px;line-height:1.6}
+.slide-count{color:var(--napoli)}
+.car-hero{display:grid;grid-template-columns:150px minmax(0,1fr);gap:20px;align-items:center;position:relative;z-index:1;margin:18px 0}
+.car-icon{font-size:92px;text-align:center;display:block;text-shadow:0 0 24px rgba(255,215,0,.18)}
+.car-name{font-size:clamp(13px,2.8vw,24px);color:var(--gold);line-height:1.5;text-shadow:3px 3px 0 #000;margin-bottom:10px}
+.car-desc{font-size:7px;color:var(--white);line-height:2.2}
+.car-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.meta-chip{font-size:5.5px;color:#9ab;background:#111827;border:1px solid #273448;padding:5px 7px;line-height:1.5}
+.car-panel-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;position:relative;z-index:1}
+.detail-box{border:2px solid #20283a;background:#0b0d18;padding:12px;min-height:92px}
+.detail-label{font-size:5.5px;color:var(--napoli);margin-bottom:8px}
+.detail-value{font-size:7px;color:var(--white);line-height:2}
+.car-lore{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.car-lore li{font-size:6.2px;color:#b8c7dd;line-height:2;border-left:3px solid #2a3b55;padding-left:9px}
 .stat-r{margin:3px 0}
 .stat-l{font-size:5px;color:#558;margin-bottom:2px}
 .stat-bar{height:5px;background:#111;border:1px solid #222}
 .stat-fill{height:100%}
-.tip{position:absolute;bottom:-26px;left:50%;transform:translateX(-50%);font-size:5.5px;color:var(--red);white-space:nowrap;opacity:0;transition:opacity .3s;pointer-events:none;z-index:10}
-.car-card:hover .tip{opacity:1}
-.car-card.f812:hover .tip{opacity:0}
-.f812tip{position:absolute;bottom:-26px;left:50%;transform:translateX(-50%);font-size:5.5px;color:var(--red);white-space:nowrap;opacity:0;pointer-events:none;z-index:10}
+.slide-secret{min-height:18px;margin-top:12px;font-size:6px;color:var(--red);line-height:2;text-align:center;opacity:0;transition:opacity .25s;position:relative;z-index:1}
+.slide-secret.show{opacity:1}
+.car-actions{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;margin:18px 0 6px;position:relative;z-index:1}
+.car-dots{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin-top:8px}
+.car-dot{width:8px;height:8px;border:1px solid #445;background:#101020;cursor:pointer;padding:0}
+.car-dot.active{background:var(--gold);border-color:var(--gold);box-shadow:0 0 10px rgba(255,215,0,.5)}
+.car-dot.easter{border-color:var(--napoli)}
 
 /* TRACKS */
 #screen-tracks{width:100%;max-width:1000px;margin:0 auto}
@@ -138,7 +152,17 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 #boat.visible{opacity:.08;bottom:-30px}
 #footer-lnk{font-size:5px;color:#222;text-align:center;padding:14px;cursor:pointer;user-select:none;transition:color .3s}
 #footer-lnk:hover{color:#444}
-@media(max-width:600px){.cars-grid{grid-template-columns:repeat(2,1fr)}.tracks-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:760px){
+  .car-carousel{grid-template-columns:1fr 1fr;gap:10px}
+  .car-stage{grid-column:1/-1;grid-row:1;min-height:0;padding:16px}
+  .car-arrow{grid-row:2;height:58px}
+  #btn-car-prev{grid-column:1}
+  #btn-car-next{grid-column:2}
+  .car-hero{grid-template-columns:1fr;gap:8px;text-align:center}
+  .car-icon{font-size:68px}
+  .car-panel-grid{grid-template-columns:1fr}
+}
+@media(max-width:600px){.tracks-grid{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
@@ -199,169 +223,48 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 <!-- ═══ CAR SELECT ═══ -->
 <section id="screen-cars" class="screen">
   <div class="screen-title">🏎️ SCEGLI LA TUA BESTIA</div>
-  <div class="screen-sub">scegli saggiamente · o almeno meglio del solito, blitz</div>
-  <div class="cars-grid" id="cars-grid">
-
-    <!-- Ferrari 458 -->
-    <div class="car-card" data-car="f458">
-      <div class="laps-b">2 GIRI</div>
-      <span class="car-icon">🏎️</span>
-      <div class="car-name">Ferrari 458 Italia</div>
-      <div class="car-desc">Urla come SubrataPal dopo un gol. Solo più intonata.</div>
-      <div class="stat-r"><div class="stat-l">POTENZA</div><div class="stat-bar"><div class="stat-fill" style="width:92%;background:#33ff66"></div></div></div>
-      <div class="stat-r"><div class="stat-l">STILE</div><div class="stat-bar"><div class="stat-fill" style="width:95%;background:#33ff66"></div></div></div>
-      <div class="stat-r"><div class="stat-l">EGO PILOTA</div><div class="stat-bar"><div class="stat-fill" style="width:72%;background:#ffd700"></div></div></div>
+  <div class="screen-sub">sfoglia il catalogo ufficiale · il prezzo non si dice · il 4 decide</div>
+  <div class="car-carousel" aria-label="Selezione macchina">
+    <button class="car-arrow" id="btn-car-prev" aria-label="Macchina precedente">◄</button>
+    <div class="car-stage" id="car-stage">
+      <div class="car-top">
+        <div class="slide-count" id="car-count">01 / 12</div>
+        <div class="laps-b" id="car-laps">2 GIRI</div>
+      </div>
+      <div class="car-hero">
+        <span class="car-icon" id="car-icon">🏎️</span>
+        <div>
+          <div class="car-name" id="car-name">Ferrari 458 Italia</div>
+          <div class="car-desc" id="car-desc">Urla come SubrataPal dopo un gol. Solo più intonata.</div>
+          <div class="car-meta" id="car-meta"></div>
+        </div>
+      </div>
+      <div class="car-panel-grid">
+        <div class="detail-box">
+          <div class="detail-label">SCHEDA TECNICA SUBRATA</div>
+          <div id="car-details"></div>
+        </div>
+        <div class="detail-box">
+          <div class="detail-label">BARRE DELLA VERITA'</div>
+          <div id="car-stats"></div>
+        </div>
+        <div class="detail-box">
+          <div class="detail-label">PERIZIA DEL BOX 4</div>
+          <ul class="car-lore" id="car-lore"></ul>
+        </div>
+        <div class="detail-box">
+          <div class="detail-label">VERDETTO IGNORANTE</div>
+          <div class="detail-value" id="car-verdict"></div>
+        </div>
+      </div>
+      <div class="slide-secret" id="slide-secret"></div>
+      <div class="car-actions">
+        <button class="btn btn-green" id="btn-car-select">✅ SCEGLI QUESTA</button>
+      </div>
     </div>
-
-    <!-- Ferrari 488 -->
-    <div class="car-card" data-car="f488">
-      <div class="laps-b">2 GIRI</div>
-      <span class="car-icon">🏎️</span>
-      <div class="car-name">Ferrari 488 GTB</div>
-      <div class="car-desc">Più veloce del portafoglio di Blitz. Non è difficile.</div>
-      <div class="stat-r"><div class="stat-l">POTENZA</div><div class="stat-bar"><div class="stat-fill" style="width:96%;background:#33ff66"></div></div></div>
-      <div class="stat-r"><div class="stat-l">STILE</div><div class="stat-bar"><div class="stat-fill" style="width:91%;background:#33ff66"></div></div></div>
-      <div class="stat-r"><div class="stat-l">EGO PILOTA</div><div class="stat-bar"><div class="stat-fill" style="width:78%;background:#ffd700"></div></div></div>
-    </div>
-
-    <!-- Ferrari Portofino -->
-    <div class="car-card" data-car="fpf">
-      <div class="laps-b">2 GIRI</div>
-      <span class="car-icon">🏎️</span>
-      <div class="car-name">Ferrari Portofino</div>
-      <div class="car-desc">Cabrio. Come andare in mare, ma su asfalto.</div>
-      <div class="stat-r"><div class="stat-l">POTENZA</div><div class="stat-bar"><div class="stat-fill" style="width:85%;background:#ffd700"></div></div></div>
-      <div class="stat-r"><div class="stat-l">STILE</div><div class="stat-bar"><div class="stat-fill" style="width:98%;background:#33ff66"></div></div></div>
-      <div class="stat-r"><div class="stat-l">EGO PILOTA</div><div class="stat-bar"><div class="stat-fill" style="width:88%;background:#ffd700"></div></div></div>
-    </div>
-
-    <!-- Porsche 991 -->
-    <div class="car-card" data-car="pgt3">
-      <div class="laps-b">2 GIRI</div>
-      <span class="car-icon">🐢</span>
-      <div class="car-name">Porsche 991 GT3 RS</div>
-      <div class="car-desc">Non è italiana, ma fa abbastanza rumore da perdonarla.</div>
-      <div class="stat-r"><div class="stat-l">POTENZA</div><div class="stat-bar"><div class="stat-fill" style="width:94%;background:#33ff66"></div></div></div>
-      <div class="stat-r"><div class="stat-l">STILE</div><div class="stat-bar"><div class="stat-fill" style="width:87%;background:#ffd700"></div></div></div>
-      <div class="stat-r"><div class="stat-l">EGO PILOTA</div><div class="stat-bar"><div class="stat-fill" style="width:80%;background:#ffd700"></div></div></div>
-    </div>
-
-    <!-- Ferrari 812 - SPECIAL -->
-    <div class="car-card f812" data-car="f812">
-      <div class="laps-b">1 GIRO</div>
-      <span class="car-icon">🏎️</span>
-      <div class="car-name">Ferrari 812 Superfast</div>
-      <div class="car-desc">Leclerc ne ha una. Tu no. Goditela per 1 giro.</div>
-      <div class="stat-r"><div class="stat-l">POTENZA</div><div class="stat-bar"><div class="stat-fill" style="width:99%;background:#33ff66"></div></div></div>
-      <div class="stat-r"><div class="stat-l">STILE</div><div class="stat-bar"><div class="stat-fill" style="width:96%;background:#33ff66"></div></div></div>
-      <div class="stat-r"><div class="stat-l">EGO PILOTA</div><div class="stat-bar"><div class="stat-fill" style="width:99%;background:#33ff66"></div></div></div>
-      <div class="f812tip" id="f812tip">Questa è la preferita di Leclerc. Non te la meriti.</div>
-    </div>
-
-    <!-- Alfa Giulia -->
-    <div class="car-card" data-car="alfa">
-      <div class="laps-b">2 GIRI</div>
-      <span class="car-icon">🍀</span>
-      <div class="car-name">Alfa Giulia QV</div>
-      <div class="car-desc">Italiana, arrabbiata, bella. Come il Napoli in trasferta.</div>
-      <div class="stat-r"><div class="stat-l">POTENZA</div><div class="stat-bar"><div class="stat-fill" style="width:88%;background:#ffd700"></div></div></div>
-      <div class="stat-r"><div class="stat-l">STILE</div><div class="stat-bar"><div class="stat-fill" style="width:90%;background:#ffd700"></div></div></div>
-      <div class="stat-r"><div class="stat-l">EGO PILOTA</div><div class="stat-bar"><div class="stat-fill" style="width:84%;background:#ffd700"></div></div></div>
-    </div>
-
-    <!-- Lambo Evo -->
-    <div class="car-card" data-car="hevo">
-      <div class="laps-b">1 GIRO</div>
-      <span class="car-icon">🐂</span>
-      <div class="car-name">Lamborghini Huracán Evo</div>
-      <div class="car-desc">Il toro inferocito. Come SubrataPal con la VAR contro.</div>
-      <div class="stat-r"><div class="stat-l">POTENZA</div><div class="stat-bar"><div class="stat-fill" style="width:95%;background:#33ff66"></div></div></div>
-      <div class="stat-r"><div class="stat-l">STILE</div><div class="stat-bar"><div class="stat-fill" style="width:93%;background:#33ff66"></div></div></div>
-      <div class="stat-r"><div class="stat-l">EGO PILOTA</div><div class="stat-bar"><div class="stat-fill" style="width:90%;background:#ffd700"></div></div></div>
-    </div>
-
-    <!-- Lambo STO -->
-    <div class="car-card" data-car="hsto">
-      <div class="laps-b">1 GIRO</div>
-      <span class="car-icon">🐂</span>
-      <div class="car-name">Lamborghini Huracán STO</div>
-      <div class="car-desc">STO = Soldi Tanti Ovviamente. Sì, si nota.</div>
-      <div class="stat-r"><div class="stat-l">POTENZA</div><div class="stat-bar"><div class="stat-fill" style="width:97%;background:#33ff66"></div></div></div>
-      <div class="stat-r"><div class="stat-l">STILE</div><div class="stat-bar"><div class="stat-fill" style="width:95%;background:#33ff66"></div></div></div>
-      <div class="stat-r"><div class="stat-l">EGO PILOTA</div><div class="stat-bar"><div class="stat-fill" style="width:93%;background:#33ff66"></div></div></div>
-    </div>
-
-    <!-- Lambo Tecnica -->
-    <div class="car-card" data-car="htec">
-      <div class="laps-b">1 GIRO</div>
-      <span class="car-icon">🐂</span>
-      <div class="car-name">Lamborghini Huracán Tecnica</div>
-      <div class="car-desc">L'ultima Huracán. Goditi il carbonio prima dell'elettrico.</div>
-      <div class="stat-r"><div class="stat-l">POTENZA</div><div class="stat-bar"><div class="stat-fill" style="width:96%;background:#33ff66"></div></div></div>
-      <div class="stat-r"><div class="stat-l">STILE</div><div class="stat-bar"><div class="stat-fill" style="width:94%;background:#33ff66"></div></div></div>
-      <div class="stat-r"><div class="stat-l">EGO PILOTA</div><div class="stat-bar"><div class="stat-fill" style="width:91%;background:#ffd700"></div></div></div>
-    </div>
-
-    <!-- Ferrari F8 -->
-    <div class="car-card" data-car="f8t">
-      <div class="laps-b">1 GIRO</div>
-      <span class="car-icon">🏎️</span>
-      <div class="car-name">Ferrari F8 Tributo</div>
-      <div class="car-desc">Tributo al V8. Il motore urla. Blitz probabilmente pure.</div>
-      <div class="stat-r"><div class="stat-l">POTENZA</div><div class="stat-bar"><div class="stat-fill" style="width:93%;background:#33ff66"></div></div></div>
-      <div class="stat-r"><div class="stat-l">STILE</div><div class="stat-bar"><div class="stat-fill" style="width:92%;background:#33ff66"></div></div></div>
-      <div class="stat-r"><div class="stat-l">EGO PILOTA</div><div class="stat-bar"><div class="stat-fill" style="width:81%;background:#ffd700"></div></div></div>
-    </div>
-
-    <!-- McLaren -->
-    <div class="car-card" data-car="mc450">
-      <div class="laps-b">1 GIRO</div>
-      <span class="car-icon">🧡</span>
-      <div class="car-name">McLaren 450S</div>
-      <div class="car-desc">Come l'ex di qualcuno. Va veloce, ma non si può tenere.</div>
-      <div class="stat-r"><div class="stat-l">POTENZA</div><div class="stat-bar"><div class="stat-fill" style="width:90%;background:#ffd700"></div></div></div>
-      <div class="stat-r"><div class="stat-l">STILE</div><div class="stat-bar"><div class="stat-fill" style="width:89%;background:#ffd700"></div></div></div>
-      <div class="stat-r"><div class="stat-l">EGO PILOTA</div><div class="stat-bar"><div class="stat-fill" style="width:77%;background:#ffd700"></div></div></div>
-      <div class="tip">Come l'ex. Bella. Veloce. Non tua.</div>
-    </div>
-
-    <!-- Tesla - TRAP (always visible) -->
-    <div class="car-card tesla" data-car="tesla">
-      <div class="laps-b" style="color:var(--red)">∞ (silenzio)</div>
-      <span class="car-icon">🔋</span>
-      <div class="car-name">Tesla Model 3</div>
-      <div class="car-desc">Un iPad con le ruote. Blitz, non osare.</div>
-      <div class="stat-r"><div class="stat-l">POTENZA</div><div class="stat-bar"><div class="stat-fill" style="width:3%;background:#888"></div></div></div>
-      <div class="stat-r"><div class="stat-l">STILE</div><div class="stat-bar"><div class="stat-fill" style="width:2%;background:#888"></div></div></div>
-      <div class="stat-r"><div class="stat-l">EGO PILOTA</div><div class="stat-bar"><div class="stat-fill" style="width:1%;background:#ff3333"></div></div></div>
-      <div class="tip">⚠️ CONTIENE ELETTRONI</div>
-    </div>
-
-    <!-- Panda - EASTER EGG -->
-    <div class="car-card easter" data-car="panda" id="card-panda">
-      <div class="laps-b" style="color:var(--napoli)">INTOCCABILE</div>
-      <span class="car-icon">🚗</span>
-      <div class="car-name">Fiat Panda 4×4</div>
-      <div class="car-desc" style="color:#88ff44">Verde menta · di Piero · NON SI TOCCA</div>
-      <div class="stat-r"><div class="stat-l">POTENZA</div><div class="stat-bar"><div class="stat-fill" style="width:4%;background:#ffd700"></div></div></div>
-      <div class="stat-r"><div class="stat-l">STILE</div><div class="stat-bar"><div class="stat-fill" style="width:100%;background:#33ff66"></div></div></div>
-      <div class="stat-r"><div class="stat-l">EGO DI PIERO</div><div class="stat-bar"><div class="stat-fill" style="width:44%;background:var(--napoli)"></div></div></div>
-      <div class="tip">👁️ Piero sta guardando.</div>
-    </div>
-
-    <!-- Nave - EASTER EGG -->
-    <div class="car-card easter" data-car="nave" id="card-nave">
-      <div class="laps-b" style="color:var(--napoli)">0 GIRI</div>
-      <span class="car-icon">🚢</span>
-      <div class="car-name">MSC Subrata I</div>
-      <div class="car-desc">44.000 ton. Non entra in pista ma ci ha provato.</div>
-      <div class="stat-r"><div class="stat-l">POTENZA</div><div class="stat-bar"><div class="stat-fill" style="width:44%;background:var(--napoli)"></div></div></div>
-      <div class="stat-r"><div class="stat-l">STILE</div><div class="stat-bar"><div class="stat-fill" style="width:44%;background:var(--napoli)"></div></div></div>
-      <div class="stat-r"><div class="stat-l">TONNELLATE</div><div class="stat-bar"><div class="stat-fill" style="width:44%;background:var(--napoli)"></div></div></div>
-      <div class="tip">🚢 SUBRATA SHIPPING CO.</div>
-    </div>
-
-  </div><!-- end cars-grid -->
+    <button class="car-arrow" id="btn-car-next" aria-label="Macchina successiva">►</button>
+  </div>
+  <div class="car-dots" id="car-dots" aria-label="Indicatori macchine"></div>
   <div id="footer-lnk">subrataal · napoli · numero 4 · © subrata race club 2026</div>
 </section>
 
@@ -560,7 +463,7 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 <script>
 // ── State ──
 const S={
-  screen:'intro', selectedCar:null,
+  screen:'intro', selectedCar:null, carIndex:0,
   easterUnlocked:false,
   konamiSeq:[], konamiDone:false,
   boatTimer:null, f812Timer:null,
@@ -584,6 +487,139 @@ const CAR_ICONS={
   hevo:'🐂', hsto:'🐂', htec:'🐂', f8t:'🏎️', mc450:'🧡',
   tesla:'🔋', panda:'🚗', nave:'🚢',
 };
+const CAR_ORDER=['f458','f488','fpf','pgt3','f812','alfa','hevo','hsto','htec','f8t','mc450','tesla','panda','nave'];
+const CAR_DETAILS={
+  f458:{
+    laps:'2 GIRI', name:'Ferrari 458 Italia', icon:'🏎️',
+    desc:'V8 aspirato, voce da stadio e zero voglia di perdonare gli errori di Blitz.',
+    tags:['V8 aspirato','Italia pura','SubrataPal approved'],
+    stats:{POTENZA:92,STILE:95,'EGO PILOTA':72},
+    specs:[['Motore','4.5 V8 aspirato'],['Mood','urlo libero in corsia box'],['Rischio Blitz','sorride troppo presto']],
+    lore:['Parte pulita, poi decide lei quanto sei adulto.','Se SubrataPal segnasse di testa, farebbe questo rumore.','La scelta elegante per chi vuole sembrare capace.'],
+    verdict:'Macchina vera, rumore vero, responsabilita discutibile. Se devi iniziare da una Ferrari, questa e quella che ti insulta con classe.'
+  },
+  f488:{
+    laps:'2 GIRI', name:'Ferrari 488 GTB', icon:'🏎️',
+    desc:'Turbo, cattiva, veloce. Il portafoglio di Blitz ha gia chiesto il VAR.',
+    tags:['Turbo Ferrari','rossa obbligatoria','anti-iPad'],
+    stats:{POTENZA:96,STILE:91,'EGO PILOTA':78},
+    specs:[['Motore','3.9 V8 biturbo'],['Mood','spinta ignorante'],['Rischio Blitz','frena quando e tardi']],
+    lore:['La 458 canta, questa ti tira una sberla.','Perfetta per arrivare al rettilineo convinti di essere Leclerc.','Il box 4 consiglia: respirare prima di accelerare.'],
+    verdict:'Scelta da persona che dice "tranquillo controllo io" e poi cerca il pedale del coraggio.'
+  },
+  fpf:{
+    laps:'2 GIRI', name:'Ferrari Portofino', icon:'🏎️',
+    desc:'Cabrio. Come andare in mare, ma con l asfalto e meno probabilita di affondare.',
+    tags:['cabrio','aperitivo racing','vento nei debiti'],
+    stats:{POTENZA:85,STILE:98,'EGO PILOTA':88},
+    specs:[['Motore','V8 turbo da signore rumoroso'],['Mood','Portofino senza porto'],['Rischio Blitz','si sistema i capelli nel casco']],
+    lore:['La piu da weekend, quindi ovviamente la useremo male.','Nautica spirituale: non galleggia, ma ci crede.','Se la scegli, la MSC Subrata I suona la sirena.'],
+    verdict:'Elegante, scenografica, pericolosamente fotogenica. Ideale per chi vuole dire "sono venuto tranquillo" su una Ferrari.'
+  },
+  pgt3:{
+    laps:'2 GIRI', name:'Porsche 991 GT3 RS', icon:'🐢',
+    desc:'Non e italiana, ma fa abbastanza rumore da ottenere il permesso temporaneo del Subrata.',
+    tags:['GT3 RS','precisa','tedesca perdonata'],
+    stats:{POTENZA:94,STILE:87,'EGO PILOTA':80},
+    specs:[['Motore','flat-six aspirato'],['Mood','bisturi con alettone'],['Rischio Blitz','capire troppo tardi che gira davvero']],
+    lore:['Sembra una tartaruga solo per confondere i deboli.','Le curve le fa con la precisione con cui noi sbagliamo i piani.','Non urla Ferrari, ma giudica in tedesco.'],
+    verdict:'La scelta tecnica. Se vuoi sembrare quello serio del gruppo, qui hai almeno la macchina giusta.'
+  },
+  f812:{
+    laps:'1 GIRO', name:'Ferrari 812 Superfast', icon:'🏎️',
+    desc:'V12 davanti, Leclerc nel cuore, Blitz da qualche parte dietro al volante.',
+    tags:['V12','Leclerc tax','1 giro sacro'],
+    stats:{POTENZA:99,STILE:96,'EGO PILOTA':99},
+    specs:[['Motore','6.5 V12 aspirato'],['Mood','Monaco ma senza Monaco'],['Rischio Blitz','credere che sia sua']],
+    lore:['Leclerc ne ha una. Tu hai un giro e gia e troppo.','Il V12 non parla: pronuncia sentenze.','Dopo 4 secondi di rispetto, il box rivela la verita.'],
+    verdict:'La macchina con piu ego del pilota, cosa rara ma necessaria. Non te la meriti, quindi funziona.',
+    secret:'Questa e la preferita di Leclerc. Non te la meriti. Il box 4 conferma.'
+  },
+  alfa:{
+    laps:'2 GIRI', name:'Alfa Giulia QV', icon:'🍀',
+    desc:'Italiana, arrabbiata, bellissima. Come il Napoli in trasferta quando decide di giocare.',
+    tags:['Quadrifoglio','orgoglio italiano','Napoli mode'],
+    stats:{POTENZA:88,STILE:90,'EGO PILOTA':84},
+    specs:[['Motore','V6 biturbo con caffe corto'],['Mood','eleganza nervosa'],['Rischio Blitz','innamorarsi e poi piangere']],
+    lore:['Non e Ferrari, quindi prova a dimostrare tutto in ogni metro.','Ha piu carattere di una chat del Subrata alle 2 di notte.','Il quadrifoglio aiuta, ma non abbastanza.'],
+    verdict:'Scelta patriottica e un po tossica. Esattamente nel tono giusto.'
+  },
+  hevo:{
+    laps:'1 GIRO', name:'Lamborghini Huracán Evo', icon:'🐂',
+    desc:'Il toro inferocito. Come SubrataPal quando la VAR gli cancella un gol inventato.',
+    tags:['Lambo','V10','urlo da parcheggio'],
+    stats:{POTENZA:95,STILE:93,'EGO PILOTA':90},
+    specs:[['Motore','5.2 V10'],['Mood','casino controllato male'],['Rischio Blitz','accelerare per fare scena']],
+    lore:['Non entra in punta di piedi: sfonda la porta del box.','Ogni cambiata dice "guardatemi" anche se nessuno ha chiesto.','Perfetta per chi vuole essere ascoltato da tre comuni.'],
+    verdict:'La scelta teatrale. Se il compleanno deve fare rumore, questa firma il verbale.'
+  },
+  hsto:{
+    laps:'1 GIRO', name:'Lamborghini Huracán STO', icon:'🐂',
+    desc:'STO = Soldi Tanti Ovviamente. Si nota da lontano, come le brutte idee.',
+    tags:['track toy','carbonio','ignoranza premium'],
+    stats:{POTENZA:97,STILE:95,'EGO PILOTA':93},
+    specs:[['Motore','V10 da pista con targa'],['Mood','aerodinamica arrogante'],['Rischio Blitz','dire "la tengo"']],
+    lore:['Ha piu appendici aero di quante scuse abbiamo noi.','Non e sobria, e questo e il punto.','Il box 4 la guarda e annuisce senza capire.'],
+    verdict:'La piu estrema del lato toro. Sceglila solo se vuoi trasformare 1 giro in una testimonianza.'
+  },
+  htec:{
+    laps:'1 GIRO', name:'Lamborghini Huracán Tecnica', icon:'🐂',
+    desc:'L ultima Huracán. Goditi il carbonio prima che qualcuno ci metta una presa USB-C.',
+    tags:['Tecnica','V10 finale','no elettrico'],
+    stats:{POTENZA:96,STILE:94,'EGO PILOTA':91},
+    specs:[['Motore','V10 prima dell apocalisse'],['Mood','fine era termica'],['Rischio Blitz','nostalgia preventiva']],
+    lore:['Un saluto rumoroso agli idrocarburi prima degli iPad con le ruote.','Tecnica nel nome, ignorante nella missione.','La Tesla la guarda da lontano e si vergogna.'],
+    verdict:'Scelta da archivio storico Subrata: preservare il rumore prima che il futuro rovini tutto.'
+  },
+  f8t:{
+    laps:'1 GIRO', name:'Ferrari F8 Tributo', icon:'🏎️',
+    desc:'Tributo al V8. Il motore urla. Blitz probabilmente pure, ma meno bene.',
+    tags:['Ferrari moderna','tributo V8','rossa cattiva'],
+    stats:{POTENZA:93,STILE:92,'EGO PILOTA':81},
+    specs:[['Motore','V8 turbo da saluto finale'],['Mood','Ferrari con rabbia educata'],['Rischio Blitz','confondere tributo con funerale']],
+    lore:['Dice addio al V8 con abbastanza violenza da farsi ricordare.','Meno teatrale della Lambo, piu tagliente nel giudizio.','SubrataPal la sceglierebbe per fare il giro d onore dopo un rigore.'],
+    verdict:'Una Ferrari moderna che sa ancora perche siamo qui: rumore, pista, decisioni non completamente mature.'
+  },
+  mc450:{
+    laps:'1 GIRO', name:'McLaren 450S', icon:'🧡',
+    desc:'Come l ex di qualcuno. Va veloce, costa emotivamente, non si puo tenere.',
+    tags:['papaya drama','inglese veloce','terapia non inclusa'],
+    stats:{POTENZA:90,STILE:89,'EGO PILOTA':77},
+    specs:[['Motore','turbo e traumi'],['Mood','leggera ma problematica'],['Rischio Blitz','scriverle dopo il giro']],
+    lore:['Bella, veloce, distante. Un profilo psicologico su quattro ruote.','L inglese che resta nel gruppo solo per fare casino.','Non tua, mai tua, ma per un giro puoi illuderti.'],
+    verdict:'La scelta emotivamente instabile. Funziona benissimo, quindi ovviamente ci fara male.'
+  },
+  tesla:{
+    laps:'∞ SILENZIO', name:'Tesla Model 3', icon:'🔋',
+    desc:'Un iPad con le ruote. Blitz, non osare. Il Subrata monitora.',
+    tags:['trappola','elettroni','non macchina'],
+    stats:{POTENZA:3,STILE:2,'EGO PILOTA':1},
+    specs:[['Motore','assente, come il buon senso'],['Mood','startup triste'],['Rischio Blitz','BSOD immediato']],
+    lore:['Non fa VROOOM. Questo chiude il processo.','Il pedale destro apre app, non emozioni.','Se la tocchi parte Windows Race Edition.'],
+    verdict:'Non e una scelta. E un test morale. Fallirlo porta alla schermata blu.',
+    trap:true, secret:'ATTENZIONE: contiene elettroni e silenzio imbarazzante.'
+  },
+  panda:{
+    laps:'INTOCCABILE', name:'Fiat Panda 4x4 Verde Menta', icon:'🚗',
+    desc:'La reliquia di Piero. Non si guarda, non si tocca, non si pronuncia senza rispetto.',
+    tags:['garage segreto','Piero watching','4x4 sacra'],
+    stats:{POTENZA:4,STILE:100,'EGO DI PIERO':44},
+    specs:[['Motore','mistero rurale'],['Mood','santuario verde menta'],['Rischio Blitz','scomparire dalla chat']],
+    lore:['Il vero mezzo definitivo, quindi ovviamente non disponibile.','Piero ha gia sentito questo click.','Ha fatto piu storia lei di molti piloti.'],
+    verdict:'Easter egg sbloccato, ma non significa autorizzazione. La Panda resta superiore e intoccabile.',
+    easter:true
+  },
+  nave:{
+    laps:'0 GIRI', name:'MSC Subrata I', icon:'🚢',
+    desc:'44.000 tonnellate di ambizione nautica. Non entra in pista, ma ci ha provato.',
+    tags:['garage segreto','nautico','44 tonnellate morali'],
+    stats:{POTENZA:44,STILE:44,TONNELLATE:44},
+    specs:[['Motore','abbastanza per salutare il porto'],['Mood','rettilineo con pescaggio'],['Rischio Blitz','cercare il canale box']],
+    lore:['La FIA non ha ancora una categoria cargo, codardi.','La sirena parte solo se scegli qualcosa di termico.','Il tracciato richiede 44 km di canale. Mancano dettagli.'],
+    verdict:'Scelta visionaria e logisticamente criminale. Il Subrata Shipping Co. approva da lontano.',
+    easter:true
+  }
+};
 
 // ── Screen management ──
 function showScreen(id){
@@ -602,7 +638,7 @@ function showScreen(id){
 }
 
 function onEnter(id){
-  if(id==='cars'){startBoatTimer();}
+  if(id==='cars'){startBoatTimer();renderCarSlide();}
   if(id==='tracks'){
     clearBoatTimer();
     var el=document.getElementById('track-sub');
@@ -620,6 +656,83 @@ function onEnter(id){
   }
 }
 
+// ── Car slideshow ──
+function visibleCars(){
+  return CAR_ORDER.filter(function(id){return S.easterUnlocked||!CAR_DETAILS[id].easter;});
+}
+
+function currentCarId(){
+  var cars=visibleCars();
+  if(S.carIndex<0)S.carIndex=cars.length-1;
+  if(S.carIndex>=cars.length)S.carIndex=0;
+  return cars[S.carIndex];
+}
+
+function statColor(value){
+  if(value>=90)return '#33ff66';
+  if(value>=70)return '#ffd700';
+  return '#ff3333';
+}
+
+function renderCarSlide(){
+  var id=currentCarId();
+  var car=CAR_DETAILS[id];
+  var cars=visibleCars();
+  var stage=document.getElementById('car-stage');
+  if(!stage||!car)return;
+  stage.className='car-stage'+(car.trap?' tesla':'')+(car.easter?' easter':'');
+  document.getElementById('car-count').textContent=String(S.carIndex+1).padStart(2,'0')+' / '+String(cars.length).padStart(2,'0');
+  document.getElementById('car-laps').textContent=car.laps;
+  document.getElementById('car-laps').style.color=car.trap?'var(--red)':car.easter?'var(--napoli)':'var(--green)';
+  document.getElementById('car-icon').textContent=car.icon;
+  document.getElementById('car-name').textContent=car.name;
+  document.getElementById('car-desc').textContent=car.desc;
+  document.getElementById('car-meta').innerHTML=car.tags.map(function(tag){return '<span class="meta-chip">'+tag+'</span>';}).join('');
+  document.getElementById('car-details').innerHTML=car.specs.map(function(row){
+    return '<div class="detail-value"><span style="color:#667">'+row[0]+':</span> '+row[1]+'</div>';
+  }).join('');
+  document.getElementById('car-stats').innerHTML=Object.keys(car.stats).map(function(label){
+    var val=car.stats[label];
+    return '<div class="stat-r"><div class="stat-l">'+label+'</div><div class="stat-bar"><div class="stat-fill" style="width:'+val+'%;background:'+statColor(val)+'"></div></div></div>';
+  }).join('');
+  document.getElementById('car-lore').innerHTML=car.lore.map(function(item){return '<li>'+item+'</li>';}).join('');
+  document.getElementById('car-verdict').textContent=car.verdict;
+  var secret=document.getElementById('slide-secret');
+  secret.textContent=car.trap?car.secret:'';
+  secret.classList.toggle('show',!!car.trap);
+  renderCarDots(cars,id);
+}
+
+function renderCarDots(cars,currentId){
+  var dots=document.getElementById('car-dots');
+  dots.innerHTML=cars.map(function(id,idx){
+    var car=CAR_DETAILS[id];
+    var cls='car-dot'+(id===currentId?' active':'')+(car.easter?' easter':'');
+    return '<button class="'+cls+'" data-index="'+idx+'" aria-label="'+car.name+'"></button>';
+  }).join('');
+  dots.querySelectorAll('.car-dot').forEach(function(dot){
+    dot.addEventListener('click',function(){
+      S.carIndex=Number(dot.dataset.index);
+      renderCarSlide();
+    });
+  });
+}
+
+function moveCarSlide(delta){
+  var cars=visibleCars();
+  S.carIndex=(S.carIndex+delta+cars.length)%cars.length;
+  renderCarSlide();
+}
+
+function chooseCurrentCar(){
+  var id=currentCarId();
+  if(id==='tesla'){showScreen('bsod');return;}
+  if(id==='panda'){showScreen('piero');return;}
+  if(id==='nave'){alert('La MSC Subrata I non puo affrontare il tracciato.\nMancano 44km di canale.');return;}
+  S.selectedCar=id;
+  showScreen('tracks');
+}
+
 // ── Button wiring ──
 document.getElementById('btn-start').addEventListener('click',function(){showScreen('disclaimer');});
 document.getElementById('btn-disclaimer').addEventListener('click',function(){showScreen('cars');});
@@ -633,32 +746,25 @@ document.getElementById('btn-pene').addEventListener('click',function(){openModa
 document.getElementById('btn-gianni').addEventListener('click',function(){showAccessAnim();setTimeout(function(){showScreen('result');},2000);});
 document.getElementById('share-btn').addEventListener('click',shareResult);
 document.getElementById('btn-back-tracks').addEventListener('click',function(){showScreen('cars');});
-
-// ── Car card clicks ──
-document.querySelectorAll('.car-card').forEach(function(card){
-  card.addEventListener('click',function(){
-    var id=card.dataset.car;
-    if(id==='tesla'){showScreen('bsod');return;}
-    if(id==='panda'){showScreen('piero');return;}
-    if(id==='nave'){alert('La MSC Subrata I non puo affrontare il tracciato.\nMancano 44km di canale.');return;}
-    S.selectedCar=id;
-    showScreen('tracks');
-  });
-});
+document.getElementById('btn-car-prev').addEventListener('click',function(){moveCarSlide(-1);});
+document.getElementById('btn-car-next').addEventListener('click',function(){moveCarSlide(1);});
+document.getElementById('btn-car-select').addEventListener('click',chooseCurrentCar);
 
 // ── Ferrari 812 hover 4s easter egg ──
-var f812card=document.querySelector('.car-card.f812');
-if(f812card){
-  f812card.addEventListener('mouseenter',function(){
+var carStage=document.getElementById('car-stage');
+if(carStage){
+  carStage.addEventListener('mouseenter',function(){
+    if(currentCarId()!=='f812')return;
     S.f812Timer=setTimeout(function(){
-      var m=document.getElementById('f812tip');
-      if(m)m.style.opacity='1';
+      var m=document.getElementById('slide-secret');
+      var car=CAR_DETAILS.f812;
+      if(m){m.textContent=car.secret;m.classList.add('show');}
     },4000);
   });
-  f812card.addEventListener('mouseleave',function(){
+  carStage.addEventListener('mouseleave',function(){
     clearTimeout(S.f812Timer);
-    var m=document.getElementById('f812tip');
-    if(m)m.style.opacity='0';
+    var m=document.getElementById('slide-secret');
+    if(m&&currentCarId()==='f812')m.classList.remove('show');
   });
 }
 
@@ -673,8 +779,8 @@ document.getElementById('logo-area').addEventListener('click',function(){
 function unlockEaster(){
   if(S.easterUnlocked)return;
   S.easterUnlocked=true;
-  document.getElementById('card-panda').classList.add('show');
-  document.getElementById('card-nave').classList.add('show');
+  S.carIndex=visibleCars().indexOf('panda');
+  renderCarSlide();
   var t=document.getElementById('toast');
   t.classList.add('show');
   setTimeout(function(){t.classList.remove('show');},3400);
@@ -703,6 +809,8 @@ function napoliCeleb(){
 
 // ── Konami code ──
 document.addEventListener('keydown',function(e){
+  if(S.screen==='cars'&&e.key==='ArrowLeft'){moveCarSlide(-1);}
+  if(S.screen==='cars'&&e.key==='ArrowRight'){moveCarSlide(1);}
   S.konamiSeq.push(e.key);
   if(S.konamiSeq.length>KONAMI.length)S.konamiSeq.shift();
   if(JSON.stringify(S.konamiSeq)===JSON.stringify(KONAMI)&&!S.konamiDone){
