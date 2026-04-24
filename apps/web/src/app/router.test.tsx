@@ -33,6 +33,18 @@ describe('createAppRouter', () => {
   test('renders the lights minigame page at /hub/minigames/lights', () => {
     renderRoute('/hub/minigames/lights');
 
-    expect(screen.getByRole('heading', { name: /reaction lights/i })).toBeInTheDocument();
+    expect(screen.getByTitle(/reaction lights/i)).toHaveAttribute(
+      'src',
+      '/legacy/index.html?screen=lights',
+    );
+  });
+
+  test('renders the penalty minigame page at /hub/minigames/penalty', () => {
+    renderRoute('/hub/minigames/penalty');
+
+    expect(screen.getByTitle(/penalty shootout/i)).toHaveAttribute(
+      'src',
+      '/legacy/index.html?screen=penalty',
+    );
   });
 });

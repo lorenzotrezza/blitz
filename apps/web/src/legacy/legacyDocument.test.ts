@@ -23,4 +23,13 @@ describe('legacy game document', () => {
     expect(sourceDocument).toContain('id="btn-lights-retry"');
     expect(sourceDocument).toContain("window.top.location.href='/hub'");
   });
+
+  test('supports booting directly into hub minigame screens from the query string', () => {
+    const sourceDocument = readFileSync(legacySourcePath, 'utf8');
+
+    expect(sourceDocument).toContain('new URLSearchParams(window.location.search)');
+    expect(sourceDocument).toContain("params.get('screen')");
+    expect(sourceDocument).toContain("initialScreen==='lights'");
+    expect(sourceDocument).toContain("initialScreen==='penalty'");
+  });
 });

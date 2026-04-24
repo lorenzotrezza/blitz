@@ -1017,6 +1017,20 @@ function goToHub(){
   window.top.location.href='/hub';
 }
 
+function bootFromQuery(){
+  var params=new URLSearchParams(window.location.search);
+  var initialScreen=params.get('screen');
+  if(!initialScreen)return;
+  if(initialScreen==='lights'){
+    if(!S.selectedCar)S.selectedCar='f458';
+    showScreen('lights');
+    return;
+  }
+  if(initialScreen==='penalty'){
+    showScreen('penalty');
+  }
+}
+
 // ── Confetti ──
 function startConfetti(){
   var cv=document.getElementById('confetti');
@@ -1434,6 +1448,7 @@ function shareResult(){
     alert(txt);
   }
 }
+bootFromQuery();
 </script>
 </body>
 </html>
