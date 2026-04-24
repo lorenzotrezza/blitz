@@ -52,6 +52,22 @@ describe('createAppRouter', () => {
     expect(screen.getByRole('heading', { name: /lobby abcd12/i })).toBeInTheDocument();
   });
 
+  test('renders the native practice route at /practice', () => {
+    renderRoute('/practice');
+
+    expect(screen.getByRole('heading', { name: /allenamento libero/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/retro race canvas/i)).toBeInTheDocument();
+    expect(screen.getByText(/bot: off/i)).toBeInTheDocument();
+  });
+
+  test('renders the native bot route at /race/bot', () => {
+    renderRoute('/race/bot');
+
+    expect(screen.getByRole('heading', { name: /bot race/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/retro race canvas/i)).toBeInTheDocument();
+    expect(screen.getByText(/bot: on/i)).toBeInTheDocument();
+  });
+
   test('renders the lights minigame page at /hub/minigames/lights', () => {
     renderRoute('/hub/minigames/lights');
 

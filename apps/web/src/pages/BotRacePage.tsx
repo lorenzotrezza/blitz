@@ -1,12 +1,15 @@
+import { RetroRaceView } from '../components/RetroRaceView';
+
 export function BotRacePage() {
   return (
     <section className="panel">
-      <p className="eyebrow">Arcade Grid</p>
+      <p className="eyebrow">Griglia Arcade</p>
       <h1>Bot Race</h1>
       <p className="lede">
-        Server-driven opponents will land here first so the live multiplayer loop can reuse the
-        same HUD, countdown, and collision rules.
+        Prima della lobby live, qui provi la corsa nativa contro riempitivi digitali. La fisica e
+        arcade, il ritmo e piu serio del vecchio minigioco.
       </p>
+      <RetroRaceView mode="bot" label="BOT: ON" />
     </section>
   );
 }

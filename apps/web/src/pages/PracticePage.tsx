@@ -1,12 +1,15 @@
+import { RetroRaceView } from '../components/RetroRaceView';
+
 export function PracticePage() {
   return (
     <section className="panel">
-      <p className="eyebrow">Solo Session</p>
-      <h1>Practice Run</h1>
+      <p className="eyebrow">Garage Libero</p>
+      <h1>Allenamento Libero</h1>
       <p className="lede">
-        This route will host the local training build: calmer steering, lap feedback, and room to
-        tune the race feel before sockets get involved.
+        Qui la pista e nativa: sterzo piu morbido del prototype legacy, HUD del box e spazio per
+        prendere la mano prima della gara vera.
       </p>
+      <RetroRaceView mode="practice" label="BOT: OFF" />
     </section>
   );
 }
