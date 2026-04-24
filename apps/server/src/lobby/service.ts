@@ -88,6 +88,7 @@ export interface LobbyService {
   leaveLobby(input: LeaveLobbyInput): LobbyState | null;
   disconnectPlayer(playerId: string): LobbyState | null;
   setReady(input: SetReadyInput): LobbyState;
+  getLobby(code: string): LobbyState | null;
 }
 
 export interface CreateLobbyServiceOptions {
@@ -232,6 +233,9 @@ export function createLobbyService(
             : player,
         ),
       });
+    },
+    getLobby(code) {
+      return store.getLobby(normalizeLobbyCode(code));
     },
   };
 }

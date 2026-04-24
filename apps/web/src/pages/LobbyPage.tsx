@@ -56,6 +56,7 @@ export function LobbyIndexPage() {
     if (raceStarted) {
       navigate(`/race/live/${raceStarted.sessionId}`, {
         replace: true,
+        state: raceStarted,
       });
     }
   }, [navigate, raceStarted]);

@@ -15,12 +15,14 @@ import {
   createLobbyService,
   type LobbyService,
 } from '../lobby/service.js';
+import { createRaceManager } from '../race/runtime.js';
 
 export type BlitzSocketServer = Server<ClientToServerEvents, ServerToClientEvents>;
 export type BlitzSocket = Socket<ClientToServerEvents, ServerToClientEvents>;
 
 export interface RegisterSocketOptions {
   lobbyService?: LobbyService;
+  raceCountdownMs?: number;
 }
 
 function normalizeLobbyCode(code: string): string {
@@ -73,6 +75,18 @@ export function registerSockets(
     },
   });
   const lobbyService = options.lobbyService ?? createLobbyService();
+  const raceManager = createRaceManager({
+    countdownMs: options.raceCountdownMs,
+    onRaceStarted(payload) {
+      io.to(payload.lobbyCode).emit(SOCKET_EVENTS.server.raceStarted, payload);
+    },
+    onRaceSnapshot(payload) {
+      io.to(payload.lobbyCode).emit(SOCKET_EVENTS.server.raceSnapshot, payload);
+    },
+    onRaceFinished(payload) {
+      io.to(payload.lobbyCode).emit(SOCKET_EVENTS.server.raceFinished, payload);
+    },
+  });
 
   io.on('connection', (socket) => {
     socket.on(SOCKET_EVENTS.client.createLobby, async (payload) => {
@@ -129,8 +143,33 @@ export function registerSockets(
       });
     });
 
+    socket.on(SOCKET_EVENTS.client.startRace, async (payload) => {
+      await handleLobbyMutation(socket, async () => {
+        const lobby = lobbyService.getLobby(payload.code);
+
+        if (!lobby) {
+          throw new LobbyServiceError('lobby-not-found', 'Lobby not found');
+        }
+
+        if (lobby.hostId !== socket.id) {
+          throw new LobbyServiceError('player-not-host', 'Only the host can start the race');
+        }
+
+        if (lobby.players.length === 0 || lobby.players.some((player) => !player.ready)) {
+          throw new LobbyServiceError('players-not-ready', 'All players must be ready');
+        }
+
+        raceManager.startLobbyRace(lobby);
+      });
+    });
+
+    socket.on(SOCKET_EVENTS.client.playerInput, (payload) => {
+      raceManager.applyInput(socket.id, payload);
+    });
+
     socket.on('disconnect', () => {
       const lobby = lobbyService.disconnectPlayer(socket.id);
+      raceManager.removePlayer(socket.id);
 
       if (lobby) {
         emitLobbySnapshot(io, lobby);

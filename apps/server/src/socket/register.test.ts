@@ -175,3 +175,55 @@ test('registerSockets emits a lobby error instead of broadcasting when a non-mem
     io.close();
   }
 });
+
+test('registerSockets starts a live race and emits the first snapshot for a ready lobby', async () => {
+  const httpServer = createHttpServer();
+  const io = registerSockets(
+    httpServer,
+    { socketCorsOrigin: '*' },
+    {
+      lobbyService: createLobbyService({
+        generateLobbyCode: () => 'ABCD12',
+      }),
+      raceCountdownMs: 0,
+    },
+  );
+  const { roomEmits, install } = captureRoomBroadcasts();
+  install(io as unknown as { to: (room: string) => { emit: (event: string, payload: unknown) => void } });
+
+  try {
+    const connectionHandler = getConnectionHandler(io);
+    const host = createFakeSocket('socket-host');
+    const guest = createFakeSocket('socket-guest');
+
+    connectionHandler(host.socket);
+    connectionHandler(guest.socket);
+
+    await host.trigger(SOCKET_EVENTS.client.createLobby, {
+      nickname: 'Host',
+      carId: 'car-red',
+    });
+    await guest.trigger(SOCKET_EVENTS.client.joinLobby, {
+      code: 'ABCD12',
+      nickname: 'Guest',
+      carId: 'car-blue',
+    });
+    await host.trigger(SOCKET_EVENTS.client.setReady, { ready: true });
+    await guest.trigger(SOCKET_EVENTS.client.setReady, { ready: true });
+
+    roomEmits.length = 0;
+
+    await host.trigger(SOCKET_EVENTS.client.startRace, {
+      code: 'ABCD12',
+    });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    assert.equal(roomEmits[0]?.event, SOCKET_EVENTS.server.raceStarted);
+    assert.equal(
+      roomEmits.some((entry) => entry.event === SOCKET_EVENTS.server.raceSnapshot),
+      true,
+    );
+  } finally {
+    io.close();
+  }
+});

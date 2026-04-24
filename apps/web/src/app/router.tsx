@@ -11,7 +11,15 @@ import { RacePage } from '../pages/RacePage';
 import { ResultsPage } from '../pages/ResultsPage';
 
 type AppRouterOptions = {
-  initialEntries?: string[];
+  initialEntries?: Array<
+    | string
+    | {
+        pathname: string;
+        search?: string;
+        hash?: string;
+        state?: unknown;
+      }
+  >;
 };
 
 function AppLayout() {
