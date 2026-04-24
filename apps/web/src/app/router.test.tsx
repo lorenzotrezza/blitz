@@ -42,7 +42,7 @@ describe('createAppRouter', () => {
     ).toBe(true);
     expect(screen.getByRole('link', { name: /lobby live/i })).toHaveAttribute(
       'href',
-      '/lobby/ABCD12',
+      '/lobby/new',
     );
   });
 

@@ -24,7 +24,7 @@ const hubCards = [
   {
     title: 'Lobby Live',
     description: 'Passa il codice, riempi la griglia e porta gli amici nel casino autorizzato.',
-    to: '/lobby/ABCD12',
+    to: '/lobby/new',
   },
 ];
 
