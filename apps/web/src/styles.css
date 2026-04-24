@@ -39,6 +39,20 @@ a {
   min-height: 100vh;
 }
 
+.legacy-shell {
+  width: 100vw;
+  height: 100vh;
+  background: #0a0a12;
+}
+
+.legacy-frame {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #0a0a12;
+}
+
 .app-shell {
   position: relative;
   min-height: 100vh;

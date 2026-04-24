@@ -41,26 +41,25 @@ function buildRoutes() {
   return [
     {
       path: '/',
+      element: <LandingPage />,
+    },
+    {
       element: <AppLayout />,
       children: [
         {
-          index: true,
-          element: <LandingPage />,
-        },
-        {
-          path: 'hub',
+          path: '/hub',
           element: <HubPage />,
         },
         {
-          path: 'hub/minigames/lights',
+          path: '/hub/minigames/lights',
           element: <MinigameLightsPage />,
         },
         {
-          path: 'hub/minigames/penalty',
+          path: '/hub/minigames/penalty',
           element: <MinigamePenaltyPage />,
         },
         {
-          path: 'lobby/:lobbyCode',
+          path: '/lobby/:lobbyCode',
           element: <LobbyPage />,
           children: [
             {
@@ -70,19 +69,19 @@ function buildRoutes() {
           ],
         },
         {
-          path: 'practice',
+          path: '/practice',
           element: <PracticePage />,
         },
         {
-          path: 'race/bot',
+          path: '/race/bot',
           element: <BotRacePage />,
         },
         {
-          path: 'race/live/:sessionId',
+          path: '/race/live/:sessionId',
           element: <RacePage />,
         },
         {
-          path: 'results/:sessionId',
+          path: '/results/:sessionId',
           element: <ResultsPage />,
         },
       ],

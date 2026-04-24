@@ -12,13 +12,10 @@ function renderRoute(initialEntry: string) {
 }
 
 describe('createAppRouter', () => {
-  test('renders the landing page at /', () => {
+  test('renders the legacy game shell at /', () => {
     renderRoute('/');
 
-    expect(screen.getByRole('heading', { name: /blitz/i })).toBeInTheDocument();
-    expect(
-      screen.getByRole('link', { name: /enter the hub/i }),
-    ).toHaveAttribute('href', '/hub');
+    expect(screen.getByTitle(/subrata race club/i)).toBeInTheDocument();
   });
 
   test('renders the hub page at /hub', () => {
