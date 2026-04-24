@@ -2,40 +2,44 @@ import { Link } from 'react-router-dom';
 
 const hubCards = [
   {
-    title: 'Reaction Lights',
-    description: 'Warm up the reflexes before the lobby countdown.',
+    title: 'Semaforo',
+    description: 'La partenza vera del vecchio club. Occhio al verde o Leclerc ti mangia vivo.',
     to: '/hub/minigames/lights',
   },
   {
-    title: 'Penalty Shootout',
-    description: 'Three shots. SubrataPal still dives the wrong way.',
+    title: 'Rigori',
+    description: 'Tre tiri secchi contro SubrataPal. In porta resta convinto, non efficace.',
     to: '/hub/minigames/penalty',
   },
   {
-    title: 'Practice Run',
-    description: 'Solo track time to tune steering before the real grid.',
+    title: 'Allenamento Libero',
+    description: 'Giri da solo per sistemare il volante prima che il box apra davvero.',
     to: '/practice',
   },
   {
     title: 'Bot Race',
-    description: 'Serious arcade race against server-driven fillers.',
+    description: 'Griglia arcade con riempitivi digitali. Rumore vero, pieta zero.',
     to: '/race/bot',
   },
   {
-    title: 'Live Lobby',
-    description: 'Share one link, stack the grid, and race together.',
+    title: 'Lobby Live',
+    description: 'Passa il codice, riempi la griglia e porta gli amici nel casino autorizzato.',
     to: '/lobby/ABCD12',
   },
 ];
 
 export function HubPage() {
   return (
-    <section className="panel">
-      <p className="eyebrow">Control Room</p>
-      <h1>Game Hub</h1>
+    <section className="panel hub-panel">
+      <p className="eyebrow">Powered By Idrocarburi</p>
+      <h1>Hub Minigiochi</h1>
       <p className="lede">
-        Pick a mode with real routes behind it. The UI is now app-shaped, so the next layers can
-        add sockets, Phaser, and lobby state without dragging the old DOM toggles along.
+        Il garage nuovo usa finalmente le destinazioni vere del club: semaforo, rigori,
+        allenamento, bot race e lobby live. Nessun guscio demo, nessuna voce finta, solo scorciatoie
+        pulite verso il caos legacy.
+      </p>
+      <p className="hub-signoff">
+        SubrataPal approved. No Tesla allowed. Tutti i giri riservati.
       </p>
       <div className="card-grid">
         {hubCards.map((card) => (

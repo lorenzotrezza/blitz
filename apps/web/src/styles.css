@@ -1,16 +1,17 @@
 :root {
   color-scheme: dark;
-  --bg-1: #050816;
-  --bg-2: #151c36;
-  --panel: rgba(8, 13, 31, 0.88);
-  --panel-border: rgba(120, 190, 255, 0.22);
-  --text: #f4f6ff;
-  --muted: #9fb0d5;
-  --accent: #6ef9cb;
-  --accent-2: #ff765d;
-  --accent-3: #ffd86f;
-  --shadow: 0 28px 80px rgba(0, 0, 0, 0.42);
-  font-family: 'Trebuchet MS', 'Avenir Next Condensed', 'Segoe UI', sans-serif;
+  --bg-1: #0a0a12;
+  --bg-2: #161326;
+  --panel: #0f0f1e;
+  --panel-border: #2a2a3a;
+  --text: #ddeeff;
+  --muted: #66798f;
+  --accent: #00aadd;
+  --accent-2: #ff3333;
+  --accent-3: #ffd700;
+  --green: #33ff66;
+  --shadow: 8px 8px 0 #000;
+  font-family: 'Press Start 2P', monospace;
   line-height: 1.5;
   font-weight: 400;
 }
@@ -25,9 +26,10 @@ body {
   min-height: 100vh;
   color: var(--text);
   background:
-    radial-gradient(circle at top, rgba(110, 249, 203, 0.15), transparent 32%),
-    radial-gradient(circle at 80% 20%, rgba(255, 118, 93, 0.24), transparent 22%),
-    linear-gradient(180deg, var(--bg-2) 0%, var(--bg-1) 58%, #03040b 100%);
+    radial-gradient(circle at top, rgba(0, 170, 221, 0.16), transparent 28%),
+    radial-gradient(circle at 80% 12%, rgba(255, 51, 51, 0.16), transparent 18%),
+    linear-gradient(180deg, var(--bg-2) 0%, var(--bg-1) 60%, #06060d 100%);
+  image-rendering: pixelated;
 }
 
 a {
@@ -82,6 +84,15 @@ a {
   overflow: hidden;
 }
 
+.shell-glow {
+  position: fixed;
+  inset: auto -10vw -22vh auto;
+  width: 48vw;
+  height: 48vw;
+  background: radial-gradient(circle, rgba(0, 170, 221, 0.12), transparent 66%);
+  pointer-events: none;
+}
+
 .scanlines {
   position: fixed;
   inset: 0;
@@ -105,10 +116,10 @@ a {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 1.1rem 1.4rem;
-  background: rgba(5, 8, 22, 0.82);
-  backdrop-filter: blur(18px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 1rem 1.2rem;
+  background: rgba(10, 10, 18, 0.96);
+  border-bottom: 4px solid #000;
+  box-shadow: 0 6px 0 #000;
 }
 
 .brand {
@@ -120,16 +131,18 @@ a {
 .brand-kicker,
 .eyebrow {
   color: var(--accent);
-  font-size: 0.78rem;
-  letter-spacing: 0.22em;
+  font-size: 0.56rem;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
 }
 
 .brand-title {
-  font-size: clamp(1rem, 2.2vw, 1.5rem);
-  font-weight: 800;
+  font-size: clamp(0.95rem, 2vw, 1.25rem);
+  font-weight: 400;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+  color: var(--accent-3);
+  text-shadow: 3px 3px 0 #000;
 }
 
 .topnav {
@@ -139,18 +152,21 @@ a {
 }
 
 .topnav a {
-  padding: 0.7rem 1rem;
-  border-radius: 999px;
-  color: var(--muted);
-  border: 1px solid transparent;
-  transition: border-color 120ms ease, color 120ms ease, background-color 120ms ease;
+  padding: 0.75rem 0.95rem;
+  color: var(--text);
+  border: 2px solid #273448;
+  background: #131727;
+  box-shadow: 3px 3px 0 #000;
+  font-size: 0.58rem;
+  transition: transform 100ms ease, border-color 100ms ease, background-color 100ms ease;
 }
 
 .topnav a.active,
 .topnav a:hover {
-  color: var(--text);
-  border-color: rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.06);
+  color: #000;
+  border-color: var(--accent-3);
+  background: var(--accent-3);
+  transform: translate(-1px, -1px);
 }
 
 .viewport {
@@ -162,8 +178,7 @@ a {
 .panel {
   position: relative;
   padding: clamp(1.4rem, 3vw, 2.4rem);
-  border: 1px solid var(--panel-border);
-  border-radius: 28px;
+  border: 4px solid var(--panel-border);
   background: var(--panel);
   box-shadow: var(--shadow);
 }
@@ -189,27 +204,31 @@ p {
 
 h1 {
   margin-top: 0.45rem;
-  font-size: clamp(2.6rem, 9vw, 5.8rem);
-  line-height: 0.96;
-  letter-spacing: -0.04em;
+  font-size: clamp(1.6rem, 5vw, 2.8rem);
+  line-height: 1.3;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
+  color: var(--accent-3);
+  text-shadow: 4px 4px 0 #000;
 }
 
 .panel h1 {
-  font-size: clamp(2rem, 5vw, 3.6rem);
+  font-size: clamp(1.2rem, 4vw, 2rem);
 }
 
 h2 {
-  font-size: 1.12rem;
+  font-size: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  line-height: 1.6;
 }
 
 .lede {
   max-width: 62ch;
   margin-top: 1rem;
   color: var(--muted);
-  font-size: 1.02rem;
+  font-size: 0.62rem;
+  line-height: 2.2;
 }
 
 .action-row {
@@ -223,21 +242,24 @@ h2 {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.9rem 1.3rem;
-  border-radius: 999px;
-  font-weight: 800;
+  padding: 0.85rem 1.2rem;
+  font-weight: 400;
   text-transform: uppercase;
   letter-spacing: 0.06em;
+  border: 0;
+  box-shadow: 4px 4px 0 #000;
+  font-size: 0.6rem;
 }
 
 .button-primary {
-  background: linear-gradient(135deg, var(--accent), #32a6ff);
-  color: #03111e;
+  background: var(--accent-3);
+  color: #000;
 }
 
 .button-secondary {
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid #005577;
+  background: var(--accent);
+  color: #fff;
 }
 
 .status-stack,
@@ -253,9 +275,9 @@ h2 {
 .status-card,
 .card {
   padding: 1rem 1.1rem;
-  border-radius: 22px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #111827;
+  border: 3px solid #273448;
+  box-shadow: 4px 4px 0 #000;
 }
 
 .status-value {
@@ -271,6 +293,8 @@ h2 {
   display: block;
   margin-top: 0.55rem;
   color: var(--muted);
+  font-size: 0.58rem;
+  line-height: 2;
 }
 
 .card-grid {
@@ -283,13 +307,26 @@ h2 {
 }
 
 .card-link:hover {
-  transform: translateY(-2px);
-  border-color: rgba(110, 249, 203, 0.4);
-  background: rgba(110, 249, 203, 0.08);
+  transform: translate(-2px, -2px);
+  border-color: var(--accent-3);
+  background: #171227;
 }
 
 strong {
   color: var(--accent-3);
+}
+
+.hub-panel {
+  background:
+    linear-gradient(180deg, rgba(0, 170, 221, 0.08), transparent 16%),
+    #0f0f1e;
+}
+
+.hub-signoff {
+  margin-top: 1rem;
+  font-size: 0.54rem;
+  line-height: 2;
+  color: var(--green);
 }
 
 @media (max-width: 820px) {

@@ -18,10 +18,32 @@ describe('createAppRouter', () => {
     expect(screen.getByTitle(/subrata race club/i)).toBeInTheDocument();
   });
 
-  test('renders the hub page at /hub', () => {
+  test('renders the 10bit hub at /hub with the real game entries', () => {
     renderRoute('/hub');
 
-    expect(screen.getByRole('heading', { name: /game hub/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /hub minigiochi/i })).toBeInTheDocument();
+    expect(screen.getByText(/powered by idrocarburi/i)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /semaforo/i })).toHaveAttribute(
+      'href',
+      '/hub/minigames/lights',
+    );
+    expect(screen.getByRole('link', { name: /rigori/i })).toHaveAttribute(
+      'href',
+      '/hub/minigames/penalty',
+    );
+    expect(screen.getByRole('link', { name: /allenamento libero/i })).toHaveAttribute(
+      'href',
+      '/practice',
+    );
+    expect(
+      screen
+        .getAllByRole('link', { name: /bot race/i })
+        .some((link) => link.getAttribute('href') === '/race/bot'),
+    ).toBe(true);
+    expect(screen.getByRole('link', { name: /lobby live/i })).toHaveAttribute(
+      'href',
+      '/lobby/ABCD12',
+    );
   });
 
   test('renders the lobby page with the route code at /lobby/ABCD12', () => {

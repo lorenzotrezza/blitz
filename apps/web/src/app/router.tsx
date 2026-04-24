@@ -18,15 +18,16 @@ function AppLayout() {
   return (
     <div className="app-shell">
       <div className="scanlines" aria-hidden="true" />
+      <div className="shell-glow" aria-hidden="true" />
       <header className="topbar">
         <Link className="brand" to="/">
-          <span className="brand-kicker">Railway Build</span>
-          <span className="brand-title">Blitz Race Control</span>
+          <span className="brand-kicker">SUBRATAAL PRESENTA</span>
+          <span className="brand-title">Subrata Race Club</span>
         </Link>
         <nav className="topnav" aria-label="Primary">
           <NavLink to="/">Home</NavLink>
           <NavLink to="/hub">Hub</NavLink>
-          <NavLink to="/practice">Practice</NavLink>
+          <NavLink to="/practice">Allenamento</NavLink>
           <NavLink to="/race/bot">Bot Race</NavLink>
         </nav>
       </header>
