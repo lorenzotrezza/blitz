@@ -1,0 +1,20 @@
+{
+  "name": "blitz",
+  "private": true,
+  "workspaces": [
+    "apps/web",
+    "apps/server",
+    "packages/shared"
+  ],
+  "scripts": {
+    "dev": "concurrently -k \"npm run dev --workspace @blitz/server\" \"npm run dev --workspace @blitz/web\"",
+    "build": "npm run build --workspace @blitz/shared && npm run build --workspace @blitz/server && npm run build --workspace @blitz/web",
+    "pretest": "npm run verify:bootstrap",
+    "test": "node --test tests/tooling-smoke.test.js",
+    "lint": "npm run lint --workspace @blitz/shared && npm run lint --workspace @blitz/server && npm run lint --workspace @blitz/web",
+    "verify:bootstrap": "npm run lint && npm run build && node apps/server/dist/index.js"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
