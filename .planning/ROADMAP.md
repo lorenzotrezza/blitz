@@ -33,6 +33,14 @@
 - Prefer reusable controls: analog pad, action button, shift button, lane/steer control.
 - Keep React HUD separate from canvas so status is testable.
 
+**Plans:** 4 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Shared race input and shell snapshot contracts
+- [ ] 01-02-PLAN.md — Reusable analog/action controls and keyboard fallback
+- [ ] 01-03-PLAN.md — Fullscreen shell, viewport, HUD, states, and gameplay CSS
+- [ ] 01-04-PLAN.md — Live race route integration and phase gate verification
+
 ## Phase 2: Drag Gear Race
 
 **Goal:** Replace drag race with a skill-based gear timing game on a straight map.
