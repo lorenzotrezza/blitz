@@ -7,9 +7,9 @@
 
 ### Game Shell And Controls
 
-- [ ] **CTRL-01**: Player can play race sessions in a fullscreen mobile-first game screen where the track, HUD, and controls are visible without scrolling.
+- [x] **CTRL-01**: Player can play race sessions in a fullscreen mobile-first game screen where the track, HUD, and controls are visible without scrolling.
 - [x] **CTRL-02**: Player can use touch controls that stay in fixed thumb-friendly zones and do not trigger browser scrolling during gameplay.
-- [ ] **CTRL-03**: Player can see mode-specific HUD feedback for objective, progress, speed, penalty, and current input state.
+- [x] **CTRL-03**: Player can see mode-specific HUD feedback for objective, progress, speed, penalty, and current input state.
 - [x] **CTRL-04**: Keyboard or desktop users have a usable fallback for every required gameplay input.
 
 ### Drag Gear Race
@@ -79,9 +79,9 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CTRL-01 | Phase 1 | Pending |
+| CTRL-01 | Phase 1 | Complete |
 | CTRL-02 | Phase 1 | Complete |
-| CTRL-03 | Phase 1 | Pending |
+| CTRL-03 | Phase 1 | Complete |
 | CTRL-04 | Phase 1 | Complete |
 | DRAG-01 | Phase 2 | Pending |
 | DRAG-02 | Phase 2 | Pending |
