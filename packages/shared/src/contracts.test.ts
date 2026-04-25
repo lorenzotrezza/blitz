@@ -130,7 +130,7 @@ test('exports the current lobby selection startability policy', () => {
   );
   assert.equal(
     isLobbySelectionStartable('race', 'drag-sprint', LOBBY_RACE_MODES.bestOf3, 3),
-    false,
+    true,
   );
   assert.equal(
     isLobbySelectionStartable('race', 'drag-sprint', LOBBY_RACE_MODES.survival, 3),

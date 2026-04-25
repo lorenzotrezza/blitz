@@ -37,7 +37,7 @@ test('game registry exposes the current playable variants while shared startabil
       LOBBY_RACE_MODES.bestOf3,
       3,
     ),
-    false,
+    true,
   );
   assert.equal(
     isLobbySelectionStartable(

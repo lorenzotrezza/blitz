@@ -155,7 +155,7 @@ describe('LobbyPage', () => {
     expect(screen.getByRole('button', { name: /kick subratapal/i })).toBeInTheDocument();
   });
 
-  test('enables start session only for drag sprint finish-line mode', () => {
+  test('enables start session for sprint circuit and the supported drag sprint modes only', () => {
     const readyPlayers = createLobbySnapshot({
       selectedVariant: PARTY_GAME_VARIANTS.dragSprint,
       settings: {
@@ -262,7 +262,7 @@ describe('LobbyPage', () => {
     view.unmount();
     view = renderRoute('/lobby/ABCD12');
 
-    expect(screen.getByRole('button', { name: /avvia sessione/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /avvia sessione/i })).toBeEnabled();
 
     mockUseLobbySocket.mockImplementation(() => ({
       draft: {

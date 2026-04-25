@@ -96,7 +96,11 @@ export function isLobbySelectionStartable(
   }
 
   if (variant === PARTY_GAME_VARIANTS.dragSprint) {
-    return raceMode === LOBBY_RACE_MODES.finishLine && playerCount !== null && playerCount <= 3;
+    return (
+      playerCount !== null &&
+      playerCount <= 3 &&
+      (raceMode === LOBBY_RACE_MODES.finishLine || raceMode === LOBBY_RACE_MODES.bestOf3)
+    );
   }
 
   return false;

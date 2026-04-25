@@ -199,3 +199,207 @@ test('finishes a drag sprint session when a driver reaches the fixed distance ta
     value: 500,
   });
 });
+
+test('resets the strip across three best-of-3 manches and ranks ties by cumulative time', () => {
+  const finishedPayloads: SessionFinishedPayload[] = [];
+  let nowMs = 1_000;
+  const runtime = createDragSprintRuntime(
+    createLobby({
+      raceMode: LOBBY_RACE_MODES.bestOf3,
+    }),
+    'session-drag-best-of-3',
+    {
+      countdownMs: 0,
+      distanceTarget: 30,
+      now: () => nowMs,
+      onFinished(payload) {
+        finishedPayloads.push(payload);
+      },
+    },
+  );
+
+  type BestOf3Snapshot = DragSprintSnapshot & {
+    round: number;
+    totalRounds: number;
+    standings: Array<{
+      playerId: string;
+      points: number;
+      roundWins: number;
+      cumulativeTimeMs: number;
+    }>;
+  };
+
+  function accelerate(playerId: string, tick: number, steer: -1 | 0 | 1 = 0) {
+    const nextState = runtime.applyInput(playerId, {
+      tick,
+      steer,
+      accelerate: true,
+      brake: false,
+    });
+
+    assert.ok(nextState);
+    return nextState;
+  }
+
+  const started = runtime.start();
+  const startedSnapshot = started.state as BestOf3Snapshot;
+
+  assert.equal(startedSnapshot.mode, LOBBY_RACE_MODES.bestOf3);
+  assert.equal(startedSnapshot.round, 1);
+  assert.equal(startedSnapshot.totalRounds, 3);
+
+  accelerate('socket-host', 1, 1);
+  accelerate('socket-guest', 1, 0);
+  let state = accelerate('socket-third', 1, -1);
+
+  nowMs = 1_090;
+  accelerate('socket-host', 2, 1);
+  nowMs = 1_200;
+  accelerate('socket-guest', 2, 0);
+  nowMs = 1_300;
+  state = accelerate('socket-third', 2, -1);
+
+  let roundTwoSnapshot = state.state as BestOf3Snapshot;
+  assert.equal(state.status, 'active');
+  assert.equal(roundTwoSnapshot.status, RACE_STATUS.racing);
+  assert.equal(roundTwoSnapshot.round, 2);
+  assert.deepEqual(
+    roundTwoSnapshot.playersState.map((player) => ({
+      lane: player.lane,
+      distance: player.distance,
+      speed: player.speed,
+      status: player.status,
+    })),
+    [
+      { lane: 0, distance: 0, speed: 0, status: 'racing' },
+      { lane: 1, distance: 0, speed: 0, status: 'racing' },
+      { lane: 2, distance: 0, speed: 0, status: 'racing' },
+    ],
+  );
+  assert.deepEqual(
+    roundTwoSnapshot.standings.map((entry) => ({
+      playerId: entry.playerId,
+      points: entry.points,
+      roundWins: entry.roundWins,
+      cumulativeTimeMs: entry.cumulativeTimeMs,
+    })),
+    [
+      {
+        playerId: 'socket-host',
+        points: 3,
+        roundWins: 1,
+        cumulativeTimeMs: 90,
+      },
+      {
+        playerId: 'socket-guest',
+        points: 2,
+        roundWins: 0,
+        cumulativeTimeMs: 200,
+      },
+      {
+        playerId: 'socket-third',
+        points: 1,
+        roundWins: 0,
+        cumulativeTimeMs: 300,
+      },
+    ],
+  );
+
+  accelerate('socket-host', 3, 0);
+  accelerate('socket-guest', 3, 0);
+  state = accelerate('socket-third', 3, 0);
+
+  nowMs = 1_420;
+  accelerate('socket-host', 4, 0);
+  nowMs = 1_560;
+  accelerate('socket-guest', 4, 0);
+  nowMs = 1_660;
+  state = accelerate('socket-third', 4, 0);
+
+  const roundThreeSnapshot = state.state as BestOf3Snapshot;
+  assert.equal(roundThreeSnapshot.round, 3);
+  assert.deepEqual(
+    roundThreeSnapshot.standings.map((entry) => ({
+      playerId: entry.playerId,
+      points: entry.points,
+      roundWins: entry.roundWins,
+    })),
+    [
+      { playerId: 'socket-host', points: 6, roundWins: 2 },
+      { playerId: 'socket-guest', points: 4, roundWins: 0 },
+      { playerId: 'socket-third', points: 2, roundWins: 0 },
+    ],
+  );
+
+  accelerate('socket-host', 5, 0);
+  accelerate('socket-guest', 5, 0);
+  state = accelerate('socket-third', 5, 0);
+
+  nowMs = 1_760;
+  accelerate('socket-guest', 6, 0);
+  nowMs = 1_900;
+  accelerate('socket-third', 6, 0);
+  nowMs = 2_060;
+  state = accelerate('socket-host', 6, 0);
+
+  const finishedSnapshot = state.state as BestOf3Snapshot;
+
+  assert.equal(state.status, 'finished');
+  assert.equal(finishedSnapshot.status, RACE_STATUS.finished);
+  assert.equal(finishedSnapshot.round, 3);
+  assert.equal(finishedPayloads.length, 1);
+  assert.deepEqual(
+    finishedSnapshot.standings.map((entry) => ({
+      playerId: entry.playerId,
+      points: entry.points,
+      roundWins: entry.roundWins,
+      cumulativeTimeMs: entry.cumulativeTimeMs,
+    })),
+    [
+      {
+        playerId: 'socket-guest',
+        points: 7,
+        roundWins: 1,
+        cumulativeTimeMs: 560,
+      },
+      {
+        playerId: 'socket-host',
+        points: 7,
+        roundWins: 2,
+        cumulativeTimeMs: 610,
+      },
+      {
+        playerId: 'socket-third',
+        points: 4,
+        roundWins: 0,
+        cumulativeTimeMs: 900,
+      },
+    ],
+  );
+  assert.deepEqual(finishedPayloads[0]?.results.rankings, [
+    {
+      playerId: 'socket-guest',
+      rank: 1,
+      label: '7 pts · 560 ms',
+      value: 7,
+    },
+    {
+      playerId: 'socket-host',
+      rank: 2,
+      label: '7 pts · 610 ms',
+      value: 7,
+    },
+    {
+      playerId: 'socket-third',
+      rank: 3,
+      label: '4 pts · 900 ms',
+      value: 4,
+    },
+  ]);
+  assert.deepEqual(finishedPayloads[0]?.results.summary, {
+    mode: LOBBY_RACE_MODES.bestOf3,
+    track: 'drag-strip',
+    distanceTarget: 30,
+    rounds: 3,
+  });
+});

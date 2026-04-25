@@ -348,7 +348,7 @@ test('registerSockets starts drag sprint in finish-line mode', async () => {
   }
 });
 
-test('registerSockets rejects drag sprint best-of-3 mode until its runtime is available', async () => {
+test('registerSockets starts drag sprint best-of-3 mode', async () => {
   const httpServer = createHttpServer();
   const io = registerSockets(
     httpServer,
@@ -402,24 +402,61 @@ test('registerSockets rejects drag sprint best-of-3 mode until its runtime is av
 
     assert.equal(
       roomEmits.some((entry) => entry.event === SOCKET_EVENTS.server.sessionStarted),
-      false,
+      true,
     );
-    assert.equal(host.emitted.length, 1);
-    assert.equal(host.emitted[0]?.event, SOCKET_EVENTS.server.lobbyError);
-    assert.deepEqual(host.emitted[0]?.payload as LobbyErrorPayload, {
-      code: 'game-not-supported',
-      message: 'Selected game is not supported',
+    assert.equal(host.emitted.length, 0);
+  } finally {
+    io.close();
+  }
+});
+
+test('registerSockets still rejects drag sprint survival mode', async () => {
+  const httpServer = createHttpServer();
+  const io = registerSockets(
+    httpServer,
+    { socketCorsOrigin: '*' },
+    {
+      lobbyService: createLobbyService({
+        generateLobbyCode: () => 'ABCD12',
+      }),
+    },
+  );
+  const { roomEmits, install } = captureRoomBroadcasts();
+  install(io as unknown as { to: (room: string) => { emit: (event: string, payload: unknown) => void } });
+
+  try {
+    const connectionHandler = getConnectionHandler(io);
+    const host = createFakeSocket('socket-host');
+    const guest = createFakeSocket('socket-guest');
+
+    connectionHandler(host.socket);
+    connectionHandler(guest.socket);
+
+    await host.trigger(SOCKET_EVENTS.client.createLobby, {
+      nickname: 'Host',
+      carId: 'car-red',
     });
-
-    roomEmits.length = 0;
-    host.emitted.length = 0;
-
+    await guest.trigger(SOCKET_EVENTS.client.joinLobby, {
+      code: 'ABCD12',
+      nickname: 'Guest',
+      carId: 'car-blue',
+    });
+    await host.trigger(SOCKET_EVENTS.client.selectGame, {
+      code: 'ABCD12',
+      game: 'race',
+      variant: 'drag-sprint',
+    });
     await host.trigger(SOCKET_EVENTS.client.updateLobbySettings, {
       code: 'ABCD12',
       settings: {
         raceMode: LOBBY_RACE_MODES.survival,
       },
     });
+    await host.trigger(SOCKET_EVENTS.client.setReady, { ready: true });
+    await guest.trigger(SOCKET_EVENTS.client.setReady, { ready: true });
+
+    roomEmits.length = 0;
+    host.emitted.length = 0;
     await host.trigger(SOCKET_EVENTS.client.startSession, {
       code: 'ABCD12',
     });

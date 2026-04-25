@@ -93,8 +93,27 @@ function formatFinishTime(finishTimeMs: number | null) {
   return `${(finishTimeMs / 1000).toFixed(1)}s`;
 }
 
-function createPlayerState(lobby: LobbyState, playerIndex: number): DragSprintPlayerState {
-  const player = lobby.players[playerIndex]!;
+interface DragSprintStanding {
+  playerId: string;
+  nickname: string;
+  points: number;
+  roundWins: number;
+  cumulativeTimeMs: number;
+}
+
+type DragSprintLobbyPlayer = LobbyState['players'][number];
+
+const BEST_OF_3_TOTAL_ROUNDS = 3;
+
+function cloneObstacles() {
+  return OBSTACLE_STREAM.map((obstacle) => ({ ...obstacle }));
+}
+
+function clonePickups() {
+  return PICKUP_STREAM.map((pickup) => ({ ...pickup }));
+}
+
+function createPlayerState(player: DragSprintLobbyPlayer, playerIndex: number): DragSprintPlayerState {
   const lane = clamp(playerIndex, 0, 2) as DragSprintLane;
 
   return {
@@ -108,7 +127,19 @@ function createPlayerState(lobby: LobbyState, playerIndex: number): DragSprintPl
   };
 }
 
-function buildRankings(
+function createPlayerStates(players: DragSprintLobbyPlayer[]) {
+  return players.map((player, index) => createPlayerState(player, index));
+}
+
+function createFinishTimes(players: DragSprintLobbyPlayer[]) {
+  return Object.fromEntries(players.map((player) => [player.id, null])) as Record<string, number | null>;
+}
+
+function createNumberMap(players: DragSprintLobbyPlayer[], initialValue: number) {
+  return Object.fromEntries(players.map((player) => [player.id, initialValue])) as Record<string, number>;
+}
+
+function buildFinishLineRankings(
   playersState: DragSprintPlayerState[],
   finishTimesMs: Record<string, number | null>,
 ): GameResultEntry[] {
@@ -140,6 +171,46 @@ function buildRankings(
     }));
 }
 
+function buildBestOf3Standings(
+  players: DragSprintLobbyPlayer[],
+  pointsByPlayerId: Record<string, number>,
+  roundWinsByPlayerId: Record<string, number>,
+  cumulativeTimeByPlayerId: Record<string, number>,
+): DragSprintStanding[] {
+  return players
+    .map((player) => ({
+      playerId: player.id,
+      nickname: player.nickname,
+      points: pointsByPlayerId[player.id] ?? 0,
+      roundWins: roundWinsByPlayerId[player.id] ?? 0,
+      cumulativeTimeMs: cumulativeTimeByPlayerId[player.id] ?? 0,
+    }))
+    .sort((left, right) => {
+      if (left.points !== right.points) {
+        return right.points - left.points;
+      }
+
+      if (left.cumulativeTimeMs !== right.cumulativeTimeMs) {
+        return left.cumulativeTimeMs - right.cumulativeTimeMs;
+      }
+
+      if (left.roundWins !== right.roundWins) {
+        return right.roundWins - left.roundWins;
+      }
+
+      return left.playerId.localeCompare(right.playerId);
+    });
+}
+
+function buildBestOf3Rankings(standings: DragSprintStanding[]): GameResultEntry[] {
+  return standings.map((entry, index) => ({
+    playerId: entry.playerId,
+    rank: index + 1,
+    label: `${entry.points} pts · ${entry.cumulativeTimeMs} ms`,
+    value: entry.points,
+  }));
+}
+
 export function createDragSprintRuntime(
   lobby: LobbyState,
   sessionId: string,
@@ -149,6 +220,10 @@ export function createDragSprintRuntime(
   const distanceTarget = Math.max(30, options.distanceTarget ?? DEFAULT_DISTANCE_TARGET);
   const laneChangeCooldownTicks =
     options.laneChangeCooldownTicks ?? DEFAULT_LANE_CHANGE_COOLDOWN_TICKS;
+  const mode =
+    lobby.settings.raceMode === LOBBY_RACE_MODES.bestOf3
+      ? LOBBY_RACE_MODES.bestOf3
+      : LOBBY_RACE_MODES.finishLine;
   const now = options.now ?? (() => Date.now());
   const schedule =
     options.schedule ??
@@ -160,16 +235,39 @@ export function createDragSprintRuntime(
     });
 
   let countdownTimer: TimerHandle = null;
+  let activePlayers = [...lobby.players];
+  let currentRound = 1;
+  let pointsByPlayerId = createNumberMap(activePlayers, 0);
+  let roundWinsByPlayerId = createNumberMap(activePlayers, 0);
+  let cumulativeTimeByPlayerId = createNumberMap(activePlayers, 0);
   let startedAtMs: number | null = null;
-  let finishTimesMs = Object.fromEntries(
-    lobby.players.map((player) => [player.id, null]),
-  ) as Record<string, number | null>;
-  let inputTickByPlayerId = Object.fromEntries(
-    lobby.players.map((player) => [player.id, 0]),
-  ) as Record<string, number>;
-  let lastLaneChangeTickByPlayerId = Object.fromEntries(
-    lobby.players.map((player) => [player.id, -laneChangeCooldownTicks]),
-  ) as Record<string, number>;
+  let finishTimesMs = createFinishTimes(activePlayers);
+  let inputTickByPlayerId = createNumberMap(activePlayers, 0);
+  let lastLaneChangeTickByPlayerId = createNumberMap(activePlayers, -laneChangeCooldownTicks);
+
+  const buildStateSnapshot = (snapshot: DragSprintSnapshot) => {
+    if (mode !== LOBBY_RACE_MODES.bestOf3) {
+      return snapshot;
+    }
+
+    return {
+      ...snapshot,
+      round: currentRound,
+      totalRounds: BEST_OF_3_TOTAL_ROUNDS,
+      standings: buildBestOf3Standings(
+        activePlayers,
+        pointsByPlayerId,
+        roundWinsByPlayerId,
+        cumulativeTimeByPlayerId,
+      ),
+    };
+  };
+
+  const resetRoundTracking = () => {
+    finishTimesMs = createFinishTimes(activePlayers);
+    inputTickByPlayerId = createNumberMap(activePlayers, 0);
+    lastLaneChangeTickByPlayerId = createNumberMap(activePlayers, -laneChangeCooldownTicks);
+  };
 
   let state: GameSessionEnvelope<DragSprintSnapshot> = {
     sessionId,
@@ -183,16 +281,20 @@ export function createDragSprintRuntime(
       sessionId,
       lobbyCode: lobby.code,
       trackId: TRACK_ID,
-      mode: LOBBY_RACE_MODES.finishLine,
+      mode,
       status: RACE_STATUS.countdown,
       tick: 0,
       startedAt: null,
       countdown: Math.ceil(countdownMs / 1000),
       distanceTarget,
-      playersState: lobby.players.map((_, index) => createPlayerState(lobby, index)),
-      obstacles: OBSTACLE_STREAM.map((obstacle) => ({ ...obstacle })),
-      pickups: PICKUP_STREAM.map((pickup) => ({ ...pickup })),
-    },
+      playersState: createPlayerStates(activePlayers),
+      obstacles: cloneObstacles(),
+      pickups: clonePickups(),
+    } as DragSprintSnapshot,
+  };
+  state = {
+    ...state,
+    state: buildStateSnapshot(state.state),
   };
 
   const clearCountdown = () => {
@@ -209,19 +311,32 @@ export function createDragSprintRuntime(
     return state;
   };
 
-  const activateRace = () => {
-    startedAtMs = now();
+  const setRoundState = (
+    playersState: DragSprintPlayerState[],
+    tick: number,
+    status: DragSprintSnapshot['status'],
+  ) => {
     state = {
       ...state,
-      status: GAME_SESSION_STATUS.active,
+      status: status === RACE_STATUS.finished ? GAME_SESSION_STATUS.finished : GAME_SESSION_STATUS.active,
       countdown: 0,
-      state: {
+      state: buildStateSnapshot({
         ...state.state,
-        status: RACE_STATUS.racing,
+        status,
+        tick,
         countdown: 0,
         startedAt: startedAtMs,
-      },
+        playersState,
+        obstacles: cloneObstacles(),
+        pickups: clonePickups(),
+      }),
     };
+  };
+
+  const activateRace = () => {
+    startedAtMs = now();
+    resetRoundTracking();
+    setRoundState(createPlayerStates(activePlayers), 0, RACE_STATUS.racing);
     emitState();
   };
 
@@ -235,6 +350,84 @@ export function createDragSprintRuntime(
     };
 
     options.onFinished?.(payload);
+  };
+
+  const finishBestOf3Round = (tick: number, playersState: DragSprintPlayerState[]) => {
+    const roundPlacements = [...playersState].sort((left, right) => {
+      const leftFinish = finishTimesMs[left.playerId] ?? Number.POSITIVE_INFINITY;
+      const rightFinish = finishTimesMs[right.playerId] ?? Number.POSITIVE_INFINITY;
+
+      if (leftFinish !== rightFinish) {
+        return leftFinish - rightFinish;
+      }
+
+      return left.playerId.localeCompare(right.playerId);
+    });
+    const playerCount = roundPlacements.length;
+
+    const nextPoints = { ...pointsByPlayerId };
+    const nextRoundWins = { ...roundWinsByPlayerId };
+    const nextCumulativeTimes = { ...cumulativeTimeByPlayerId };
+
+    roundPlacements.forEach((player, index) => {
+      const finishTimeMs = finishTimesMs[player.playerId] ?? 0;
+      nextPoints[player.playerId] = (nextPoints[player.playerId] ?? 0) + (playerCount - index);
+      nextCumulativeTimes[player.playerId] =
+        (nextCumulativeTimes[player.playerId] ?? 0) + finishTimeMs;
+
+      if (index === 0) {
+        nextRoundWins[player.playerId] = (nextRoundWins[player.playerId] ?? 0) + 1;
+      }
+    });
+
+    pointsByPlayerId = nextPoints;
+    roundWinsByPlayerId = nextRoundWins;
+    cumulativeTimeByPlayerId = nextCumulativeTimes;
+
+    if (currentRound >= BEST_OF_3_TOTAL_ROUNDS) {
+      const standings = buildBestOf3Standings(
+        activePlayers,
+        pointsByPlayerId,
+        roundWinsByPlayerId,
+        cumulativeTimeByPlayerId,
+      );
+
+      state = {
+        ...state,
+        status: GAME_SESSION_STATUS.finished,
+        countdown: 0,
+        results: {
+          rankings: buildBestOf3Rankings(standings),
+          summary: {
+            mode: LOBBY_RACE_MODES.bestOf3,
+            track: TRACK_ID,
+            distanceTarget,
+            rounds: BEST_OF_3_TOTAL_ROUNDS,
+          },
+        },
+        state: buildStateSnapshot({
+          ...state.state,
+          status: RACE_STATUS.finished,
+          tick,
+          countdown: 0,
+          startedAt: startedAtMs,
+          playersState,
+          obstacles: cloneObstacles(),
+          pickups: clonePickups(),
+        }),
+      };
+
+      emitState();
+      emitFinished();
+      return state;
+    }
+
+    currentRound += 1;
+    startedAtMs = now();
+    resetRoundTracking();
+    setRoundState(createPlayerStates(activePlayers), 0, RACE_STATUS.racing);
+    emitState();
+    return state;
   };
 
   return {
@@ -270,6 +463,11 @@ export function createDragSprintRuntime(
       const brake = readBoolean(input.brake);
       const nextPlayers = state.state.playersState.map((player) => ({ ...player }));
       const currentPlayer = nextPlayers[playerIndex]!;
+
+      if (currentPlayer.status !== 'racing') {
+        return state;
+      }
+
       const playerTick = (inputTickByPlayerId[playerId] ?? 0) + 1;
       const nextSpeed = clamp(
         currentPlayer.speed +
@@ -317,22 +515,34 @@ export function createDragSprintRuntime(
         [playerId]: finishTimeMs,
       };
 
+      if (mode === LOBBY_RACE_MODES.bestOf3) {
+        const roundComplete = nextPlayers.every((player) => player.status === 'finished');
+
+        if (roundComplete) {
+          return finishBestOf3Round(tick, nextPlayers);
+        }
+
+        setRoundState(nextPlayers, tick, RACE_STATUS.racing);
+        emitState();
+        return state;
+      }
+
       const winnerReachedFinish = nextPlayers.some((player) => player.distance >= distanceTarget);
 
       state = {
         ...state,
         status: winnerReachedFinish ? GAME_SESSION_STATUS.finished : GAME_SESSION_STATUS.active,
-        state: {
+        state: buildStateSnapshot({
           ...state.state,
           tick,
           status: winnerReachedFinish ? RACE_STATUS.finished : RACE_STATUS.racing,
           playersState: nextPlayers,
-          obstacles: OBSTACLE_STREAM.map((obstacle) => ({ ...obstacle })),
-          pickups: PICKUP_STREAM.map((pickup) => ({ ...pickup })),
-        },
+          obstacles: cloneObstacles(),
+          pickups: clonePickups(),
+        }),
         results: winnerReachedFinish
           ? {
-              rankings: buildRankings(nextPlayers, finishTimesMs),
+              rankings: buildFinishLineRankings(nextPlayers, finishTimesMs),
               summary: {
                 mode: LOBBY_RACE_MODES.finishLine,
                 track: TRACK_ID,
@@ -351,20 +561,27 @@ export function createDragSprintRuntime(
       return state;
     },
     removePlayer(playerId) {
+      activePlayers = activePlayers.filter((player) => player.id !== playerId);
       const nextPlayers = state.state.playersState.filter((player) => player.playerId !== playerId);
       const { [playerId]: _finishTime, ...nextFinishTimes } = finishTimesMs;
       const { [playerId]: _inputTick, ...nextInputTicks } = inputTickByPlayerId;
       const { [playerId]: _laneChangeTick, ...nextLaneChangeTicks } = lastLaneChangeTickByPlayerId;
+      const { [playerId]: _points, ...nextPoints } = pointsByPlayerId;
+      const { [playerId]: _roundWins, ...nextRoundWins } = roundWinsByPlayerId;
+      const { [playerId]: _cumulativeTime, ...nextCumulativeTimes } = cumulativeTimeByPlayerId;
 
       finishTimesMs = nextFinishTimes;
       inputTickByPlayerId = nextInputTicks;
       lastLaneChangeTickByPlayerId = nextLaneChangeTicks;
+      pointsByPlayerId = nextPoints;
+      roundWinsByPlayerId = nextRoundWins;
+      cumulativeTimeByPlayerId = nextCumulativeTimes;
       state = {
         ...state,
-        state: {
+        state: buildStateSnapshot({
           ...state.state,
           playersState: nextPlayers,
-        },
+        }),
       };
       emitState();
     },
