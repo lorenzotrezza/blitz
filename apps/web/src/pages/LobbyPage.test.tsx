@@ -5,6 +5,8 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import {
   LOBBY_RACE_MODES,
+  PARTY_GAMES,
+  PARTY_GAME_VARIANTS,
   PLAYER_CONNECTION_STATE,
   type LobbyState,
 } from '@blitz/shared';
@@ -36,8 +38,8 @@ function createLobbySnapshot(overrides: LobbySnapshotOverrides = {}): LobbyState
     code: 'ABCD12',
     hostId: 'socket-host',
     mode: 'multiplayer',
-    selectedGame: 'race',
-    selectedVariant: 'sprint-circuit',
+    selectedGame: PARTY_GAMES.race,
+    selectedVariant: PARTY_GAME_VARIANTS.sprintCircuit,
     status: 'waiting',
     settings: {
       ...settingsOverrides,
@@ -155,7 +157,7 @@ describe('LobbyPage', () => {
 
   test('keeps start session disabled for drag sprint until its runtime is available', () => {
     const readyPlayers = createLobbySnapshot({
-      selectedVariant: 'drag-sprint',
+      selectedVariant: PARTY_GAME_VARIANTS.dragSprint,
       settings: {
         raceMode: LOBBY_RACE_MODES.bestOf3,
       },
@@ -176,7 +178,7 @@ describe('LobbyPage', () => {
       isHost: true,
       joinedLobby: createLobbySnapshot({
         players: readyPlayers,
-        selectedVariant: 'sprint-circuit',
+        selectedVariant: PARTY_GAME_VARIANTS.sprintCircuit,
       }),
       me: {
         id: 'socket-host',
@@ -214,7 +216,7 @@ describe('LobbyPage', () => {
       isHost: true,
       joinedLobby: createLobbySnapshot({
         players: readyPlayers,
-        selectedVariant: 'drag-sprint',
+        selectedVariant: PARTY_GAME_VARIANTS.dragSprint,
         settings: {
           raceMode: LOBBY_RACE_MODES.bestOf3,
         },
@@ -328,8 +330,8 @@ describe('LobbyPage', () => {
     expect(screen.queryByRole('button', { name: /best of 3/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /survival/i })).not.toBeInTheDocument();
 
-    expect(selectGame).toHaveBeenCalledWith('race', 'drag-sprint');
-    expect(selectGame).toHaveBeenCalledWith('race', 'sprint-circuit');
+    expect(selectGame).toHaveBeenCalledWith(PARTY_GAMES.race, PARTY_GAME_VARIANTS.dragSprint);
+    expect(selectGame).toHaveBeenCalledWith(PARTY_GAMES.race, PARTY_GAME_VARIANTS.sprintCircuit);
     expect(updateSettings).toHaveBeenCalledWith({
       raceMode: LOBBY_RACE_MODES.bestOf3,
     });
