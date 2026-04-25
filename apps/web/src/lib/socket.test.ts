@@ -27,6 +27,6 @@ describe('resolveSocketUrl', () => {
         dev: true,
         windowOrigin: '',
       }),
-    ).toBe('http://127.0.0.1:3000');
+    ).toBe('http://127.0.0.1:3004');
   });
 });
