@@ -13,6 +13,7 @@ import {
 } from './index.js';
 import type {
   ClientToServerEvents,
+  DragSprintMode,
   DragSprintSnapshot,
   LobbyState,
   PartyLobbyState,
@@ -151,11 +152,12 @@ test('exports the expected race snapshot shape', () => {
 });
 
 test('exports the expected drag sprint snapshot shape', () => {
+  const mode: DragSprintMode = 'finish-line';
   const snapshot: DragSprintSnapshot = {
     sessionId: 'session-drag',
     lobbyCode: 'ABCD12',
     trackId: 'drag-strip',
-    mode: 'finish-line',
+    mode,
     status: RACE_STATUS.racing,
     tick: 12,
     countdown: 0,
@@ -191,6 +193,7 @@ test('exports the expected drag sprint snapshot shape', () => {
     ],
   };
 
+  assert.equal(mode, 'finish-line');
   assert.equal(snapshot.mode, 'finish-line');
   assert.equal(snapshot.trackId, 'drag-strip');
   assert.equal(snapshot.playersState[0]?.status, 'racing');
