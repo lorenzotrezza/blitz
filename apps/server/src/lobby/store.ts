@@ -4,6 +4,9 @@ function cloneLobbyState(lobby: LobbyState): LobbyState {
   return {
     code: lobby.code,
     hostId: lobby.hostId,
+    mode: lobby.mode,
+    selectedGame: lobby.selectedGame,
+    selectedVariant: lobby.selectedVariant,
     players: lobby.players.map((player) => ({ ...player })),
     settings: { ...lobby.settings },
     status: lobby.status,

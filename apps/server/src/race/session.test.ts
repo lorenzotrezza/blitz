@@ -14,6 +14,9 @@ function createLobby(): LobbyState {
   return {
     code: 'ABCD12',
     hostId: 'socket-host',
+    mode: 'multiplayer',
+    selectedGame: 'race',
+    selectedVariant: 'sprint-circuit',
     status: LOBBY_STATUS.waiting,
     settings: {
       trackId: 'track-oval',

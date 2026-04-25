@@ -1,6 +1,8 @@
 import type { Server as HttpServer } from 'node:http';
+import { randomUUID } from 'node:crypto';
 
 import {
+  LOBBY_STATUS,
   SOCKET_EVENTS,
   ClientToServerEvents,
   type LobbyErrorPayload,
@@ -10,19 +12,19 @@ import {
 import { Server, type Socket } from 'socket.io';
 
 import type { ServerConfig } from '../config.js';
+import { createGameRuntimeRegistry, type GameRuntimeRegistry } from '../games/registry.js';
 import {
   LobbyServiceError,
   createLobbyService,
   type LobbyService,
 } from '../lobby/service.js';
-import { createRaceManager } from '../race/runtime.js';
 
 export type BlitzSocketServer = Server<ClientToServerEvents, ServerToClientEvents>;
 export type BlitzSocket = Socket<ClientToServerEvents, ServerToClientEvents>;
 
 export interface RegisterSocketOptions {
   lobbyService?: LobbyService;
-  raceCountdownMs?: number;
+  gameRegistry?: GameRuntimeRegistry;
 }
 
 function normalizeLobbyCode(code: string): string {
@@ -75,18 +77,43 @@ export function registerSockets(
     },
   });
   const lobbyService = options.lobbyService ?? createLobbyService();
-  const raceManager = createRaceManager({
-    countdownMs: options.raceCountdownMs,
-    onRaceStarted(payload) {
-      io.to(payload.lobbyCode).emit(SOCKET_EVENTS.server.raceStarted, payload);
-    },
-    onRaceSnapshot(payload) {
-      io.to(payload.lobbyCode).emit(SOCKET_EVENTS.server.raceSnapshot, payload);
-    },
-    onRaceFinished(payload) {
-      io.to(payload.lobbyCode).emit(SOCKET_EVENTS.server.raceFinished, payload);
-    },
-  });
+  const gameRegistry = options.gameRegistry ?? createGameRuntimeRegistry();
+
+  async function startSession(code: string, playerId: string) {
+    const lobby = lobbyService.getLobby(code);
+
+    if (!lobby) {
+      throw new LobbyServiceError('lobby-not-found', 'Lobby not found');
+    }
+
+    if (lobby.hostId !== playerId) {
+      throw new LobbyServiceError('player-not-host', 'Only the host can start the session');
+    }
+
+    if (lobby.players.length === 0 || lobby.players.some((player) => !player.ready)) {
+      throw new LobbyServiceError('players-not-ready', 'All players must be ready');
+    }
+
+    const gameEntry = gameRegistry.resolve(lobby.selectedGame, lobby.selectedVariant);
+
+    if (!gameEntry) {
+      throw new LobbyServiceError('game-not-supported', 'Selected game is not supported');
+    }
+
+    const sessionLobby = lobbyService.setStatus({
+      code: lobby.code,
+      status: LOBBY_STATUS.inSession,
+    });
+    emitLobbySnapshot(io, sessionLobby);
+
+    io.to(lobby.code).emit(SOCKET_EVENTS.server.sessionStarted, {
+      sessionId: randomUUID(),
+      lobbyCode: lobby.code,
+      game: gameEntry.game,
+      variant: gameEntry.variant,
+      countdown: gameEntry.countdown,
+    });
+  }
 
   io.on('connection', (socket) => {
     socket.on(SOCKET_EVENTS.client.createLobby, async (payload) => {
@@ -143,33 +170,45 @@ export function registerSockets(
       });
     });
 
-    socket.on(SOCKET_EVENTS.client.startRace, async (payload) => {
+    socket.on(SOCKET_EVENTS.client.selectGame, async (payload) => {
       await handleLobbyMutation(socket, async () => {
-        const lobby = lobbyService.getLobby(payload.code);
+        const lobby = lobbyService.selectGame({
+          code: payload.code,
+          hostId: socket.id,
+          game: payload.game,
+          variant: payload.variant,
+        });
 
-        if (!lobby) {
-          throw new LobbyServiceError('lobby-not-found', 'Lobby not found');
-        }
-
-        if (lobby.hostId !== socket.id) {
-          throw new LobbyServiceError('player-not-host', 'Only the host can start the race');
-        }
-
-        if (lobby.players.length === 0 || lobby.players.some((player) => !player.ready)) {
-          throw new LobbyServiceError('players-not-ready', 'All players must be ready');
-        }
-
-        raceManager.startLobbyRace(lobby);
+        emitLobbySnapshot(io, lobby);
       });
     });
 
-    socket.on(SOCKET_EVENTS.client.playerInput, (payload) => {
-      raceManager.applyInput(socket.id, payload);
+    socket.on(SOCKET_EVENTS.client.updateLobbySettings, async (payload) => {
+      await handleLobbyMutation(socket, async () => {
+        const lobby = lobbyService.updateSettings({
+          code: payload.code,
+          hostId: socket.id,
+          settings: payload.settings,
+        });
+
+        emitLobbySnapshot(io, lobby);
+      });
+    });
+
+    socket.on(SOCKET_EVENTS.client.startSession, async (payload) => {
+      await handleLobbyMutation(socket, async () => {
+        await startSession(payload.code, socket.id);
+      });
+    });
+
+    socket.on(SOCKET_EVENTS.client.startRace, async (payload) => {
+      await handleLobbyMutation(socket, async () => {
+        await startSession(payload.code, socket.id);
+      });
     });
 
     socket.on('disconnect', () => {
       const lobby = lobbyService.disconnectPlayer(socket.id);
-      raceManager.removePlayer(socket.id);
 
       if (lobby) {
         emitLobbySnapshot(io, lobby);

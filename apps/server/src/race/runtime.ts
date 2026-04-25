@@ -49,7 +49,7 @@ export function createRaceManager(options: RaceManagerOptions = {}): RaceManager
       const payload: RaceStartedPayload = {
         sessionId,
         lobbyCode: lobby.code,
-        trackId: lobby.settings.trackId,
+        trackId: lobby.settings.trackId ?? 'track-oval',
         countdown: Math.ceil(countdownMs / 1000),
       };
 

@@ -49,6 +49,9 @@ test('createLobby creates a lobby with the caller as host', () => {
 
   assert.equal(lobby.code, 'ABCD12');
   assert.equal(lobby.hostId, 'socket-host');
+  assert.equal(lobby.mode, 'multiplayer');
+  assert.equal(lobby.selectedGame, 'lights');
+  assert.equal(lobby.selectedVariant, null);
   assert.equal(lobby.status, LOBBY_STATUS.waiting);
   assert.equal(lobby.settings.maxPlayers, MAX_LOBBY_PLAYERS);
   assert.deepEqual(lobby.players, [
@@ -89,6 +92,44 @@ test('joinLobby adds a player by nickname to an existing lobby', () => {
       { id: 'socket-guest', nickname: 'Guest', ready: false },
     ],
   );
+});
+
+test('host can select a game before starting the session', () => {
+  const service = createService();
+  const lobby = service.createLobby({
+    playerId: 'socket-host',
+    nickname: 'Host',
+    carId: 'car-red',
+  });
+
+  const updatedLobby = service.selectGame({
+    code: lobby.code,
+    hostId: 'socket-host',
+    game: 'penalty',
+    variant: null,
+  });
+
+  assert.equal(updatedLobby.selectedGame, 'penalty');
+  assert.equal(updatedLobby.selectedVariant, null);
+});
+
+test('host can update neutral lobby settings before the session starts', () => {
+  const service = createService();
+  const lobby = service.createLobby({
+    playerId: 'socket-host',
+    nickname: 'Host',
+    carId: 'car-red',
+  });
+
+  const updatedLobby = service.updateSettings({
+    code: lobby.code,
+    hostId: 'socket-host',
+    settings: {
+      rounds: 3,
+    },
+  });
+
+  assert.equal(updatedLobby.settings.rounds, 3);
 });
 
 test('joinLobby rejects a join when the lobby is already full', () => {
@@ -231,7 +272,7 @@ test('setReady rejects when the lobby is not in the waiting state', () => {
 
   store.saveLobby({
     ...lobby,
-    status: LOBBY_STATUS.racing,
+    status: LOBBY_STATUS.inSession,
   });
 
   assert.throws(

@@ -190,7 +190,7 @@ export function createRaceSession(lobby: LobbyState, sessionId: string): RaceSes
     snapshot: {
       sessionId,
       lobbyCode: lobby.code,
-      trackId: lobby.settings.trackId,
+      trackId: lobby.settings.trackId ?? 'track-oval',
       status: RACE_STATUS.countdown,
       tick: 0,
       startedAt: null,

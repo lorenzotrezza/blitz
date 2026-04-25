@@ -2,7 +2,11 @@ import {
   LOBBY_STATUS,
   MAX_LOBBY_PLAYERS,
   PLAYER_CONNECTION_STATE,
+  type LobbySettings,
   type LobbyState,
+  type LobbyStatus,
+  type PartyGame,
+  type PartyGameVariant,
   type PlayerInfo,
 } from '@blitz/shared';
 
@@ -12,8 +16,9 @@ import {
   type LobbyStore,
 } from './store.js';
 
-const DEFAULT_TRACK_ID = 'track-oval';
-const DEFAULT_BOT_COUNT = 0;
+const DEFAULT_GAME: PartyGame = 'lights';
+const DEFAULT_VARIANT: PartyGameVariant = null;
+const DEFAULT_ROUNDS = 3;
 
 function normalizeLobbyCode(code: string): string {
   return code.trim().toUpperCase();
@@ -25,6 +30,12 @@ function assertLobbyWaiting(lobby: LobbyState): void {
       'lobby-not-waiting',
       'Lobby is not in the waiting state',
     );
+  }
+}
+
+function assertHost(lobby: LobbyState, hostId: string): void {
+  if (lobby.hostId !== hostId) {
+    throw new LobbyServiceError('player-not-host', 'Only the host can manage the lobby');
   }
 }
 
@@ -42,11 +53,13 @@ function createLobbySnapshot(code: string, host: PlayerInfo): LobbyState {
   return {
     code,
     hostId: host.id,
+    mode: 'multiplayer',
+    selectedGame: DEFAULT_GAME,
+    selectedVariant: DEFAULT_VARIANT,
     players: [host],
     settings: {
-      trackId: DEFAULT_TRACK_ID,
-      botCount: DEFAULT_BOT_COUNT,
       maxPlayers: MAX_LOBBY_PLAYERS,
+      rounds: DEFAULT_ROUNDS,
     },
     status: LOBBY_STATUS.waiting,
   };
@@ -82,12 +95,33 @@ export interface SetReadyInput {
   ready: boolean;
 }
 
+export interface SelectGameInput {
+  code: string;
+  hostId: string;
+  game: PartyGame;
+  variant: PartyGameVariant;
+}
+
+export interface UpdateSettingsInput {
+  code: string;
+  hostId: string;
+  settings: Partial<LobbySettings>;
+}
+
+export interface SetStatusInput {
+  code: string;
+  status: LobbyStatus;
+}
+
 export interface LobbyService {
   createLobby(input: CreateLobbyInput): LobbyState;
   joinLobby(input: JoinLobbyInput): LobbyState;
   leaveLobby(input: LeaveLobbyInput): LobbyState | null;
   disconnectPlayer(playerId: string): LobbyState | null;
   setReady(input: SetReadyInput): LobbyState;
+  selectGame(input: SelectGameInput): LobbyState;
+  updateSettings(input: UpdateSettingsInput): LobbyState;
+  setStatus(input: SetStatusInput): LobbyState;
   getLobby(code: string): LobbyState | null;
 }
 
@@ -232,6 +266,55 @@ export function createLobbyService(
               }
             : player,
         ),
+      });
+    },
+    selectGame(input) {
+      const code = normalizeLobbyCode(input.code);
+      const lobby = store.getLobby(code);
+
+      if (!lobby) {
+        throw new LobbyServiceError('lobby-not-found', 'Lobby not found');
+      }
+
+      assertLobbyWaiting(lobby);
+      assertHost(lobby, input.hostId);
+
+      return store.saveLobby({
+        ...lobby,
+        selectedGame: input.game,
+        selectedVariant: input.variant,
+      });
+    },
+    updateSettings(input) {
+      const code = normalizeLobbyCode(input.code);
+      const lobby = store.getLobby(code);
+
+      if (!lobby) {
+        throw new LobbyServiceError('lobby-not-found', 'Lobby not found');
+      }
+
+      assertLobbyWaiting(lobby);
+      assertHost(lobby, input.hostId);
+
+      return store.saveLobby({
+        ...lobby,
+        settings: {
+          ...lobby.settings,
+          ...input.settings,
+        },
+      });
+    },
+    setStatus(input) {
+      const code = normalizeLobbyCode(input.code);
+      const lobby = store.getLobby(code);
+
+      if (!lobby) {
+        throw new LobbyServiceError('lobby-not-found', 'Lobby not found');
+      }
+
+      return store.saveLobby({
+        ...lobby,
+        status: input.status,
       });
     },
     getLobby(code) {
