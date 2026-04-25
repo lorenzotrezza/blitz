@@ -25,6 +25,7 @@ const DEFAULT_ACCELERATION = 12;
 const DEFAULT_BRAKE = 12;
 const DEFAULT_DRAG = 1;
 const DEFAULT_LANE_CHANGE_COOLDOWN_TICKS = 2;
+const DEFAULT_SURVIVAL_TIMEOUT_TICKS = 2;
 const TRACK_ID = 'drag-strip';
 
 type TimerHandle = ReturnType<typeof setTimeout> | null;
@@ -204,6 +205,44 @@ function buildBestOf3Rankings(standings: DragSprintStanding[]): GameResultEntry[
   }));
 }
 
+function buildSurvivalRankings(
+  playersState: DragSprintPlayerState[],
+  outcomeTimesMs: Record<string, number | null>,
+): GameResultEntry[] {
+  return [...playersState]
+    .sort((left, right) => {
+      const leftPriority = left.status === 'eliminated' ? 1 : 0;
+      const rightPriority = right.status === 'eliminated' ? 1 : 0;
+
+      if (leftPriority !== rightPriority) {
+        return leftPriority - rightPriority;
+      }
+
+      const leftOutcome = outcomeTimesMs[left.playerId] ?? -1;
+      const rightOutcome = outcomeTimesMs[right.playerId] ?? -1;
+
+      if (leftOutcome !== rightOutcome) {
+        return rightOutcome - leftOutcome;
+      }
+
+      if (left.distance !== right.distance) {
+        return right.distance - left.distance;
+      }
+
+      return left.playerId.localeCompare(right.playerId);
+    })
+    .map((player, index) => {
+      const outcomeTimeMs = outcomeTimesMs[player.playerId];
+
+      return {
+        playerId: player.playerId,
+        rank: index + 1,
+        label: formatFinishTime(outcomeTimeMs) ?? `${Math.round(player.distance)}m`,
+        value: outcomeTimeMs ?? Math.round(player.distance),
+      };
+    });
+}
+
 export function createDragSprintRuntime(
   lobby: LobbyState,
   sessionId: string,
@@ -216,7 +255,9 @@ export function createDragSprintRuntime(
   const mode =
     lobby.settings.raceMode === LOBBY_RACE_MODES.bestOf3
       ? LOBBY_RACE_MODES.bestOf3
-      : LOBBY_RACE_MODES.finishLine;
+      : lobby.settings.raceMode === LOBBY_RACE_MODES.survival
+        ? LOBBY_RACE_MODES.survival
+        : LOBBY_RACE_MODES.finishLine;
   const now = options.now ?? (() => Date.now());
   const schedule =
     options.schedule ??
@@ -235,8 +276,10 @@ export function createDragSprintRuntime(
   let cumulativeTimeByPlayerId = createNumberMap(activePlayers, 0);
   let startedAtMs: number | null = null;
   let finishTimesMs = createFinishTimes(activePlayers);
+  let outcomeTimesMs = createFinishTimes(activePlayers);
   let inputTickByPlayerId = createNumberMap(activePlayers, 0);
   let lastLaneChangeTickByPlayerId = createNumberMap(activePlayers, -laneChangeCooldownTicks);
+  let lastActionStateTickByPlayerId = createNumberMap(activePlayers, 0);
 
   const buildStateSnapshot = (snapshot: DragSprintSnapshot) => {
     if (mode !== LOBBY_RACE_MODES.bestOf3) {
@@ -258,8 +301,10 @@ export function createDragSprintRuntime(
 
   const resetRoundTracking = () => {
     finishTimesMs = createFinishTimes(activePlayers);
+    outcomeTimesMs = createFinishTimes(activePlayers);
     inputTickByPlayerId = createNumberMap(activePlayers, 0);
     lastLaneChangeTickByPlayerId = createNumberMap(activePlayers, -laneChangeCooldownTicks);
+    lastActionStateTickByPlayerId = createNumberMap(activePlayers, 0);
   };
 
   let state: GameSessionEnvelope<DragSprintSnapshot> = {
@@ -383,6 +428,59 @@ export function createDragSprintRuntime(
     return state;
   };
 
+  const finalizeSurvivalSession = (tick: number, playersState: DragSprintPlayerState[]) => {
+    const elapsedMs = Math.max(0, now() - (startedAtMs ?? now()));
+    const activePlayersState = playersState.filter((player) => player.status !== 'eliminated');
+    const winnerId = activePlayersState.length === 1 ? activePlayersState[0]!.playerId : null;
+    const finalizedPlayers =
+      winnerId === null
+        ? playersState
+        : playersState.map((player) =>
+            player.playerId === winnerId
+              ? {
+                  ...player,
+                  status: 'finished' as const,
+                }
+              : player,
+          );
+
+    if (winnerId !== null && outcomeTimesMs[winnerId] === null) {
+      outcomeTimesMs = {
+        ...outcomeTimesMs,
+        [winnerId]: elapsedMs,
+      };
+    }
+
+    state = {
+      ...state,
+      status: GAME_SESSION_STATUS.finished,
+      countdown: 0,
+      results: {
+        rankings: buildSurvivalRankings(finalizedPlayers, outcomeTimesMs),
+        summary: {
+          mode: LOBBY_RACE_MODES.survival,
+          track: TRACK_ID,
+          distanceTarget,
+          winnerId,
+        },
+      },
+      state: buildStateSnapshot({
+        ...state.state,
+        status: RACE_STATUS.finished,
+        tick,
+        countdown: 0,
+        startedAt: startedAtMs,
+        playersState: finalizedPlayers,
+        obstacles: cloneObstacles(),
+        pickups: clonePickups(),
+      }),
+    };
+
+    emitState();
+    emitFinished();
+    return state;
+  };
+
   const finishBestOf3Round = (tick: number, playersState: DragSprintPlayerState[]) => {
     const roundPlacements = [...playersState].sort((left, right) => {
       const leftFinish = finishTimesMs[left.playerId] ?? Number.POSITIVE_INFINITY;
@@ -458,10 +556,60 @@ export function createDragSprintRuntime(
       const steer = readSteer(input.steer);
       const accelerate = readBoolean(input.accelerate);
       const brake = readBoolean(input.brake);
+      const elapsedMs = Math.max(0, now() - (startedAtMs ?? now()));
       const nextPlayers = state.state.playersState.map((player) => ({ ...player }));
+
+      if (mode === LOBBY_RACE_MODES.survival) {
+        for (let index = 0; index < nextPlayers.length; index += 1) {
+          const player = nextPlayers[index]!;
+
+          if (
+            player.status !== 'racing' ||
+            tick - (lastActionStateTickByPlayerId[player.playerId] ?? 0) <= DEFAULT_SURVIVAL_TIMEOUT_TICKS
+          ) {
+            continue;
+          }
+
+          nextPlayers[index] = {
+            ...player,
+            speed: 0,
+            status: 'eliminated',
+          };
+
+          if (outcomeTimesMs[player.playerId] === null) {
+            outcomeTimesMs = {
+              ...outcomeTimesMs,
+              [player.playerId]: elapsedMs,
+            };
+          }
+        }
+      }
+
       const currentPlayer = nextPlayers[playerIndex]!;
 
       if (currentPlayer.status !== 'racing') {
+        if (mode === LOBBY_RACE_MODES.survival) {
+          const activeRacers = nextPlayers.filter((player) => player.status === 'racing');
+
+          if (activeRacers.length <= 1) {
+            return finalizeSurvivalSession(tick, nextPlayers);
+          }
+
+          state = {
+            ...state,
+            status: GAME_SESSION_STATUS.active,
+            state: buildStateSnapshot({
+              ...state.state,
+              tick,
+              status: RACE_STATUS.racing,
+              playersState: nextPlayers,
+              obstacles: cloneObstacles(),
+              pickups: clonePickups(),
+            }),
+          };
+          emitState();
+        }
+
         return state;
       }
 
@@ -495,13 +643,44 @@ export function createDragSprintRuntime(
       }
 
       const nextDistance = clamp(currentPlayer.distance + nextSpeed, 0, distanceTarget);
+      const collidedObstacle =
+        mode === LOBBY_RACE_MODES.survival
+          ? OBSTACLE_STREAM.find(
+              (obstacle) =>
+                obstacle.lane === nextLane &&
+                currentPlayer.distance < obstacle.distance &&
+                nextDistance >= obstacle.distance,
+            ) ?? null
+          : null;
+      const nextStatus =
+        mode === LOBBY_RACE_MODES.survival
+          ? collidedObstacle
+            ? 'eliminated'
+            : 'racing'
+          : nextDistance >= distanceTarget
+            ? 'finished'
+            : 'racing';
       nextPlayers[playerIndex] = {
         ...currentPlayer,
         lane: nextLane,
-        speed: nextSpeed,
-        distance: nextDistance,
-        status: nextDistance >= distanceTarget ? 'finished' : 'racing',
+        speed: nextStatus === 'eliminated' ? 0 : nextSpeed,
+        distance: collidedObstacle?.distance ?? nextDistance,
+        status: nextStatus,
       };
+
+      if (mode === LOBBY_RACE_MODES.survival) {
+        lastActionStateTickByPlayerId = {
+          ...lastActionStateTickByPlayerId,
+          [playerId]: tick,
+        };
+
+        if (nextStatus === 'eliminated' && outcomeTimesMs[playerId] === null) {
+          outcomeTimesMs = {
+            ...outcomeTimesMs,
+            [playerId]: elapsedMs,
+          };
+        }
+      }
 
       const finishTimeMs =
         nextDistance >= distanceTarget
@@ -520,6 +699,31 @@ export function createDragSprintRuntime(
         }
 
         setRoundState(nextPlayers, tick, RACE_STATUS.racing);
+        emitState();
+        return state;
+      }
+
+      if (mode === LOBBY_RACE_MODES.survival) {
+        const activeRacers = nextPlayers.filter((player) => player.status === 'racing');
+
+        if (activeRacers.length <= 1) {
+          return finalizeSurvivalSession(tick, nextPlayers);
+        }
+
+        state = {
+          ...state,
+          status: GAME_SESSION_STATUS.active,
+          state: buildStateSnapshot({
+            ...state.state,
+            tick,
+            status: RACE_STATUS.racing,
+            playersState: nextPlayers,
+            obstacles: cloneObstacles(),
+            pickups: clonePickups(),
+          }),
+          results: null,
+        };
+
         emitState();
         return state;
       }
@@ -561,15 +765,19 @@ export function createDragSprintRuntime(
       activePlayers = activePlayers.filter((player) => player.id !== playerId);
       const nextPlayers = state.state.playersState.filter((player) => player.playerId !== playerId);
       const { [playerId]: _finishTime, ...nextFinishTimes } = finishTimesMs;
+      const { [playerId]: _outcomeTime, ...nextOutcomeTimes } = outcomeTimesMs;
       const { [playerId]: _inputTick, ...nextInputTicks } = inputTickByPlayerId;
       const { [playerId]: _laneChangeTick, ...nextLaneChangeTicks } = lastLaneChangeTickByPlayerId;
+      const { [playerId]: _lastActionTick, ...nextLastActionTicks } = lastActionStateTickByPlayerId;
       const { [playerId]: _points, ...nextPoints } = pointsByPlayerId;
       const { [playerId]: _roundWins, ...nextRoundWins } = roundWinsByPlayerId;
       const { [playerId]: _cumulativeTime, ...nextCumulativeTimes } = cumulativeTimeByPlayerId;
 
       finishTimesMs = nextFinishTimes;
+      outcomeTimesMs = nextOutcomeTimes;
       inputTickByPlayerId = nextInputTicks;
       lastLaneChangeTickByPlayerId = nextLaneChangeTicks;
+      lastActionStateTickByPlayerId = nextLastActionTicks;
       pointsByPlayerId = nextPoints;
       roundWinsByPlayerId = nextRoundWins;
       cumulativeTimeByPlayerId = nextCumulativeTimes;
@@ -586,6 +794,19 @@ export function createDragSprintRuntime(
 
         if (nextPlayers.every((player) => player.status === 'finished')) {
           finishBestOf3Round(state.state.tick, nextPlayers);
+          return;
+        }
+      }
+
+      if (
+        mode === LOBBY_RACE_MODES.survival &&
+        state.status !== GAME_SESSION_STATUS.finished &&
+        state.state.status === RACE_STATUS.racing
+      ) {
+        const activeRacers = nextPlayers.filter((player) => player.status === 'racing');
+
+        if (activeRacers.length <= 1) {
+          finalizeSurvivalSession(state.state.tick, nextPlayers);
           return;
         }
       }

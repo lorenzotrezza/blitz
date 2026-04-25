@@ -1,4 +1,4 @@
-const DEFAULT_PORT = 3000;
+const DEFAULT_PORT = 3004;
 const MAX_PORT = 65_535;
 const DEFAULT_SOCKET_CORS_ORIGIN = '*';
 const PORT_PATTERN = /^(0|[1-9]\d{0,4})$/;

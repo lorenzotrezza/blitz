@@ -200,6 +200,103 @@ test('finishes a drag sprint session when a driver reaches the fixed distance ta
   });
 });
 
+test('eliminates inactive and crashed drivers in survival mode until the last active racer wins', () => {
+  const finishedPayloads: SessionFinishedPayload[] = [];
+  let nowMs = 20_000;
+  const runtime = createDragSprintRuntime(
+    createLobby({
+      raceMode: LOBBY_RACE_MODES.survival,
+    }),
+    'session-drag-survival',
+    {
+      countdownMs: 0,
+      distanceTarget: 120,
+      now: () => nowMs,
+      onFinished(payload) {
+        finishedPayloads.push(payload);
+      },
+    },
+  );
+
+  function apply(
+    playerId: string,
+    tick: number,
+    steer: -1 | 0 | 1 = 0,
+    accelerate = true,
+    brake = false,
+  ) {
+    const nextState = runtime.applyInput(playerId, {
+      tick,
+      steer,
+      accelerate,
+      brake,
+    });
+
+    assert.ok(nextState);
+    return nextState;
+  }
+
+  const started = runtime.start();
+  const startedSnapshot = started.state as DragSprintSnapshot;
+
+  assert.equal(startedSnapshot.mode, LOBBY_RACE_MODES.survival);
+  assert.equal(startedSnapshot.status, RACE_STATUS.racing);
+
+  nowMs = 20_050;
+  apply('socket-host', 1, 0);
+  nowMs = 20_100;
+  apply('socket-guest', 1, -1);
+  nowMs = 20_150;
+  const timeoutState = apply('socket-host', 2, 0);
+
+  const timeoutSnapshot = timeoutState.state as DragSprintSnapshot;
+
+  assert.equal(timeoutSnapshot.playersState[2]?.status, 'eliminated');
+  assert.equal(timeoutSnapshot.playersState[2]?.distance, 0);
+
+  nowMs = 20_200;
+  apply('socket-guest', 2, 0);
+  nowMs = 20_250;
+  apply('socket-host', 3, 0);
+  nowMs = 20_300;
+  const finished = apply('socket-guest', 3, 0);
+
+  const finishedSnapshot = finished.state as DragSprintSnapshot;
+
+  assert.equal(finished.status, 'finished');
+  assert.equal(finishedSnapshot.status, RACE_STATUS.finished);
+  assert.equal(finishedSnapshot.playersState[0]?.status, 'finished');
+  assert.equal(finishedSnapshot.playersState[1]?.status, 'eliminated');
+  assert.equal(finishedSnapshot.playersState[1]?.distance, 36);
+  assert.equal(finishedPayloads.length, 1);
+  assert.deepEqual(finishedPayloads[0]?.results.rankings, [
+    {
+      playerId: 'socket-host',
+      rank: 1,
+      label: '0.3s',
+      value: 300,
+    },
+    {
+      playerId: 'socket-guest',
+      rank: 2,
+      label: '0.3s',
+      value: 300,
+    },
+    {
+      playerId: 'socket-third',
+      rank: 3,
+      label: '0.1s',
+      value: 150,
+    },
+  ]);
+  assert.deepEqual(finishedPayloads[0]?.results.summary, {
+    mode: LOBBY_RACE_MODES.survival,
+    track: 'drag-strip',
+    distanceTarget: 120,
+    winnerId: 'socket-host',
+  });
+});
+
 test('resets the strip across three best-of-3 manches and ranks ties by cumulative time', () => {
   const finishedPayloads: SessionFinishedPayload[] = [];
   let nowMs = 1_000;
