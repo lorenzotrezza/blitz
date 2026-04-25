@@ -56,7 +56,7 @@ export interface RaceAnalogVector {
   magnitude: number;
 }
 
-export interface RaceInputBase {
+export interface RaceInputBase extends Record<string, unknown> {
   kind: RaceGameInputKind;
   sequence: number;
   clientTimeMs: number;
@@ -206,7 +206,7 @@ export interface DragSprintSnapshot extends Record<string, unknown> {
   pickups: DragSprintPickupState[];
 }
 
-export interface PlayerInput {
+export interface PlayerInput extends Record<string, unknown> {
   tick: number;
   steer: SteeringInput;
   accelerate: boolean;

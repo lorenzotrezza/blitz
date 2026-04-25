@@ -397,6 +397,7 @@ test('exports discriminated race game input contract shapes', () => {
     brake: false,
   };
   const existingPayload: GameInputPayload = { reactionAtMs: 123 };
+  const legacyReactionAtMs: unknown = existingPayload.reactionAtMs;
 
   assert.equal(analogInput.kind, 'analog');
   assert.equal(analogInput.kind, analogKind);
@@ -412,6 +413,7 @@ test('exports discriminated race game input contract shapes', () => {
   assert.equal(actionInput.action, 'shift');
   assert.equal(actionInput.sequence, 3);
   assert.equal(legacyInput.steer, 1);
+  assert.equal(legacyReactionAtMs, 123);
   assert.deepEqual(existingPayload, { reactionAtMs: 123 });
 });
 
