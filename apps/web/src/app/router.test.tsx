@@ -18,32 +18,17 @@ describe('createAppRouter', () => {
     expect(screen.getByTitle(/subrata race club/i)).toBeInTheDocument();
   });
 
-  test('renders the 10bit hub at /hub with the real game entries', () => {
+  test('renders party mode entrypoints at /hub', () => {
     renderRoute('/hub');
 
-    expect(screen.getByRole('heading', { name: /hub minigiochi/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /scegli modalita/i })).toBeInTheDocument();
     expect(screen.getByText(/powered by idrocarburi/i)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /semaforo/i })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /singolo/i })).toHaveAttribute('href', '/hub/single');
+    expect(screen.getByRole('link', { name: /multiplayer/i })).toHaveAttribute(
       'href',
-      '/hub/minigames/lights',
+      '/hub/multiplayer',
     );
-    expect(screen.getByRole('link', { name: /rigori/i })).toHaveAttribute(
-      'href',
-      '/hub/minigames/penalty',
-    );
-    expect(screen.getByRole('link', { name: /allenamento libero/i })).toHaveAttribute(
-      'href',
-      '/practice',
-    );
-    expect(
-      screen
-        .getAllByRole('link', { name: /bot race/i })
-        .some((link) => link.getAttribute('href') === '/race/bot'),
-    ).toBe(true);
-    expect(screen.getByRole('link', { name: /lobby live/i })).toHaveAttribute(
-      'href',
-      '/lobby/new',
-    );
+    expect(screen.queryByRole('link', { name: /bot race/i })).not.toBeInTheDocument();
   });
 
   test('renders the lobby page with the route code at /lobby/ABCD12', () => {

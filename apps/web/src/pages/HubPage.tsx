@@ -2,29 +2,16 @@ import { Link } from 'react-router-dom';
 
 const hubCards = [
   {
-    title: 'Semaforo',
-    description: 'La partenza vera del vecchio club. Occhio al verde o Leclerc ti mangia vivo.',
-    to: '/hub/minigames/lights',
+    title: 'Singolo',
+    description:
+      'Scegli il gioco e vai subito in sessione locale: semaforo, rigori e la nuova famiglia corse.',
+    to: '/hub/single',
   },
   {
-    title: 'Rigori',
-    description: 'Tre tiri secchi contro SubrataPal. In porta resta convinto, non efficace.',
-    to: '/hub/minigames/penalty',
-  },
-  {
-    title: 'Allenamento Libero',
-    description: 'Giri da solo per sistemare il volante prima che il box apra davvero.',
-    to: '/practice',
-  },
-  {
-    title: 'Bot Race',
-    description: 'Griglia arcade con riempitivi digitali. Rumore vero, pieta zero.',
-    to: '/race/bot',
-  },
-  {
-    title: 'Lobby Live',
-    description: 'Passa il codice, riempi la griglia e porta gli amici nel casino autorizzato.',
-    to: '/lobby/new',
+    title: 'Multiplayer',
+    description:
+      'Apri o raggiungi una party lobby neutra al gioco e lascia all host la scelta della sessione.',
+    to: '/hub/multiplayer',
   },
 ];
 
@@ -32,14 +19,13 @@ export function HubPage() {
   return (
     <section className="panel hub-panel">
       <p className="eyebrow">Powered By Idrocarburi</p>
-      <h1>Hub Minigiochi</h1>
+      <h1>Scegli Modalita</h1>
       <p className="lede">
-        Il garage nuovo usa finalmente le destinazioni vere del club: semaforo, rigori,
-        allenamento, bot race e lobby live. Nessun guscio demo, nessuna voce finta, solo scorciatoie
-        pulite verso il caos legacy.
+        Blitz entra in party mode: prima decidi se giochi da solo o in lobby, poi scegli il gioco.
+        Bot mode esce dalla vetrina e la corsa smette di comandare tutta l app.
       </p>
       <p className="hub-signoff">
-        SubrataPal approved. No Tesla allowed. Tutti i giri riservati.
+        SubrataPal approved. Modalita prima del rumore. Tutti i giri riservati.
       </p>
       <div className="card-grid">
         {hubCards.map((card) => (

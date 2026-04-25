@@ -6,6 +6,7 @@ import { LandingPage } from '../pages/LandingPage';
 import { LobbyIndexPage, LobbyPage } from '../pages/LobbyPage';
 import { MinigameLightsPage } from '../pages/MinigameLightsPage';
 import { MinigamePenaltyPage } from '../pages/MinigamePenaltyPage';
+import { ModeSelectPage } from '../pages/ModeSelectPage';
 import { PracticePage } from '../pages/PracticePage';
 import { RacePage } from '../pages/RacePage';
 import { ResultsPage } from '../pages/ResultsPage';
@@ -35,8 +36,6 @@ function AppLayout() {
         <nav className="topnav" aria-label="Primary">
           <NavLink to="/">Home</NavLink>
           <NavLink to="/hub">Hub</NavLink>
-          <NavLink to="/practice">Allenamento</NavLink>
-          <NavLink to="/race/bot">Bot Race</NavLink>
         </nav>
       </header>
       <main className="viewport">
@@ -58,6 +57,14 @@ function buildRoutes() {
         {
           path: '/hub',
           element: <HubPage />,
+        },
+        {
+          path: '/hub/single',
+          element: <ModeSelectPage mode="single" />,
+        },
+        {
+          path: '/hub/multiplayer',
+          element: <ModeSelectPage mode="multiplayer" />,
         },
         {
           path: '/hub/minigames/lights',
