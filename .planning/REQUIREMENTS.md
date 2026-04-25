@@ -46,7 +46,7 @@
 
 ### Architecture And Verification
 
-- [ ] **ARCH-01**: Shared contracts define explicit input and snapshot shapes for each rebuilt race mode.
+- [x] **ARCH-01**: Shared contracts define explicit input and snapshot shapes for each rebuilt race mode.
 - [ ] **ARCH-02**: Server race rules are covered by deterministic tests for timing, collisions, checkpoints, penalties, and results.
 - [ ] **ARCH-03**: Web tests cover core route rendering, control availability, and mode-specific HUD copy.
 - [ ] **ARCH-04**: Root build/test commands pass before the milestone is considered complete.
@@ -103,7 +103,7 @@
 | FLOW-03 | Phase 6 | Pending |
 | FLOW-04 | Phase 6 | Pending |
 | FLOW-05 | Phase 6 | Pending |
-| ARCH-01 | Phase 1 | Pending |
+| ARCH-01 | Phase 1 | Complete |
 | ARCH-02 | Phase 2 | Pending |
 | ARCH-03 | Phase 6 | Pending |
 | ARCH-04 | Phase 6 | Pending |
