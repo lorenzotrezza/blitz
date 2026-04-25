@@ -37,7 +37,7 @@
 
 Plans:
 - [x] 01-01-PLAN.md — Shared race input and shell snapshot contracts
-- [ ] 01-02-PLAN.md — Reusable analog/action controls and keyboard fallback
+- [x] 01-02-PLAN.md — Reusable analog/action controls and keyboard fallback
 - [ ] 01-03-PLAN.md — Fullscreen shell, viewport, HUD, states, and gameplay CSS
 - [ ] 01-04-PLAN.md — Live race route integration and phase gate verification
 
