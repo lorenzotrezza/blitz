@@ -111,6 +111,77 @@ export interface RaceShellSnapshot extends Record<string, unknown> {
   mode: Record<string, unknown>;
 }
 
+export const DRAG_SHIFT_QUALITY = {
+  early: 'early',
+  good: 'good',
+  perfect: 'perfect',
+  late: 'late',
+} as const;
+
+export type DragShiftQuality =
+  (typeof DRAG_SHIFT_QUALITY)[keyof typeof DRAG_SHIFT_QUALITY];
+
+export interface DragShiftSummary {
+  early: number;
+  good: number;
+  perfect: number;
+  late: number;
+  total: number;
+}
+
+export interface DragShiftWindow {
+  goodMinRpm: number;
+  perfectMinRpm: number;
+  perfectMaxRpm: number;
+  goodMaxRpm: number;
+  redlineRpm: number;
+}
+
+export interface DragGearThrottleInput extends Record<string, unknown> {
+  kind: 'drag-throttle';
+  pressed: boolean;
+  sequence: number;
+  clientTimeMs: number;
+}
+
+export interface DragGearShiftInput extends Record<string, unknown> {
+  kind: 'drag-shift';
+  sequence: number;
+  clientTimeMs: number;
+}
+
+export type DragGearInput = DragGearThrottleInput | DragGearShiftInput;
+
+export interface DragGearPlayerState {
+  playerId: string;
+  nickname: string;
+  gear: number;
+  maxGear: number;
+  rpm: number;
+  speedKmh: number;
+  distanceM: number;
+  distanceTargetM: number;
+  throttlePressed: boolean;
+  lastShiftQuality: DragShiftQuality | null;
+  shiftSummary: DragShiftSummary;
+  finished: boolean;
+  finishTimeMs: number | null;
+  rank: number | null;
+}
+
+export interface DragGearSnapshot extends Record<string, unknown> {
+  sessionId: string;
+  lobbyCode: string;
+  trackId: string;
+  status: RaceStatus;
+  tick: number;
+  startedAt: number | null;
+  countdown: number | null;
+  distanceTargetM: number;
+  shiftWindow: DragShiftWindow;
+  playersState: DragGearPlayerState[];
+}
+
 export interface RaceEntrantState {
   nickname: string;
   x: number;
