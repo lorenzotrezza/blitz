@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom/vitest';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { RouterProvider } from 'react-router-dom';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
@@ -21,7 +21,7 @@ function renderRoute(initialEntry: string) {
   return render(<RouterProvider router={router} />);
 }
 
-function createLobbySnapshot(): LobbyState {
+function createLobbySnapshot(overrides: Partial<LobbyState> = {}): LobbyState {
   return {
     code: 'ABCD12',
     hostId: 'socket-host',
@@ -34,6 +34,7 @@ function createLobbySnapshot(): LobbyState {
       botCount: 0,
       maxPlayers: 8,
       rounds: 3,
+      ...overrides.settings,
     },
     players: [
       {
@@ -51,6 +52,7 @@ function createLobbySnapshot(): LobbyState {
         connectionState: PLAYER_CONNECTION_STATE.connected,
       },
     ],
+    ...overrides,
   };
 }
 
@@ -74,6 +76,7 @@ beforeEach(() => {
     toggleReady: vi.fn(),
     leave: vi.fn(),
     selectGame: vi.fn(),
+    updateSettings: vi.fn(),
     startSession: vi.fn(),
     kickPlayer: vi.fn(),
     copyInviteLink: vi.fn(),
@@ -117,6 +120,7 @@ describe('LobbyPage', () => {
       toggleReady: vi.fn(),
       leave: vi.fn(),
       selectGame: vi.fn(),
+      updateSettings: vi.fn(),
       startSession: vi.fn(),
       kickPlayer,
       copyInviteLink: vi.fn(),
@@ -137,5 +141,111 @@ describe('LobbyPage', () => {
     expect(screen.getByRole('button', { name: /copia invito/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /avvia sessione/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /kick subratapal/i })).toBeInTheDocument();
+  });
+
+  test('host can pick both race variants and drag sprint rulesets', () => {
+    const selectGame = vi.fn();
+    const updateSettings = vi.fn();
+
+    mockUseLobbySocket.mockReturnValue({
+      draft: {
+        nickname: 'Blitz',
+        carId: 'f812',
+      },
+      error: null,
+      isBusy: false,
+      isConnected: true,
+      isHost: true,
+      joinedLobby: createLobbySnapshot({
+        selectedVariant: 'drag-sprint',
+        settings: {
+          trackId: 'track-oval',
+          botCount: 0,
+          maxPlayers: 8,
+          rounds: 3,
+          raceMode: 'finish-line',
+        },
+      }),
+      me: {
+        id: 'socket-host',
+        nickname: 'Blitz',
+        carId: 'f812',
+        ready: true,
+        connectionState: PLAYER_CONNECTION_STATE.connected,
+      },
+      sessionStarted: null,
+      setNickname: vi.fn(),
+      setCarId: vi.fn(),
+      submit: vi.fn(),
+      toggleReady: vi.fn(),
+      leave: vi.fn(),
+      selectGame,
+      updateSettings,
+      startSession: vi.fn(),
+      kickPlayer: vi.fn(),
+      copyInviteLink: vi.fn(),
+      copiedInvite: false,
+    });
+
+    renderRoute('/lobby/ABCD12');
+
+    expect(screen.getByRole('button', { name: /sprint circuit/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /drag sprint/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /finish line/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /best of 3/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /survival/i })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /drag sprint/i }));
+    fireEvent.click(screen.getByRole('button', { name: /best of 3/i }));
+
+    expect(selectGame).toHaveBeenCalledWith('race', 'drag-sprint');
+    expect(updateSettings).toHaveBeenCalledWith({
+      raceMode: 'best-of-3',
+    });
+  });
+
+  test('host defaults drag sprint to finish line when no race mode is set', () => {
+    const selectGame = vi.fn();
+    const updateSettings = vi.fn();
+
+    mockUseLobbySocket.mockReturnValue({
+      draft: {
+        nickname: 'Blitz',
+        carId: 'f812',
+      },
+      error: null,
+      isBusy: false,
+      isConnected: true,
+      isHost: true,
+      joinedLobby: createLobbySnapshot(),
+      me: {
+        id: 'socket-host',
+        nickname: 'Blitz',
+        carId: 'f812',
+        ready: true,
+        connectionState: PLAYER_CONNECTION_STATE.connected,
+      },
+      sessionStarted: null,
+      setNickname: vi.fn(),
+      setCarId: vi.fn(),
+      submit: vi.fn(),
+      toggleReady: vi.fn(),
+      leave: vi.fn(),
+      selectGame,
+      updateSettings,
+      startSession: vi.fn(),
+      kickPlayer: vi.fn(),
+      copyInviteLink: vi.fn(),
+      copiedInvite: false,
+    });
+
+    renderRoute('/lobby/ABCD12');
+
+    fireEvent.click(screen.getByRole('button', { name: /drag sprint/i }));
+
+    expect(selectGame).toHaveBeenCalledWith('race', 'drag-sprint');
+    expect(updateSettings).toHaveBeenCalledWith({
+      raceMode: 'finish-line',
+    });
   });
 });

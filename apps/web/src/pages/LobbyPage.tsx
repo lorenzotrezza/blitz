@@ -17,6 +17,17 @@ const CAR_OPTIONS = [
   { value: 'nave', label: 'MSC Nave' },
 ];
 
+const RACE_VARIANTS = [
+  { value: 'sprint-circuit', label: 'Sprint Circuit' },
+  { value: 'drag-sprint', label: 'Drag Sprint' },
+] as const;
+
+const DRAG_SPRINT_MODES = [
+  { value: 'finish-line', label: 'Finish Line' },
+  { value: 'best-of-3', label: 'Best of 3' },
+  { value: 'survival', label: 'Survival' },
+] as const;
+
 function allDriversReady(lobby: LobbyState | null) {
   return Boolean(lobby && lobby.players.length > 0 && lobby.players.every((player) => player.ready));
 }
@@ -54,6 +65,7 @@ export function LobbyIndexPage() {
     toggleReady,
     leave,
     selectGame,
+    updateSettings,
     startSession,
     kickPlayer,
     copyInviteLink,
@@ -65,6 +77,8 @@ export function LobbyIndexPage() {
       readyToLaunch &&
       (joinedLobby.selectedGame !== 'race' || joinedLobby.selectedVariant),
   );
+  const selectedRaceMode =
+    typeof joinedLobby?.settings.raceMode === 'string' ? joinedLobby.settings.raceMode : null;
 
   useEffect(() => {
     if (isCreateRoute && joinedLobby?.code && joinedLobby.code !== 'NEW') {
@@ -167,16 +181,48 @@ export function LobbyIndexPage() {
                 </button>
               </div>
               {joinedLobby.selectedGame === 'race' ? (
-                <div className="action-row">
-                  <button
-                    className={`button ${joinedLobby.selectedVariant === 'sprint-circuit' ? 'button-primary' : 'button-secondary'}`}
-                    type="button"
-                    disabled={!isHost || isBusy}
-                    onClick={() => selectGame('race', 'sprint-circuit')}
-                  >
-                    Sprint Circuit
-                  </button>
-                </div>
+                <>
+                  <div className="action-row">
+                    {RACE_VARIANTS.map((variant) => (
+                      <button
+                        key={variant.value}
+                        className={`button ${joinedLobby.selectedVariant === variant.value ? 'button-primary' : 'button-secondary'}`}
+                        type="button"
+                        disabled={!isHost || isBusy}
+                        onClick={() => {
+                          selectGame('race', variant.value);
+
+                          if (variant.value === 'drag-sprint' && !selectedRaceMode) {
+                            updateSettings({
+                              raceMode: 'finish-line',
+                            });
+                          }
+                        }}
+                      >
+                        {variant.label}
+                      </button>
+                    ))}
+                  </div>
+                  {joinedLobby.selectedVariant === 'drag-sprint' ? (
+                    <div className="action-row">
+                      {DRAG_SPRINT_MODES.map((mode) => (
+                        <button
+                          key={mode.value}
+                          className={`button ${selectedRaceMode === mode.value ? 'button-primary' : 'button-secondary'}`}
+                          type="button"
+                          disabled={!isHost || isBusy}
+                          onClick={() =>
+                            updateSettings({
+                              raceMode: mode.value,
+                            })
+                          }
+                        >
+                          {mode.label}
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+                </>
               ) : null}
             </>
           ) : (

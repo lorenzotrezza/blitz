@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import type { LobbyState, PlayerInfo, SessionStartedPayload } from '@blitz/shared';
+import type {
+  LobbySettings,
+  LobbyState,
+  PlayerInfo,
+  SessionStartedPayload,
+} from '@blitz/shared';
 import { SOCKET_EVENTS } from '@blitz/shared';
 
 import { getBlitzSocket } from './socket';
@@ -26,6 +31,7 @@ export interface LobbySocketState {
   toggleReady: () => void;
   leave: () => void;
   selectGame: (game: LobbyState['selectedGame'], variant: LobbyState['selectedVariant']) => void;
+  updateSettings: (settings: Partial<LobbySettings>) => void;
   startSession: () => void;
   kickPlayer: (playerId: string) => void;
   copyInviteLink: () => Promise<void>;
@@ -259,6 +265,17 @@ export function useLobbySocket(lobbyCode: string): LobbySocketState {
         code: joinedLobby.code,
         game,
         variant,
+      });
+    },
+    updateSettings(settings) {
+      if (!joinedLobby || !isHost) {
+        return;
+      }
+
+      setIsBusy(true);
+      socket.emit(SOCKET_EVENTS.client.updateLobbySettings, {
+        code: joinedLobby.code,
+        settings,
       });
     },
     startSession() {

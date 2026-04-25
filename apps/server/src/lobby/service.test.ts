@@ -132,6 +132,34 @@ test('host can update neutral lobby settings before the session starts', () => {
   assert.equal(updatedLobby.settings.rounds, 3);
 });
 
+test('host can persist drag sprint race mode settings in the neutral lobby', () => {
+  const service = createService();
+  const lobby = service.createLobby({
+    playerId: 'socket-host',
+    nickname: 'Host',
+    carId: 'car-red',
+  });
+
+  const raceLobby = service.selectGame({
+    code: lobby.code,
+    hostId: 'socket-host',
+    game: 'race',
+    variant: 'drag-sprint',
+  });
+
+  const updatedLobby = service.updateSettings({
+    code: raceLobby.code,
+    hostId: 'socket-host',
+    settings: {
+      raceMode: 'best-of-3',
+    },
+  });
+
+  assert.equal(updatedLobby.selectedGame, 'race');
+  assert.equal(updatedLobby.selectedVariant, 'drag-sprint');
+  assert.equal(updatedLobby.settings.raceMode, 'best-of-3');
+});
+
 test('host can kick a non-host player from the lobby', () => {
   const service = createService();
   const lobby = service.createLobby({
