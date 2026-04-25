@@ -158,13 +158,6 @@ describe('LobbyPage', () => {
       isHost: true,
       joinedLobby: createLobbySnapshot({
         selectedVariant: 'drag-sprint',
-        settings: {
-          trackId: 'track-oval',
-          botCount: 0,
-          maxPlayers: 8,
-          rounds: 3,
-          raceMode: 'finish-line',
-        },
       }),
       me: {
         id: 'socket-host',
@@ -202,49 +195,7 @@ describe('LobbyPage', () => {
     expect(updateSettings).toHaveBeenCalledWith({
       raceMode: 'best-of-3',
     });
-  });
-
-  test('host defaults drag sprint to finish line when no race mode is set', () => {
-    const selectGame = vi.fn();
-    const updateSettings = vi.fn();
-
-    mockUseLobbySocket.mockReturnValue({
-      draft: {
-        nickname: 'Blitz',
-        carId: 'f812',
-      },
-      error: null,
-      isBusy: false,
-      isConnected: true,
-      isHost: true,
-      joinedLobby: createLobbySnapshot(),
-      me: {
-        id: 'socket-host',
-        nickname: 'Blitz',
-        carId: 'f812',
-        ready: true,
-        connectionState: PLAYER_CONNECTION_STATE.connected,
-      },
-      sessionStarted: null,
-      setNickname: vi.fn(),
-      setCarId: vi.fn(),
-      submit: vi.fn(),
-      toggleReady: vi.fn(),
-      leave: vi.fn(),
-      selectGame,
-      updateSettings,
-      startSession: vi.fn(),
-      kickPlayer: vi.fn(),
-      copyInviteLink: vi.fn(),
-      copiedInvite: false,
-    });
-
-    renderRoute('/lobby/ABCD12');
-
-    fireEvent.click(screen.getByRole('button', { name: /drag sprint/i }));
-
-    expect(selectGame).toHaveBeenCalledWith('race', 'drag-sprint');
-    expect(updateSettings).toHaveBeenCalledWith({
+    expect(updateSettings).not.toHaveBeenCalledWith({
       raceMode: 'finish-line',
     });
   });

@@ -189,15 +189,7 @@ export function LobbyIndexPage() {
                         className={`button ${joinedLobby.selectedVariant === variant.value ? 'button-primary' : 'button-secondary'}`}
                         type="button"
                         disabled={!isHost || isBusy}
-                        onClick={() => {
-                          selectGame('race', variant.value);
-
-                          if (variant.value === 'drag-sprint' && !selectedRaceMode) {
-                            updateSettings({
-                              raceMode: 'finish-line',
-                            });
-                          }
-                        }}
+                        onClick={() => selectGame('race', variant.value)}
                       >
                         {variant.label}
                       </button>
