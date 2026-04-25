@@ -42,6 +42,53 @@ export interface RaceSnapshot extends Record<string, unknown> {
   botsState: RaceBotState[];
 }
 
+export type DragSprintMode = 'finish-line' | 'best-of-3' | 'survival';
+
+export type DragSprintPowerUpType = 'nitro' | 'shield' | 'magnet' | 'repair';
+
+export type DragSprintObstacleType = 'cone' | 'oil' | 'slow-car' | 'construction';
+
+export interface DragSprintPlayerState {
+  playerId: string;
+  nickname: string;
+  lane: 0 | 1 | 2;
+  distance: number;
+  speed: number;
+  finished: boolean;
+  eliminated: boolean;
+  activePowerUp: DragSprintPowerUpType | null;
+}
+
+export interface DragSprintObstacleState {
+  id: string;
+  type: DragSprintObstacleType;
+  lane: 0 | 1 | 2;
+  distance: number;
+  speed: number;
+}
+
+export interface DragSprintPickupState {
+  id: string;
+  type: DragSprintPowerUpType;
+  lane: 0 | 1 | 2;
+  distance: number;
+}
+
+export interface DragSprintSnapshot extends Record<string, unknown> {
+  sessionId: string;
+  lobbyCode: string;
+  trackId: string;
+  mode: DragSprintMode;
+  status: RaceStatus;
+  tick: number;
+  startedAt: number | null;
+  countdown: number | null;
+  distanceTarget: number | null;
+  playersState: DragSprintPlayerState[];
+  obstacles: DragSprintObstacleState[];
+  pickups: DragSprintPickupState[];
+}
+
 export interface PlayerInput {
   tick: number;
   steer: SteeringInput;

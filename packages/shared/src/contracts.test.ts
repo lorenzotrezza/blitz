@@ -13,6 +13,7 @@ import {
 } from './index.js';
 import type {
   ClientToServerEvents,
+  DragSprintSnapshot,
   LobbyState,
   PartyLobbyState,
   PlayerInfo,
@@ -147,6 +148,26 @@ test('exports the expected race snapshot shape', () => {
   assert.equal(snapshot.botsState[0]?.botId, 'bot-1');
   assert.equal(snapshot.playersState[0]?.progress, 0.54);
   assert.equal('playerId' in snapshot.botsState[0]!, false);
+});
+
+test('exports the expected drag sprint snapshot shape', () => {
+  const snapshot: DragSprintSnapshot = {
+    sessionId: 'session-drag',
+    lobbyCode: 'ABCD12',
+    trackId: 'drag-strip',
+    mode: 'finish-line',
+    status: RACE_STATUS.racing,
+    tick: 12,
+    countdown: 0,
+    startedAt: 1_713_980_000_000,
+    distanceTarget: 1200,
+    playersState: [],
+    obstacles: [],
+    pickups: [],
+  };
+
+  assert.equal(snapshot.mode, 'finish-line');
+  assert.equal(snapshot.trackId, 'drag-strip');
 });
 
 test('keeps host ownership in lobby state rather than duplicating it in player info', () => {
