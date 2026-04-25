@@ -13,7 +13,8 @@ See: `.planning/PROJECT.md` (updated 2026-04-25)
 - Brownfield codebase map exists in `.planning/codebase/`.
 - Requirements defined in `.planning/REQUIREMENTS.md`.
 - Roadmap defined in `.planning/ROADMAP.md`.
-- Next recommended command: `$gsd-discuss-phase 1`
+- Phase 1 discussion completed in `.planning/phases/01-fullscreen-game-shell-and-input-foundation/1-CONTEXT.md`.
+- Next recommended command: `$gsd-ui-phase 1`
 
 ## Active Phase
 
@@ -21,7 +22,7 @@ See: `.planning/PROJECT.md` (updated 2026-04-25)
 |-------|-------|
 | Phase | 1 |
 | Name | Fullscreen Game Shell And Input Foundation |
-| Status | Not started |
+| Status | Discussed; ready for UI design |
 | UI hint | yes |
 
 ## Quick Tasks Completed
@@ -37,6 +38,7 @@ See: `.planning/PROJECT.md` (updated 2026-04-25)
 - Server remains authoritative for gameplay state.
 - The race catalog must contain mechanically distinct modes, not renamed copies.
 - Phase 1 should solve controls and fullscreen layout before individual game modes.
+- Phase 1 locked decisions are recorded in `1-CONTEXT.md`: fullscreen gameplay route, landscape-first phone target, two-thumb controls, reusable analog/action primitives, minimal readable HUD, desktop fallback, and discriminated shared contracts.
 
 ## Open Risks
 
