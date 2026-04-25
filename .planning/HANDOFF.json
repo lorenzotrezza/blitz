@@ -1,0 +1,103 @@
+{
+  "version": "1.0",
+  "timestamp": "2026-04-25T03:36:51.374Z",
+  "phase": null,
+  "phase_name": null,
+  "phase_dir": null,
+  "plan": "docs/plans/2026-04-25-blitz-drag-sprint-implementation.md",
+  "task": 3,
+  "total_tasks": 8,
+  "status": "paused",
+  "completed_tasks": [
+    {
+      "id": 1,
+      "name": "Add shared Drag Sprint contracts and shape tests",
+      "status": "done",
+      "commit": "cd0a414"
+    },
+    {
+      "id": 2,
+      "name": "Expose Drag Sprint and its rulesets in the neutral lobby",
+      "status": "done",
+      "commit": "023d63d"
+    },
+    {
+      "id": 3,
+      "name": "Add the base server runtime for Drag Sprint finish-line play",
+      "status": "in_progress",
+      "progress": "Partial uncommitted implementation exists: runtime file and tests created, registry wired, lobby/server startability made raceMode-aware so drag-sprint is startable only for finish-line. No Task 3 commit yet and no final spec/quality review was run."
+    }
+  ],
+  "remaining_tasks": [
+    {
+      "id": 4,
+      "name": "Extend the runtime with Best of 3",
+      "status": "not_started"
+    },
+    {
+      "id": 5,
+      "name": "Extend the runtime with Survival",
+      "status": "not_started"
+    },
+    {
+      "id": 6,
+      "name": "Build the Drag Sprint session page and route wiring",
+      "status": "not_started"
+    },
+    {
+      "id": 7,
+      "name": "Common results integration for Drag Sprint",
+      "status": "not_started"
+    },
+    {
+      "id": 8,
+      "name": "Final regression and platform verification",
+      "status": "not_started"
+    }
+  ],
+  "blockers": [
+    {
+      "description": "Task 3 is paused mid-implementation with unverified working tree changes. The new drag sprint runtime and supporting startability edits must be reviewed and tested before any further task work.",
+      "type": "technical",
+      "workaround": "Inspect the current diff, run the targeted Task 3 tests first, then complete spec review and code-quality review before proceeding."
+    }
+  ],
+  "human_actions_pending": [],
+  "decisions": [
+    {
+      "decision": "Keep Sprint Circuit and add Drag Sprint as a second Corse variant",
+      "rationale": "User explicitly wanted the new straight-road race as a variant, not a replacement."
+    },
+    {
+      "decision": "Drag Sprint is lane-based head-to-head on a fixed straight road",
+      "rationale": "Approved design: 3 fixed lanes, no random track tilt, clearer party-game readability."
+    },
+    {
+      "decision": "Support three host-selectable Drag Sprint modes: finish-line, best-of-3, survival",
+      "rationale": "User explicitly requested all three modes."
+    },
+    {
+      "decision": "For Task 3 only, make Drag Sprint startable exclusively in finish-line mode",
+      "rationale": "Best-of-3 and survival are future tasks; current branch needed a raceMode-aware gate instead of the temporary game+variant-only helper from Task 2."
+    },
+    {
+      "decision": "Do not work on the lobby server-offline fix in this stream",
+      "rationale": "User explicitly deferred that issue and asked to concentrate on the rest of the plan."
+    }
+  ],
+  "uncommitted_files": [
+    "apps/server/src/games/registry.test.ts",
+    "apps/server/src/games/registry.ts",
+    "apps/server/src/socket/register.test.ts",
+    "apps/server/src/socket/register.ts",
+    "apps/web/src/pages/LobbyPage.test.tsx",
+    "apps/web/src/pages/LobbyPage.tsx",
+    "packages/shared/src/contracts.test.ts",
+    "packages/shared/src/lobby.ts",
+    "apps/server/src/games/race/dragSprint.ts",
+    "apps/server/src/games/race/dragSprint.test.ts",
+    "pnpm-lock.yaml"
+  ],
+  "next_action": "Resume Task 3 by reviewing the partial Drag Sprint runtime diff, running the targeted server/shared/web tests, fixing any failures, then completing spec review and code-quality review before committing Task 3.",
+  "context_notes": "Execution is using subagent-driven-development. Task 1 and Task 2 are fully closed. Task 3 was delegated to a fresh implementer subagent, but the user requested pause before the agent reported back. The subagent was stopped; its partial edits are now in the main worktree. No final verification has been claimed for Task 3."
+}
