@@ -13,7 +13,14 @@ import {
 } from './index.js';
 import type {
   ClientToServerEvents,
+  DragSprintLane,
   DragSprintMode,
+  DragSprintObstacleState,
+  DragSprintObstacleType,
+  DragSprintPickupState,
+  DragSprintPlayerState,
+  DragSprintPlayerStatus,
+  DragSprintPowerUpType,
   DragSprintSnapshot,
   LobbyState,
   PartyLobbyState,
@@ -153,6 +160,41 @@ test('exports the expected race snapshot shape', () => {
 
 test('exports the expected drag sprint snapshot shape', () => {
   const mode: DragSprintMode = 'finish-line';
+  const bestOf3Mode: DragSprintMode = 'best-of-3';
+  const survivalMode: DragSprintMode = 'survival';
+  const leftLane: DragSprintLane = 0;
+  const centerLane: DragSprintLane = 1;
+  const rightLane: DragSprintLane = 2;
+  const nitro: DragSprintPowerUpType = 'nitro';
+  const shield: DragSprintPowerUpType = 'shield';
+  const repair: DragSprintPowerUpType = 'repair';
+  const construction: DragSprintObstacleType = 'construction';
+  const cone: DragSprintObstacleType = 'cone';
+  const racingStatus: DragSprintPlayerStatus = 'racing';
+  const finishedStatus: DragSprintPlayerStatus = 'finished';
+  const eliminatedStatus: DragSprintPlayerStatus = 'eliminated';
+  const playerState: DragSprintPlayerState = {
+    playerId: 'player-1',
+    nickname: 'Host',
+    lane: centerLane,
+    distance: 420,
+    speed: 18,
+    status: racingStatus,
+    activePowerUp: nitro,
+  };
+  const obstacleState: DragSprintObstacleState = {
+    id: 'obstacle-1',
+    type: construction,
+    lane: rightLane,
+    distance: 560,
+    speed: 4,
+  };
+  const pickupState: DragSprintPickupState = {
+    id: 'pickup-1',
+    type: shield,
+    lane: leftLane,
+    distance: 610,
+  };
   const snapshot: DragSprintSnapshot = {
     sessionId: 'session-drag',
     lobbyCode: 'ABCD12',
@@ -163,43 +205,28 @@ test('exports the expected drag sprint snapshot shape', () => {
     countdown: 0,
     startedAt: 1_713_980_000_000,
     distanceTarget: 1200,
-    playersState: [
-      {
-        playerId: 'player-1',
-        nickname: 'Host',
-        lane: 1,
-        distance: 420,
-        speed: 18,
-        status: 'racing',
-        activePowerUp: 'nitro',
-      },
-    ],
-    obstacles: [
-      {
-        id: 'obstacle-1',
-        type: 'construction',
-        lane: 2,
-        distance: 560,
-        speed: 4,
-      },
-    ],
-    pickups: [
-      {
-        id: 'pickup-1',
-        type: 'shield',
-        lane: 0,
-        distance: 610,
-      },
-    ],
+    playersState: [playerState],
+    obstacles: [obstacleState],
+    pickups: [pickupState],
   };
 
   assert.equal(mode, 'finish-line');
+  assert.equal(bestOf3Mode, 'best-of-3');
+  assert.equal(survivalMode, 'survival');
+  assert.equal(leftLane, 0);
+  assert.equal(centerLane, 1);
+  assert.equal(rightLane, 2);
+  assert.equal(nitro, 'nitro');
+  assert.equal(repair, 'repair');
+  assert.equal(cone, 'cone');
+  assert.equal(finishedStatus, 'finished');
+  assert.equal(eliminatedStatus, 'eliminated');
   assert.equal(snapshot.mode, 'finish-line');
   assert.equal(snapshot.trackId, 'drag-strip');
-  assert.equal(snapshot.playersState[0]?.status, 'racing');
-  assert.equal(snapshot.playersState[0]?.lane, 1);
-  assert.equal(snapshot.obstacles[0]?.type, 'construction');
-  assert.equal(snapshot.pickups[0]?.type, 'shield');
+  assert.equal(snapshot.playersState[0]?.status, racingStatus);
+  assert.equal(snapshot.playersState[0]?.lane, centerLane);
+  assert.equal(snapshot.obstacles[0]?.type, construction);
+  assert.equal(snapshot.pickups[0]?.type, shield);
 });
 
 test('keeps host ownership in lobby state rather than duplicating it in player info', () => {
