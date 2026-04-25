@@ -44,7 +44,7 @@ function normalizeLobbyCode(value: string) {
   return value.trim().toUpperCase();
 }
 
-function readPersistedLobby(code: string): LobbyState | null {
+export function readStoredActiveLobby(): LobbyState | null {
   if (typeof window === 'undefined') {
     return null;
   }
@@ -58,13 +58,19 @@ function readPersistedLobby(code: string): LobbyState | null {
   try {
     const parsed = JSON.parse(raw) as LobbyState;
 
-    return parsed.code === code ? parsed : null;
+    return parsed;
   } catch {
     return null;
   }
 }
 
-function persistLobby(lobby: LobbyState | null): void {
+function readPersistedLobby(code: string): LobbyState | null {
+  const storedLobby = readStoredActiveLobby();
+
+  return storedLobby?.code === code ? storedLobby : null;
+}
+
+export function persistActiveLobby(lobby: LobbyState | null): void {
   if (typeof window === 'undefined') {
     return;
   }
@@ -128,7 +134,7 @@ export function useLobbySocket(lobbyCode: string): LobbySocketState {
       }
 
       setJoinedLobby(payload);
-      persistLobby(payload);
+      persistActiveLobby(payload);
       setIsBusy(false);
       setError(null);
     };
@@ -241,7 +247,7 @@ export function useLobbySocket(lobbyCode: string): LobbySocketState {
       setSessionStarted(null);
       setIsBusy(false);
       setCopiedInvite(false);
-      persistLobby(null);
+      persistActiveLobby(null);
     },
     selectGame(game, variant) {
       if (!joinedLobby || !isHost) {

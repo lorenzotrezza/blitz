@@ -3,6 +3,7 @@ import { Outlet, useNavigate, useParams } from 'react-router-dom';
 
 import { type LobbyState } from '@blitz/shared';
 
+import { resolveSessionRoute } from '../lib/sessionRoutes';
 import { useLobbySocket } from '../lib/useLobbySocket';
 
 export function LobbyPage() {
@@ -73,14 +74,7 @@ export function LobbyIndexPage() {
 
   useEffect(() => {
     if (sessionStarted) {
-      const target =
-        sessionStarted.game === 'lights'
-          ? `/session/lights/${sessionStarted.sessionId}`
-          : sessionStarted.game === 'penalty'
-            ? `/session/penalty/${sessionStarted.sessionId}`
-            : `/race/live/${sessionStarted.sessionId}`;
-
-      navigate(target, {
+      navigate(resolveSessionRoute(sessionStarted), {
         replace: true,
         state: sessionStarted,
       });

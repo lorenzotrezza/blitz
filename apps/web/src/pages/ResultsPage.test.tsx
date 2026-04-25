@@ -1,11 +1,19 @@
 import '@testing-library/jest-dom/vitest';
 import { render, screen } from '@testing-library/react';
 import { RouterProvider } from 'react-router-dom';
-import { describe, expect, test } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import type { SessionFinishedPayload } from '@blitz/shared';
 
 import { createAppRouter } from '../app/router';
+
+const { mockUsePostGameActions } = vi.hoisted(() => ({
+  mockUsePostGameActions: vi.fn(),
+}));
+
+vi.mock('../lib/usePostGameActions', () => ({
+  usePostGameActions: mockUsePostGameActions,
+}));
 
 function renderRoute(initialEntry: string, state?: unknown) {
   const router = createAppRouter({
@@ -48,13 +56,53 @@ function createFinishedPayload(): SessionFinishedPayload {
   };
 }
 
+beforeEach(() => {
+  mockUsePostGameActions.mockReset();
+  mockUsePostGameActions.mockReturnValue({
+    isConnected: true,
+    lobby: {
+      code: 'ABCD12',
+      hostId: 'socket-host',
+      players: [],
+    },
+    isHost: true,
+    pendingAction: null,
+    postGameUpdate: null,
+    sessionStarted: null,
+    submitAction: vi.fn(),
+  });
+});
+
 describe('ResultsPage', () => {
-  test('renders shared rankings from the finished session payload', () => {
+  test('renders shared rankings and host-only post-game actions', () => {
     renderRoute('/results/session-1', createFinishedPayload());
 
     expect(screen.getByRole('heading', { name: /risultati finali/i })).toBeInTheDocument();
     expect(screen.getByText(/socket-host/i)).toBeInTheDocument();
     expect(screen.getByText(/182 ms media/i)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /torna all hub/i })).toHaveAttribute('href', '/hub');
+    expect(screen.getByRole('button', { name: /rigioca/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /torna alla lobby/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /cambia gioco/i })).toBeInTheDocument();
+  });
+
+  test('shows a waiting state instead of host controls for non-host players', () => {
+    mockUsePostGameActions.mockReturnValue({
+      isConnected: true,
+      lobby: {
+        code: 'ABCD12',
+        hostId: 'socket-host',
+        players: [],
+      },
+      isHost: false,
+      pendingAction: null,
+      postGameUpdate: null,
+      sessionStarted: null,
+      submitAction: vi.fn(),
+    });
+
+    renderRoute('/results/session-1', createFinishedPayload());
+
+    expect(screen.getByText(/in attesa della decisione host/i)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /rigioca/i })).not.toBeInTheDocument();
   });
 });

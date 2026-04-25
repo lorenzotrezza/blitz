@@ -6,6 +6,7 @@ import {
   SOCKET_EVENTS,
   ClientToServerEvents,
   GameSessionEnvelope,
+  type PostGameActionPayload,
   type LobbyErrorPayload,
   type LobbyState,
   SessionFinishedPayload,
@@ -136,6 +137,37 @@ export function registerSockets(
     io.to(lobby.code).emit(SOCKET_EVENTS.server.sessionStarted, startedPayload);
   }
 
+  function emitPostGameUpdate(payload: PostGameActionPayload, lobby: LobbyState) {
+    io.to(lobby.code).emit(SOCKET_EVENTS.server.postGameUpdated, {
+      action: payload.action,
+      lobby,
+    });
+  }
+
+  async function applyPostGameAction(payload: PostGameActionPayload, playerId: string) {
+    const lobby = lobbyService.getLobby(payload.code);
+
+    if (!lobby) {
+      throw new LobbyServiceError('lobby-not-found', 'Lobby not found');
+    }
+
+    if (lobby.hostId !== playerId) {
+      throw new LobbyServiceError('player-not-host', 'Only the host can control the next step');
+    }
+
+    if (payload.action === 'rematch') {
+      await startSession(lobby.code, playerId);
+      return;
+    }
+
+    const waitingLobby = lobbyService.setStatus({
+      code: lobby.code,
+      status: LOBBY_STATUS.waiting,
+    });
+    emitLobbySnapshot(io, waitingLobby);
+    emitPostGameUpdate(payload, waitingLobby);
+  }
+
   io.on('connection', (socket) => {
     socket.on(SOCKET_EVENTS.client.createLobby, async (payload) => {
       await handleLobbyMutation(socket, async () => {
@@ -231,6 +263,12 @@ export function registerSockets(
     socket.on(SOCKET_EVENTS.client.startSession, async (payload) => {
       await handleLobbyMutation(socket, async () => {
         await startSession(payload.code, socket.id);
+      });
+    });
+
+    socket.on(SOCKET_EVENTS.client.postGameAction, async (payload) => {
+      await handleLobbyMutation(socket, async () => {
+        await applyPostGameAction(payload, socket.id);
       });
     });
 

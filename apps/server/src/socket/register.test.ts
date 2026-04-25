@@ -3,6 +3,7 @@ import { createServer as createHttpServer } from 'node:http';
 import test from 'node:test';
 
 import {
+  LOBBY_STATUS,
   SOCKET_EVENTS,
   type LobbyErrorPayload,
   type LobbyState,
@@ -279,6 +280,120 @@ test('registerSockets starts a neutral session for the selected game in a ready 
     assert.equal(
       (startedEvent?.payload as { game: string }).game,
       'penalty',
+    );
+  } finally {
+    io.close();
+  }
+});
+
+test('registerSockets returns the room to the lobby when the host chooses return-to-lobby', async () => {
+  const httpServer = createHttpServer();
+  const lobbyService = createLobbyService({
+    generateLobbyCode: () => 'ABCD12',
+  });
+  const io = registerSockets(
+    httpServer,
+    { socketCorsOrigin: '*' },
+    {
+      lobbyService,
+    },
+  );
+  const { roomEmits, install } = captureRoomBroadcasts();
+  install(io as unknown as { to: (room: string) => { emit: (event: string, payload: unknown) => void } });
+
+  try {
+    const connectionHandler = getConnectionHandler(io);
+    const host = createFakeSocket('socket-host');
+    const guest = createFakeSocket('socket-guest');
+
+    connectionHandler(host.socket);
+    connectionHandler(guest.socket);
+
+    await host.trigger(SOCKET_EVENTS.client.createLobby, {
+      nickname: 'Host',
+      carId: 'car-red',
+    });
+    await guest.trigger(SOCKET_EVENTS.client.joinLobby, {
+      code: 'ABCD12',
+      nickname: 'Guest',
+      carId: 'car-blue',
+    });
+
+    lobbyService.setStatus({
+      code: 'ABCD12',
+      status: LOBBY_STATUS.results,
+    });
+    roomEmits.length = 0;
+
+    await host.trigger(SOCKET_EVENTS.client.postGameAction, {
+      code: 'ABCD12',
+      action: 'return-to-lobby',
+    });
+
+    const lobbyUpdate = roomEmits.find((entry) => entry.event === SOCKET_EVENTS.server.lobbyUpdated);
+    const postGameUpdate = roomEmits.find((entry) => entry.event === SOCKET_EVENTS.server.postGameUpdated);
+
+    assert.equal((lobbyUpdate?.payload as LobbyState).status, LOBBY_STATUS.waiting);
+    assert.equal((postGameUpdate?.payload as { action: string }).action, 'return-to-lobby');
+  } finally {
+    io.close();
+  }
+});
+
+test('registerSockets starts a rematch session when the host chooses rigioca', async () => {
+  const httpServer = createHttpServer();
+  const lobbyService = createLobbyService({
+    generateLobbyCode: () => 'ABCD12',
+  });
+  const io = registerSockets(
+    httpServer,
+    { socketCorsOrigin: '*' },
+    {
+      lobbyService,
+    },
+  );
+  const { roomEmits, install } = captureRoomBroadcasts();
+  install(io as unknown as { to: (room: string) => { emit: (event: string, payload: unknown) => void } });
+
+  try {
+    const connectionHandler = getConnectionHandler(io);
+    const host = createFakeSocket('socket-host');
+    const guest = createFakeSocket('socket-guest');
+
+    connectionHandler(host.socket);
+    connectionHandler(guest.socket);
+
+    await host.trigger(SOCKET_EVENTS.client.createLobby, {
+      nickname: 'Host',
+      carId: 'car-red',
+    });
+    await guest.trigger(SOCKET_EVENTS.client.joinLobby, {
+      code: 'ABCD12',
+      nickname: 'Guest',
+      carId: 'car-blue',
+    });
+    await host.trigger(SOCKET_EVENTS.client.selectGame, {
+      code: 'ABCD12',
+      game: 'lights',
+      variant: null,
+    });
+    await host.trigger(SOCKET_EVENTS.client.setReady, { ready: true });
+    await guest.trigger(SOCKET_EVENTS.client.setReady, { ready: true });
+
+    lobbyService.setStatus({
+      code: 'ABCD12',
+      status: LOBBY_STATUS.results,
+    });
+    roomEmits.length = 0;
+
+    await host.trigger(SOCKET_EVENTS.client.postGameAction, {
+      code: 'ABCD12',
+      action: 'rematch',
+    });
+
+    assert.equal(
+      roomEmits.some((entry) => entry.event === SOCKET_EVENTS.server.sessionStarted),
+      true,
     );
   } finally {
     io.close();

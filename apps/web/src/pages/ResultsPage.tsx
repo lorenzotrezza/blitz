@@ -1,6 +1,10 @@
-import { Link, useLocation, useParams } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import type { RaceFinishedPayload, SessionFinishedPayload } from '@blitz/shared';
+
+import { resolveSessionRoute } from '../lib/sessionRoutes';
+import { usePostGameActions } from '../lib/usePostGameActions';
 
 function formatFinishTime(finishTimeMs: number | null) {
   if (finishTimeMs === null) {
@@ -53,6 +57,7 @@ function readLobbyRoster() {
 
 export function ResultsPage() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { sessionId = 'pending' } = useParams();
   const locationPayload =
     (location.state as SessionFinishedPayload | RaceFinishedPayload | null) ?? null;
@@ -64,6 +69,27 @@ export function ResultsPage() {
         : null),
   );
   const roster = readLobbyRoster();
+  const { lobby, isHost, pendingAction, postGameUpdate, sessionStarted, submitAction } =
+    usePostGameActions(payload?.lobbyCode ?? null);
+
+  useEffect(() => {
+    if (!postGameUpdate?.lobby.code) {
+      return;
+    }
+
+    navigate(`/lobby/${postGameUpdate.lobby.code}`, { replace: true });
+  }, [navigate, postGameUpdate]);
+
+  useEffect(() => {
+    if (!sessionStarted) {
+      return;
+    }
+
+    navigate(resolveSessionRoute(sessionStarted), {
+      replace: true,
+      state: sessionStarted,
+    });
+  }, [navigate, sessionStarted]);
 
   return (
     <section className="panel results-panel">
@@ -94,11 +120,38 @@ export function ResultsPage() {
       )}
 
       <div className="action-row">
-        <Link className="button button-primary" to="/hub">
+        {isHost && lobby ? (
+          <>
+            <button
+              className="button button-primary"
+              type="button"
+              disabled={pendingAction !== null}
+              onClick={() => submitAction('rematch')}
+            >
+              {pendingAction === 'rematch' ? 'Rigioca...' : 'Rigioca'}
+            </button>
+            <button
+              className="button button-secondary"
+              type="button"
+              disabled={pendingAction !== null}
+              onClick={() => submitAction('return-to-lobby')}
+            >
+              Torna alla Lobby
+            </button>
+            <button
+              className="button button-secondary"
+              type="button"
+              disabled={pendingAction !== null}
+              onClick={() => submitAction('change-game')}
+            >
+              Cambia Gioco
+            </button>
+          </>
+        ) : lobby ? (
+          <p className="lobby-meta">In attesa della decisione host per il prossimo giro.</p>
+        ) : null}
+        <Link className="button button-secondary" to="/hub">
           Torna all Hub
-        </Link>
-        <Link className="button button-secondary" to="/lobby/new">
-          Nuova Lobby
         </Link>
       </div>
     </section>
