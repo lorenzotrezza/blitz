@@ -190,6 +190,10 @@ function loadGame() {
 
   const timers = createTimerHarness();
   const documentListeners = {};
+  const location = {
+    href: 'http://localhost/',
+    search: '',
+  };
 
   const document = {
     getElementById(id) {
@@ -214,6 +218,10 @@ function loadGame() {
     window: {
       innerWidth: 1280,
       innerHeight: 720,
+      location,
+      top: {
+        location,
+      },
     },
     navigator: {
       clipboard: {
@@ -230,6 +238,7 @@ function loadGame() {
     Date: { now: timers.now },
     Math,
     JSON,
+    URLSearchParams,
   };
 
   vm.createContext(context);

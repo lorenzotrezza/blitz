@@ -257,7 +257,7 @@ test('eliminates inactive and crashed drivers in survival mode until the last ac
   nowMs = 20_200;
   apply('socket-guest', 2, 0);
   nowMs = 20_250;
-  apply('socket-host', 3, 0);
+  apply('socket-host', 3, 1);
   nowMs = 20_300;
   const finished = apply('socket-guest', 3, 0);
 

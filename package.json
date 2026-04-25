@@ -1,18 +1,20 @@
 {
   "name": "blitz",
   "private": true,
+  "packageManager": "pnpm@10.33.2",
   "workspaces": [
     "apps/web",
     "apps/server",
     "packages/shared"
   ],
   "scripts": {
-    "dev": "concurrently -k \"npm run dev --workspace @blitz/server\" \"npm run dev --workspace @blitz/web\"",
-    "build": "npm run build --workspace @blitz/shared && npm run build --workspace @blitz/server && npm run build --workspace @blitz/web",
-    "pretest": "npm run verify:bootstrap",
-    "test": "node --test tests/tooling-smoke.test.js",
-    "lint": "npm run lint --workspace @blitz/shared && npm run lint --workspace @blitz/server && npm run lint --workspace @blitz/web",
-    "verify:bootstrap": "npm run lint && npm run build && node apps/server/dist/index.js"
+    "dev": "pnpm --parallel --filter @blitz/server --filter @blitz/web dev",
+    "build": "pnpm --filter @blitz/shared build && pnpm --filter @blitz/server build && pnpm --filter @blitz/web build",
+    "start": "pnpm --filter @blitz/server start",
+    "pretest": "pnpm run verify:bootstrap",
+    "test": "pnpm --filter @blitz/shared test && pnpm --filter @blitz/server test && pnpm --filter @blitz/web test && node --test tests/*.test.js",
+    "lint": "pnpm --filter @blitz/shared build && pnpm --filter @blitz/shared lint && pnpm --filter @blitz/server lint && pnpm --filter @blitz/web lint",
+    "verify:bootstrap": "pnpm run lint && pnpm run build && node tests/bootstrap-smoke.mjs"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
