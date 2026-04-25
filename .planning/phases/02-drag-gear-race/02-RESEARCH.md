@@ -412,17 +412,17 @@ useEffect(() => {
 | A2 | First-pass physics tuning should make perfect/good/early/late runs measurably different, but exact acceleration constants require play-testing. | Common Pitfalls / Summary | Tests may pass mechanically while manual feel remains weak. |
 | A3 | Summary key names such as `perfectShifts`, `goodShifts`, `earlyShifts`, and `lateShifts` are recommended but not already present in code. | Pattern 4 | Planner should align exact keys with shared types before implementation. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Has Phase 1 been executed before Phase 2 starts?**  
    - What we know: `.planning/STATE.md` says Phase 1 is planned and ready to execute, while Phase 2 UI contract depends on the Phase 1 fullscreen shell. [VERIFIED: `.planning/STATE.md`; `.planning/phases/02-drag-gear-race/02-UI-SPEC.md`]  
    - What's unclear: The codebase currently does not contain `FullscreenGameShell`, `ActionButton`, or `RaceGameInput`; grep found those only in Phase 1 planning artifacts. [VERIFIED: local grep over `apps`, `packages`, and Phase 1 docs]  
-   - Recommendation: Plan Phase 2 as depending on Phase 1 outputs; include a Wave 0 verification task that checks these files/types exist or adapts the plan if Phase 1 is not executed. [VERIFIED: `.planning/phases/01-fullscreen-game-shell-and-input-foundation/01-01-PLAN.md`; `.planning/phases/01-fullscreen-game-shell-and-input-foundation/01-02-PLAN.md`]
+   - RESOLVED: Phase 1 source absence is resolved by `02-01-PLAN.md` Wave 0 prerequisite gate; execute Phase 1 before Phase 2 if those files are absent.
 
 2. **Should drag continue respecting lobby `raceMode` variants?**  
    - What we know: Current `dragSprint.ts` branches on `finish-line`, `best-of-3`, and `survival`; Phase 2 context describes one gear timing race and defers unrelated mechanics. [VERIFIED: `apps/server/src/games/race/dragSprint.ts`; `02-CONTEXT.md`]  
    - What's unclear: Whether lobby settings should be ignored, normalized, or hidden until Phase 6 lobby polish. [VERIFIED: `.planning/ROADMAP.md`]  
-   - Recommendation: For Phase 2 runtime, implement one `drag-sprint` gear race path and avoid survival/best-of-3 behavior; leave broad lobby catalog/settings cleanup to Phase 6 unless current startability blocks manual testing. [VERIFIED: `02-CONTEXT.md`; `.planning/ROADMAP.md`]
+   - RESOLVED: Drag lobby mode ambiguity is resolved by implementing one `race:drag-sprint` gear race path in Phase 2; broader lobby catalog cleanup remains Phase 6.
 
 ## Environment Availability
 
