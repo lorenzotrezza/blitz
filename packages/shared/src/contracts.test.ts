@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 import {
+  LOBBY_RACE_MODES,
   LOBBY_STATUS,
   MAX_LOBBY_PLAYERS,
   RACE_STATUS,
@@ -98,12 +99,20 @@ test('exports a party lobby shape with selected game metadata', () => {
     players: [],
     settings: {
       maxPlayers: MAX_LOBBY_PLAYERS,
+      raceMode: LOBBY_RACE_MODES.finishLine,
     },
   };
 
   assert.equal(lobby.mode, 'multiplayer');
   assert.equal(lobby.selectedGame, 'lights');
   assert.equal(lobby.selectedVariant, null);
+  assert.equal(lobby.settings.raceMode, LOBBY_RACE_MODES.finishLine);
+});
+
+test('exports stable drag sprint race mode values for lobby settings', () => {
+  assert.equal(LOBBY_RACE_MODES.finishLine, 'finish-line');
+  assert.equal(LOBBY_RACE_MODES.bestOf3, 'best-of-3');
+  assert.equal(LOBBY_RACE_MODES.survival, 'survival');
 });
 
 test('exports the expected race snapshot shape', () => {
@@ -358,6 +367,7 @@ test('exports typed socket contracts for client and server event payloads', () =
     [SOCKET_EVENTS.client.updateLobbySettings]: (payload) => {
       assert.equal(payload.code, 'ABCD12');
       assert.equal(payload.settings.rounds, 3);
+      assert.equal(payload.settings.raceMode, LOBBY_RACE_MODES.bestOf3);
     },
     [SOCKET_EVENTS.client.startSession]: (payload) => {
       assert.equal(payload.code, 'ABCD12');
@@ -434,6 +444,7 @@ test('exports typed socket contracts for client and server event payloads', () =
     code: 'ABCD12',
     settings: {
       rounds: 3,
+      raceMode: LOBBY_RACE_MODES.bestOf3,
     },
   });
   clientEvents[SOCKET_EVENTS.client.startSession]({ code: 'ABCD12' });

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+  LOBBY_RACE_MODES,
   LOBBY_STATUS,
   MAX_LOBBY_PLAYERS,
   PLAYER_CONNECTION_STATE,
@@ -151,13 +152,13 @@ test('host can persist drag sprint race mode settings in the neutral lobby', () 
     code: raceLobby.code,
     hostId: 'socket-host',
     settings: {
-      raceMode: 'best-of-3',
+      raceMode: LOBBY_RACE_MODES.bestOf3,
     },
   });
 
   assert.equal(updatedLobby.selectedGame, 'race');
   assert.equal(updatedLobby.selectedVariant, 'drag-sprint');
-  assert.equal(updatedLobby.settings.raceMode, 'best-of-3');
+  assert.equal(updatedLobby.settings.raceMode, LOBBY_RACE_MODES.bestOf3);
 });
 
 test('host can kick a non-host player from the lobby', () => {

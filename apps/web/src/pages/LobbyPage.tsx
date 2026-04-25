@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Outlet, useNavigate, useParams } from 'react-router-dom';
 
-import { type LobbyState } from '@blitz/shared';
+import { LOBBY_RACE_MODES, type LobbyState } from '@blitz/shared';
 
 import { resolveSessionRoute } from '../lib/sessionRoutes';
 import { useLobbySocket } from '../lib/useLobbySocket';
@@ -23,9 +23,9 @@ const RACE_VARIANTS = [
 ] as const;
 
 const DRAG_SPRINT_MODES = [
-  { value: 'finish-line', label: 'Finish Line' },
-  { value: 'best-of-3', label: 'Best of 3' },
-  { value: 'survival', label: 'Survival' },
+  { value: LOBBY_RACE_MODES.finishLine, label: 'Finish Line' },
+  { value: LOBBY_RACE_MODES.bestOf3, label: 'Best of 3' },
+  { value: LOBBY_RACE_MODES.survival, label: 'Survival' },
 ] as const;
 
 function allDriversReady(lobby: LobbyState | null) {
@@ -77,8 +77,7 @@ export function LobbyIndexPage() {
       readyToLaunch &&
       (joinedLobby.selectedGame !== 'race' || joinedLobby.selectedVariant),
   );
-  const selectedRaceMode =
-    typeof joinedLobby?.settings.raceMode === 'string' ? joinedLobby.settings.raceMode : null;
+  const selectedRaceMode = joinedLobby?.settings.raceMode ?? null;
 
   useEffect(() => {
     if (isCreateRoute && joinedLobby?.code && joinedLobby.code !== 'NEW') {

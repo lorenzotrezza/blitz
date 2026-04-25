@@ -3,7 +3,11 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { RouterProvider } from 'react-router-dom';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { PLAYER_CONNECTION_STATE, type LobbyState } from '@blitz/shared';
+import {
+  LOBBY_RACE_MODES,
+  PLAYER_CONNECTION_STATE,
+  type LobbyState,
+} from '@blitz/shared';
 
 import { createAppRouter } from '../app/router';
 
@@ -21,7 +25,13 @@ function renderRoute(initialEntry: string) {
   return render(<RouterProvider router={router} />);
 }
 
-function createLobbySnapshot(overrides: Partial<LobbyState> = {}): LobbyState {
+type LobbySnapshotOverrides = Omit<Partial<LobbyState>, 'settings'> & {
+  settings?: Partial<LobbyState['settings']>;
+};
+
+function createLobbySnapshot(overrides: LobbySnapshotOverrides = {}): LobbyState {
+  const { settings: settingsOverrides, ...restOverrides } = overrides;
+
   return {
     code: 'ABCD12',
     hostId: 'socket-host',
@@ -30,11 +40,11 @@ function createLobbySnapshot(overrides: Partial<LobbyState> = {}): LobbyState {
     selectedVariant: 'sprint-circuit',
     status: 'waiting',
     settings: {
-      trackId: 'track-oval',
-      botCount: 0,
-      maxPlayers: 8,
-      rounds: 3,
-      ...overrides.settings,
+      ...settingsOverrides,
+      trackId: settingsOverrides?.trackId ?? 'track-oval',
+      botCount: settingsOverrides?.botCount ?? 0,
+      maxPlayers: settingsOverrides?.maxPlayers ?? 8,
+      rounds: settingsOverrides?.rounds ?? 3,
     },
     players: [
       {
@@ -52,7 +62,7 @@ function createLobbySnapshot(overrides: Partial<LobbyState> = {}): LobbyState {
         connectionState: PLAYER_CONNECTION_STATE.connected,
       },
     ],
-    ...overrides,
+    ...restOverrides,
   };
 }
 
@@ -158,6 +168,9 @@ describe('LobbyPage', () => {
       isHost: true,
       joinedLobby: createLobbySnapshot({
         selectedVariant: 'drag-sprint',
+        settings: {
+          raceMode: LOBBY_RACE_MODES.bestOf3,
+        },
       }),
       me: {
         id: 'socket-host',
@@ -187,16 +200,19 @@ describe('LobbyPage', () => {
     expect(screen.getByRole('button', { name: /finish line/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /best of 3/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /survival/i })).toBeInTheDocument();
+    expect(screen.getByText(/griglia 2\/8/i)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /drag sprint/i }));
+    fireEvent.click(screen.getByRole('button', { name: /sprint circuit/i }));
     fireEvent.click(screen.getByRole('button', { name: /best of 3/i }));
 
     expect(selectGame).toHaveBeenCalledWith('race', 'drag-sprint');
+    expect(selectGame).toHaveBeenCalledWith('race', 'sprint-circuit');
     expect(updateSettings).toHaveBeenCalledWith({
-      raceMode: 'best-of-3',
+      raceMode: LOBBY_RACE_MODES.bestOf3,
     });
     expect(updateSettings).not.toHaveBeenCalledWith({
-      raceMode: 'finish-line',
+      raceMode: LOBBY_RACE_MODES.finishLine,
     });
   });
 });

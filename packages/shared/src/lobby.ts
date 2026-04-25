@@ -1,3 +1,5 @@
+import type { DragSprintMode } from './game.js';
+
 export const MAX_LOBBY_PLAYERS = 8;
 
 export const PARTY_MODES = {
@@ -20,6 +22,12 @@ export const PARTY_GAME_VARIANTS = {
   trafficSurvival: 'traffic-survival',
   dragSprint: 'drag-sprint',
 } as const;
+
+export const LOBBY_RACE_MODES = {
+  finishLine: 'finish-line',
+  bestOf3: 'best-of-3',
+  survival: 'survival',
+} as const satisfies Record<string, DragSprintMode>;
 
 export type PartyGameVariant =
   | (typeof PARTY_GAME_VARIANTS)[keyof typeof PARTY_GAME_VARIANTS]
@@ -56,6 +64,7 @@ export interface LobbySettings {
   botCount?: number;
   rounds?: number | null;
   laps?: number | null;
+  raceMode?: DragSprintMode | null;
   [key: string]: string | number | boolean | null | undefined;
 }
 
