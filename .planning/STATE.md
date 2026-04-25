@@ -14,7 +14,8 @@ See: `.planning/PROJECT.md` (updated 2026-04-25)
 - Requirements defined in `.planning/REQUIREMENTS.md`.
 - Roadmap defined in `.planning/ROADMAP.md`.
 - Phase 1 discussion completed in `.planning/phases/01-fullscreen-game-shell-and-input-foundation/1-CONTEXT.md`.
-- Next recommended command: `$gsd-ui-phase 1`
+- Phase 1 UI design contract approved in `.planning/phases/01-fullscreen-game-shell-and-input-foundation/01-UI-SPEC.md`.
+- Next recommended command: `$gsd-plan-phase 1`
 
 ## Active Phase
 
@@ -22,7 +23,7 @@ See: `.planning/PROJECT.md` (updated 2026-04-25)
 |-------|-------|
 | Phase | 1 |
 | Name | Fullscreen Game Shell And Input Foundation |
-| Status | Discussed; ready for UI design |
+| Status | UI-SPEC approved; ready for planning |
 | UI hint | yes |
 
 ## Quick Tasks Completed
