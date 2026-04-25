@@ -5,23 +5,45 @@ export type BlitzClientSocket = Socket<ServerToClientEvents, ClientToServerEvent
 
 let sharedSocket: BlitzClientSocket | null = null;
 
-function resolveSocketUrl() {
-  if (import.meta.env.VITE_SOCKET_URL) {
-    return import.meta.env.VITE_SOCKET_URL;
+interface ResolveSocketUrlOptions {
+  explicitUrl?: string;
+  dev?: boolean;
+  windowOrigin?: string;
+}
+
+export function resolveSocketUrl(options: ResolveSocketUrlOptions = {}) {
+  const explicitUrl = options.explicitUrl;
+
+  if (explicitUrl) {
+    return explicitUrl;
   }
 
-  if (import.meta.env.DEV) {
+  const windowOrigin =
+    options.windowOrigin ??
+    (typeof window === 'undefined' ? '' : window.location.origin);
+
+  if (windowOrigin) {
+    return windowOrigin;
+  }
+
+  if (options.dev) {
     return 'http://127.0.0.1:3000';
   }
 
-  return window.location.origin;
+  return 'http://127.0.0.1:3000';
 }
 
 export function getBlitzSocket(): BlitzClientSocket {
   if (!sharedSocket) {
-    sharedSocket = io(resolveSocketUrl(), {
+    sharedSocket = io(
+      resolveSocketUrl({
+        explicitUrl: import.meta.env.VITE_SOCKET_URL,
+        dev: import.meta.env.DEV,
+      }),
+      {
       autoConnect: false,
-    });
+      },
+    );
   }
 
   return sharedSocket;
