@@ -1,9 +1,19 @@
 import '@testing-library/jest-dom/vitest';
 import { render, screen } from '@testing-library/react';
 import { RouterProvider } from 'react-router-dom';
-import { afterEach, describe, expect, test } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vitest';
+
+import { RACE_STATUS, type RaceSnapshot } from '@blitz/shared';
 
 import { createAppRouter } from './router';
+
+const { mockUseLiveRaceSocket } = vi.hoisted(() => ({
+  mockUseLiveRaceSocket: vi.fn(),
+}));
+
+vi.mock('../lib/useLiveRaceSocket', () => ({
+  useLiveRaceSocket: mockUseLiveRaceSocket,
+}));
 
 function renderRoute(initialEntry: string) {
   const router = createAppRouter({ initialEntries: [initialEntry] });
@@ -11,8 +21,38 @@ function renderRoute(initialEntry: string) {
   return render(<RouterProvider router={router} />);
 }
 
+function createSnapshot(): RaceSnapshot {
+  return {
+    sessionId: 'session-1',
+    lobbyCode: 'ABCD12',
+    trackId: 'sprint-circuit',
+    status: RACE_STATUS.racing,
+    tick: 12,
+    startedAt: 1_713_980_000_000,
+    countdown: 0,
+    playersState: [
+      {
+        playerId: 'socket-host',
+        nickname: 'Blitz',
+        x: 120,
+        y: 88,
+        vx: 0,
+        vy: 2,
+        angle: 0.3,
+        lap: 1,
+        checkpoint: 2,
+        progress: 0.54,
+        penalties: 0,
+        speed: 3.8,
+      },
+    ],
+    botsState: [],
+  };
+}
+
 afterEach(() => {
   window.localStorage.clear();
+  mockUseLiveRaceSocket.mockReset();
 });
 
 describe('createAppRouter', () => {
@@ -107,5 +147,24 @@ describe('createAppRouter', () => {
       'src',
       '/legacy/index.html?screen=penalty',
     );
+  });
+
+  test('renders live race route outside app chrome', () => {
+    mockUseLiveRaceSocket.mockReturnValue({
+      isConnected: true,
+      snapshot: createSnapshot(),
+      finished: null,
+      submitInput: vi.fn(),
+    });
+
+    const { container } = renderRoute('/race/live/session-1');
+
+    expect(screen.getByLabelText('Fullscreen race session')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /home/i })).toBeNull();
+    expect(screen.queryByRole('link', { name: /hub/i })).toBeNull();
+    expect(document.querySelector('.topbar')).toBeNull();
+    expect(container.querySelector('.viewport')).toBeNull();
+    expect(container.querySelector('.panel')).toBeNull();
+    expect(container.querySelector('.card')).toBeNull();
   });
 });

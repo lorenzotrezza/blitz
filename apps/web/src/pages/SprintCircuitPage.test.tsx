@@ -1,18 +1,24 @@
 import '@testing-library/jest-dom/vitest';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { RouterProvider } from 'react-router-dom';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { RACE_STATUS, type RaceSnapshot } from '@blitz/shared';
+import { RACE_STATUS, type RaceSnapshot, type SessionFinishedPayload } from '@blitz/shared';
 
 import { createAppRouter } from '../app/router';
 
-const { mockUseLiveRaceSocket } = vi.hoisted(() => ({
+const { mockSubmitInput, mockUseLiveRaceSocket, mockUsePostGameActions } = vi.hoisted(() => ({
+  mockSubmitInput: vi.fn(),
   mockUseLiveRaceSocket: vi.fn(),
+  mockUsePostGameActions: vi.fn(),
 }));
 
 vi.mock('../lib/useLiveRaceSocket', () => ({
   useLiveRaceSocket: mockUseLiveRaceSocket,
+}));
+
+vi.mock('../lib/usePostGameActions', () => ({
+  usePostGameActions: mockUsePostGameActions,
 }));
 
 function renderRoute(initialEntry: string) {
@@ -64,26 +70,104 @@ function createSnapshot(): RaceSnapshot {
   };
 }
 
+function createFinishedPayload(): SessionFinishedPayload {
+  return {
+    sessionId: 'session-1',
+    lobbyCode: 'ABCD12',
+    game: 'race',
+    variant: null,
+    results: {
+      rankings: [
+        {
+          playerId: 'socket-host',
+          rank: 1,
+          label: '42.0s',
+          value: 42_000,
+        },
+      ],
+    },
+  };
+}
+
 beforeEach(() => {
+  window.sessionStorage.clear();
+  mockSubmitInput.mockReset();
   mockUseLiveRaceSocket.mockReset();
   mockUseLiveRaceSocket.mockReturnValue({
+    isConnected: true,
     snapshot: createSnapshot(),
     finished: null,
-    steer: 0,
-    braking: false,
-    setSteer: vi.fn(),
-    setBrake: vi.fn(),
+    submitInput: mockSubmitInput,
+  });
+  mockUsePostGameActions.mockReset();
+  mockUsePostGameActions.mockReturnValue({
+    isConnected: true,
+    lobby: null,
+    isHost: false,
+    pendingAction: null,
+    postGameUpdate: null,
+    sessionStarted: null,
+    submitAction: vi.fn(),
   });
 });
 
 describe('SprintCircuitPage', () => {
-  test('renders the sprint circuit canvas and entrants', () => {
+  test('renders the fullscreen race shell with HUD and controls', () => {
     renderRoute('/race/live/session-1');
 
-    expect(screen.getByRole('heading', { name: /sprint circuit/i })).toBeInTheDocument();
+    expect(screen.getByLabelText('Fullscreen race session')).toBeInTheDocument();
     expect(screen.getByLabelText(/sprint circuit canvas/i)).toBeInTheDocument();
+    expect(screen.getByText(/reach the finish/i)).toBeInTheDocument();
+    expect(screen.getByText(/54%/i)).toBeInTheDocument();
     expect(screen.getByText(/blitz/i)).toBeInTheDocument();
     expect(screen.getByText(/subratapal/i)).toBeInTheDocument();
-    expect(screen.getByText(/checkpoint 2/i)).toBeInTheDocument();
+    expect(screen.getByText(/checkpoint/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/steer/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'GO' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'BRAKE' })).toBeInTheDocument();
+  });
+
+  test('renders without normal app chrome or card layout classes', () => {
+    const { container } = renderRoute('/race/live/session-1');
+
+    expect(screen.queryByRole('link', { name: /home/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /hub/i })).not.toBeInTheDocument();
+    expect(container.querySelector('.viewport')).toBeNull();
+    expect(container.querySelector('.panel')).toBeNull();
+    expect(container.querySelector('.card')).toBeNull();
+  });
+
+  test('stores server results and navigates to results when finished', async () => {
+    const finished = createFinishedPayload();
+
+    mockUseLiveRaceSocket.mockReturnValue({
+      isConnected: true,
+      snapshot: createSnapshot(),
+      finished,
+      submitInput: mockSubmitInput,
+    });
+
+    renderRoute('/race/live/session-1');
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /risultati finali/i })).toBeInTheDocument();
+    });
+    expect(window.sessionStorage.getItem('blitz-results:session-1')).toBe(JSON.stringify(finished));
+  });
+
+  test('emits shared typed race input from route controls', () => {
+    renderRoute('/race/live/session-1');
+
+    fireEvent.pointerDown(screen.getByRole('button', { name: 'GO' }), {
+      pointerId: 1,
+    });
+
+    expect(mockSubmitInput).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: 'button',
+        button: 'primary',
+        state: 'pressed',
+      }),
+    );
   });
 });
