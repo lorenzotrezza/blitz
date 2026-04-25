@@ -12,6 +12,7 @@ export const SOCKET_EVENTS = {
     joinLobby: 'client:join-lobby',
     leaveLobby: 'client:leave-lobby',
     setReady: 'client:set-ready',
+    kickPlayer: 'client:kick-player',
     selectGame: 'client:select-game',
     updateLobbySettings: 'client:update-lobby-settings',
     startSession: 'client:start-session',
@@ -48,6 +49,11 @@ export interface LeaveLobbyPayload {
 
 export interface SetReadyPayload {
   ready: boolean;
+}
+
+export interface KickPlayerPayload {
+  code: string;
+  playerId: string;
 }
 
 export interface SelectGamePayload {
@@ -159,6 +165,7 @@ export type ClientToServerEvents = {
   [SOCKET_EVENTS.client.joinLobby]: (payload: JoinLobbyPayload) => void;
   [SOCKET_EVENTS.client.leaveLobby]: (payload: LeaveLobbyPayload) => void;
   [SOCKET_EVENTS.client.setReady]: (payload: SetReadyPayload) => void;
+  [SOCKET_EVENTS.client.kickPlayer]: (payload: KickPlayerPayload) => void;
   [SOCKET_EVENTS.client.selectGame]: (payload: SelectGamePayload) => void;
   [SOCKET_EVENTS.client.updateLobbySettings]: (payload: UpdateLobbySettingsPayload) => void;
   [SOCKET_EVENTS.client.startSession]: (payload: StartSessionPayload) => void;

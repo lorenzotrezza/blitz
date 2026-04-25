@@ -132,6 +132,33 @@ test('host can update neutral lobby settings before the session starts', () => {
   assert.equal(updatedLobby.settings.rounds, 3);
 });
 
+test('host can kick a non-host player from the lobby', () => {
+  const service = createService();
+  const lobby = service.createLobby({
+    playerId: 'socket-host',
+    nickname: 'Host',
+    carId: 'car-red',
+  });
+
+  service.joinLobby({
+    code: lobby.code,
+    playerId: 'socket-guest',
+    nickname: 'Guest',
+    carId: 'car-blue',
+  });
+
+  const updatedLobby = service.kickPlayer({
+    code: lobby.code,
+    hostId: 'socket-host',
+    playerId: 'socket-guest',
+  });
+
+  assert.deepEqual(
+    updatedLobby.players.map((player: { id: string }) => player.id),
+    ['socket-host'],
+  );
+});
+
 test('joinLobby rejects a join when the lobby is already full', () => {
   const service = createService();
   const lobby = service.createLobby({

@@ -25,11 +25,15 @@ function createLobbySnapshot(): LobbyState {
   return {
     code: 'ABCD12',
     hostId: 'socket-host',
+    mode: 'multiplayer',
+    selectedGame: 'race',
+    selectedVariant: 'sprint-circuit',
     status: 'waiting',
     settings: {
       trackId: 'track-oval',
       botCount: 0,
       maxPlayers: 8,
+      rounds: 3,
     },
     players: [
       {
@@ -63,13 +67,15 @@ beforeEach(() => {
     isHost: false,
     joinedLobby: null,
     me: null,
-    raceStarted: null,
+    sessionStarted: null,
     setNickname: vi.fn(),
     setCarId: vi.fn(),
     submit: vi.fn(),
     toggleReady: vi.fn(),
     leave: vi.fn(),
-    startRace: vi.fn(),
+    selectGame: vi.fn(),
+    startSession: vi.fn(),
+    kickPlayer: vi.fn(),
     copyInviteLink: vi.fn(),
     copiedInvite: false,
   });
@@ -86,6 +92,7 @@ describe('LobbyPage', () => {
   });
 
   test('renders lobby roster and ready actions after joining', () => {
+    const kickPlayer = vi.fn();
     mockUseLobbySocket.mockReturnValue({
       draft: {
         nickname: 'Blitz',
@@ -103,13 +110,15 @@ describe('LobbyPage', () => {
         ready: true,
         connectionState: PLAYER_CONNECTION_STATE.connected,
       },
-      raceStarted: null,
+      sessionStarted: null,
       setNickname: vi.fn(),
       setCarId: vi.fn(),
       submit: vi.fn(),
       toggleReady: vi.fn(),
       leave: vi.fn(),
-      startRace: vi.fn(),
+      selectGame: vi.fn(),
+      startSession: vi.fn(),
+      kickPlayer,
       copyInviteLink: vi.fn(),
       copiedInvite: false,
     });
@@ -118,10 +127,15 @@ describe('LobbyPage', () => {
 
     expect(screen.getByRole('heading', { name: /lobby abcd12/i })).toBeInTheDocument();
     expect(screen.getByText(/blitz/i)).toBeInTheDocument();
-    expect(screen.getByText(/subratapal/i)).toBeInTheDocument();
+    expect(screen.getByText('SubrataPal', { selector: 'strong' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /semaforo/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /rigori/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /corse/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /sprint circuit/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /non pronto/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /lascia lobby/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /copia invito/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /avvia gara live/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /avvia sessione/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /kick subratapal/i })).toBeInTheDocument();
   });
 });

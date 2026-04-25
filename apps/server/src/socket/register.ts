@@ -170,6 +170,18 @@ export function registerSockets(
       });
     });
 
+    socket.on(SOCKET_EVENTS.client.kickPlayer, async (payload) => {
+      await handleLobbyMutation(socket, async () => {
+        const lobby = lobbyService.kickPlayer({
+          code: payload.code,
+          hostId: socket.id,
+          playerId: payload.playerId,
+        });
+
+        emitLobbySnapshot(io, lobby);
+      });
+    });
+
     socket.on(SOCKET_EVENTS.client.selectGame, async (payload) => {
       await handleLobbyMutation(socket, async () => {
         const lobby = lobbyService.selectGame({

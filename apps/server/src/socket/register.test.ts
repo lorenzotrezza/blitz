@@ -176,6 +176,56 @@ test('registerSockets emits a lobby error instead of broadcasting when a non-mem
   }
 });
 
+test('registerSockets lets the host kick a guest and broadcasts the updated lobby', async () => {
+  const httpServer = createHttpServer();
+  const io = registerSockets(
+    httpServer,
+    { socketCorsOrigin: '*' },
+    {
+      lobbyService: createLobbyService({
+        generateLobbyCode: () => 'ABCD12',
+      }),
+    },
+  );
+  const { roomEmits, install } = captureRoomBroadcasts();
+  install(io as unknown as { to: (room: string) => { emit: (event: string, payload: unknown) => void } });
+
+  try {
+    const connectionHandler = getConnectionHandler(io);
+    const host = createFakeSocket('socket-host');
+    const guest = createFakeSocket('socket-guest');
+
+    connectionHandler(host.socket);
+    connectionHandler(guest.socket);
+
+    await host.trigger(SOCKET_EVENTS.client.createLobby, {
+      nickname: 'Host',
+      carId: 'car-red',
+    });
+    await guest.trigger(SOCKET_EVENTS.client.joinLobby, {
+      code: 'ABCD12',
+      nickname: 'Guest',
+      carId: 'car-blue',
+    });
+
+    roomEmits.length = 0;
+
+    await host.trigger(SOCKET_EVENTS.client.kickPlayer, {
+      code: 'ABCD12',
+      playerId: 'socket-guest',
+    });
+
+    assert.equal(roomEmits.length, 1);
+    assert.equal(roomEmits[0]?.event, SOCKET_EVENTS.server.lobbyUpdated);
+    assert.deepEqual(
+      (roomEmits[0]?.payload as LobbyState).players.map((player) => player.id),
+      ['socket-host'],
+    );
+  } finally {
+    io.close();
+  }
+});
+
 test('registerSockets starts a neutral session for the selected game in a ready lobby', async () => {
   const httpServer = createHttpServer();
   const io = registerSockets(

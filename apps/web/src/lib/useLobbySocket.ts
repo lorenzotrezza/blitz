@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import type { LobbyState, PlayerInfo, RaceStartedPayload } from '@blitz/shared';
+import type { LobbyState, PlayerInfo, SessionStartedPayload } from '@blitz/shared';
 import { SOCKET_EVENTS } from '@blitz/shared';
 
 import { getBlitzSocket } from './socket';
@@ -18,14 +18,16 @@ export interface LobbySocketState {
   isHost: boolean;
   joinedLobby: LobbyState | null;
   me: PlayerInfo | null;
-  raceStarted: RaceStartedPayload | null;
+  sessionStarted: SessionStartedPayload | null;
   copiedInvite: boolean;
   setNickname: (value: string) => void;
   setCarId: (value: string) => void;
   submit: () => void;
   toggleReady: () => void;
   leave: () => void;
-  startRace: () => void;
+  selectGame: (game: LobbyState['selectedGame'], variant: LobbyState['selectedVariant']) => void;
+  startSession: () => void;
+  kickPlayer: (playerId: string) => void;
   copyInviteLink: () => Promise<void>;
 }
 
@@ -36,8 +38,43 @@ const DEFAULT_DRAFT: LobbyDraft = {
   carId: 'f812',
 };
 
+const ACTIVE_LOBBY_STORAGE_KEY = 'blitz-active-lobby';
+
 function normalizeLobbyCode(value: string) {
   return value.trim().toUpperCase();
+}
+
+function readPersistedLobby(code: string): LobbyState | null {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  const raw = window.localStorage.getItem(ACTIVE_LOBBY_STORAGE_KEY);
+
+  if (!raw) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as LobbyState;
+
+    return parsed.code === code ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function persistLobby(lobby: LobbyState | null): void {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  if (!lobby) {
+    window.localStorage.removeItem(ACTIVE_LOBBY_STORAGE_KEY);
+    return;
+  }
+
+  window.localStorage.setItem(ACTIVE_LOBBY_STORAGE_KEY, JSON.stringify(lobby));
 }
 
 export function useLobbySocket(lobbyCode: string): LobbySocketState {
@@ -51,8 +88,10 @@ export function useLobbySocket(lobbyCode: string): LobbySocketState {
   const [isBusy, setIsBusy] = useState(false);
   const [isConnected, setIsConnected] = useState(socket.connected);
   const [socketId, setSocketId] = useState<string | null>(socket.id ?? null);
-  const [joinedLobby, setJoinedLobby] = useState<LobbyState | null>(null);
-  const [raceStarted, setRaceStarted] = useState<RaceStartedPayload | null>(null);
+  const [joinedLobby, setJoinedLobby] = useState<LobbyState | null>(
+    isCreateRoute ? null : readPersistedLobby(requestedCode),
+  );
+  const [sessionStarted, setSessionStarted] = useState<SessionStartedPayload | null>(null);
   const [copiedInvite, setCopiedInvite] = useState(false);
 
   useEffect(() => {
@@ -61,7 +100,8 @@ export function useLobbySocket(lobbyCode: string): LobbySocketState {
     }
 
     setError(null);
-    setRaceStarted(null);
+    setSessionStarted(null);
+    setJoinedLobby(readPersistedLobby(requestedCode));
   }, [isCreateRoute, requestedCode]);
 
   useEffect(() => {
@@ -88,6 +128,7 @@ export function useLobbySocket(lobbyCode: string): LobbySocketState {
       }
 
       setJoinedLobby(payload);
+      persistLobby(payload);
       setIsBusy(false);
       setError(null);
     };
@@ -97,12 +138,12 @@ export function useLobbySocket(lobbyCode: string): LobbySocketState {
       setIsBusy(false);
     };
 
-    const handleRaceStarted = (payload: RaceStartedPayload) => {
+    const handleSessionStarted = (payload: SessionStartedPayload) => {
       if (joinedLobby && payload.lobbyCode !== joinedLobby.code && !isCreateRoute) {
         return;
       }
 
-      setRaceStarted(payload);
+      setSessionStarted(payload);
       setIsBusy(false);
     };
 
@@ -110,14 +151,14 @@ export function useLobbySocket(lobbyCode: string): LobbySocketState {
     socket.on('disconnect', handleDisconnect);
     socket.on(SOCKET_EVENTS.server.lobbyUpdated, handleLobbyUpdated);
     socket.on(SOCKET_EVENTS.server.lobbyError, handleLobbyError);
-    socket.on(SOCKET_EVENTS.server.raceStarted, handleRaceStarted);
+    socket.on(SOCKET_EVENTS.server.sessionStarted, handleSessionStarted);
 
     return () => {
       socket.off('connect', handleConnect);
       socket.off('disconnect', handleDisconnect);
       socket.off(SOCKET_EVENTS.server.lobbyUpdated, handleLobbyUpdated);
       socket.off(SOCKET_EVENTS.server.lobbyError, handleLobbyError);
-      socket.off(SOCKET_EVENTS.server.raceStarted, handleRaceStarted);
+      socket.off(SOCKET_EVENTS.server.sessionStarted, handleSessionStarted);
 
       if (inviteResetRef.current) {
         window.clearTimeout(inviteResetRef.current);
@@ -139,7 +180,7 @@ export function useLobbySocket(lobbyCode: string): LobbySocketState {
     isHost,
     joinedLobby,
     me,
-    raceStarted,
+    sessionStarted,
     copiedInvite,
     setNickname(value) {
       setDraft((current) => ({
@@ -197,18 +238,42 @@ export function useLobbySocket(lobbyCode: string): LobbySocketState {
         code: joinedLobby.code,
       });
       setJoinedLobby(null);
-      setRaceStarted(null);
+      setSessionStarted(null);
       setIsBusy(false);
       setCopiedInvite(false);
+      persistLobby(null);
     },
-    startRace() {
+    selectGame(game, variant) {
+      if (!joinedLobby || !isHost) {
+        return;
+      }
+
+      setIsBusy(true);
+      socket.emit(SOCKET_EVENTS.client.selectGame, {
+        code: joinedLobby.code,
+        game,
+        variant,
+      });
+    },
+    startSession() {
       if (!joinedLobby) {
         return;
       }
 
       setIsBusy(true);
-      socket.emit(SOCKET_EVENTS.client.startRace, {
+      socket.emit(SOCKET_EVENTS.client.startSession, {
         code: joinedLobby.code,
+      });
+    },
+    kickPlayer(playerId) {
+      if (!joinedLobby || !isHost) {
+        return;
+      }
+
+      setIsBusy(true);
+      socket.emit(SOCKET_EVENTS.client.kickPlayer, {
+        code: joinedLobby.code,
+        playerId,
       });
     },
     async copyInviteLink() {

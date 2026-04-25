@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom/vitest';
 import { render, screen } from '@testing-library/react';
 import { RouterProvider } from 'react-router-dom';
-import { describe, expect, test } from 'vitest';
+import { afterEach, describe, expect, test } from 'vitest';
 
 import { createAppRouter } from './router';
 
@@ -10,6 +10,10 @@ function renderRoute(initialEntry: string) {
 
   return render(<RouterProvider router={router} />);
 }
+
+afterEach(() => {
+  window.localStorage.clear();
+});
 
 describe('createAppRouter', () => {
   test('renders the legacy game shell at /', () => {
@@ -29,6 +33,22 @@ describe('createAppRouter', () => {
       '/hub/multiplayer',
     );
     expect(screen.queryByRole('link', { name: /bot race/i })).not.toBeInTheDocument();
+  });
+
+  test('renders a persistent return-to-lobby entry when a lobby is stored', () => {
+    window.localStorage.setItem(
+      'blitz-active-lobby',
+      JSON.stringify({
+        code: 'ABCD12',
+      }),
+    );
+
+    renderRoute('/hub');
+
+    expect(screen.getByRole('link', { name: /rientra lobby abcd12/i })).toHaveAttribute(
+      'href',
+      '/lobby/ABCD12',
+    );
   });
 
   test('renders the lobby page with the route code at /lobby/ABCD12', () => {

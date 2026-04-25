@@ -108,6 +108,12 @@ export interface UpdateSettingsInput {
   settings: Partial<LobbySettings>;
 }
 
+export interface KickPlayerInput {
+  code: string;
+  hostId: string;
+  playerId: string;
+}
+
 export interface SetStatusInput {
   code: string;
   status: LobbyStatus;
@@ -121,6 +127,7 @@ export interface LobbyService {
   setReady(input: SetReadyInput): LobbyState;
   selectGame(input: SelectGameInput): LobbyState;
   updateSettings(input: UpdateSettingsInput): LobbyState;
+  kickPlayer(input: KickPlayerInput): LobbyState;
   setStatus(input: SetStatusInput): LobbyState;
   getLobby(code: string): LobbyState | null;
 }
@@ -303,6 +310,29 @@ export function createLobbyService(
           ...input.settings,
         },
       });
+    },
+    kickPlayer(input) {
+      const code = normalizeLobbyCode(input.code);
+      const lobby = store.getLobby(code);
+
+      if (!lobby) {
+        throw new LobbyServiceError('lobby-not-found', 'Lobby not found');
+      }
+
+      assertLobbyWaiting(lobby);
+      assertHost(lobby, input.hostId);
+
+      if (lobby.hostId === input.playerId) {
+        throw new LobbyServiceError('cannot-kick-host', 'Host cannot be removed');
+      }
+
+      const nextLobby = removePlayer(code, input.playerId);
+
+      if (!nextLobby) {
+        throw new LobbyServiceError('lobby-empty', 'Lobby cannot become empty');
+      }
+
+      return nextLobby;
     },
     setStatus(input) {
       const code = normalizeLobbyCode(input.code);

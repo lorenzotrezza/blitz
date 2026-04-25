@@ -1,5 +1,9 @@
 import { Link } from 'react-router-dom';
 
+type PersistedLobby = {
+  code: string;
+};
+
 const hubCards = [
   {
     title: 'Singolo',
@@ -16,6 +20,23 @@ const hubCards = [
 ];
 
 export function HubPage() {
+  const activeLobby =
+    typeof window === 'undefined'
+      ? null
+      : (() => {
+          const raw = window.localStorage.getItem('blitz-active-lobby');
+
+          if (!raw) {
+            return null;
+          }
+
+          try {
+            return JSON.parse(raw) as PersistedLobby;
+          } catch {
+            return null;
+          }
+        })();
+
   return (
     <section className="panel hub-panel">
       <p className="eyebrow">Powered By Idrocarburi</p>
@@ -27,6 +48,13 @@ export function HubPage() {
       <p className="hub-signoff">
         SubrataPal approved. Modalita prima del rumore. Tutti i giri riservati.
       </p>
+      {activeLobby?.code ? (
+        <div className="action-row">
+          <Link className="button button-primary" to={`/lobby/${activeLobby.code}`}>
+            {`Rientra Lobby ${activeLobby.code}`}
+          </Link>
+        </div>
+      ) : null}
       <div className="card-grid">
         {hubCards.map((card) => (
           <Link className="card card-link" key={card.to} to={card.to}>

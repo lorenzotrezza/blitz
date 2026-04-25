@@ -66,6 +66,7 @@ test('exports stable socket event names', () => {
   assert.equal(SOCKET_EVENTS.client.joinLobby, 'client:join-lobby');
   assert.equal(SOCKET_EVENTS.client.leaveLobby, 'client:leave-lobby');
   assert.equal(SOCKET_EVENTS.client.setReady, 'client:set-ready');
+  assert.equal(SOCKET_EVENTS.client.kickPlayer, 'client:kick-player');
   assert.equal(SOCKET_EVENTS.client.selectGame, 'client:select-game');
   assert.equal(SOCKET_EVENTS.client.updateLobbySettings, 'client:update-lobby-settings');
   assert.equal(SOCKET_EVENTS.client.startSession, 'client:start-session');
@@ -230,6 +231,10 @@ test('exports typed socket contracts for client and server event payloads', () =
     [SOCKET_EVENTS.client.setReady]: (payload) => {
       assert.equal(payload.ready, true);
     },
+    [SOCKET_EVENTS.client.kickPlayer]: (payload) => {
+      assert.equal(payload.code, 'ABCD12');
+      assert.equal(payload.playerId, 'socket-guest');
+    },
     [SOCKET_EVENTS.client.selectGame]: (payload) => {
       assert.equal(payload.game, 'lights');
       assert.equal(payload.variant, null);
@@ -300,6 +305,10 @@ test('exports typed socket contracts for client and server event payloads', () =
   });
   clientEvents[SOCKET_EVENTS.client.leaveLobby]({ code: 'ABCD12' });
   clientEvents[SOCKET_EVENTS.client.setReady]({ ready: true });
+  clientEvents[SOCKET_EVENTS.client.kickPlayer]({
+    code: 'ABCD12',
+    playerId: 'socket-guest',
+  });
   clientEvents[SOCKET_EVENTS.client.selectGame]({
     code: 'ABCD12',
     game: 'lights',

@@ -20,6 +20,18 @@ function allDriversReady(lobby: LobbyState | null) {
   return Boolean(lobby && lobby.players.length > 0 && lobby.players.every((player) => player.ready));
 }
 
+function gameLabel(game: LobbyState['selectedGame']) {
+  if (game === 'lights') {
+    return 'Semaforo';
+  }
+
+  if (game === 'penalty') {
+    return 'Rigori';
+  }
+
+  return 'Corse';
+}
+
 export function LobbyIndexPage() {
   const navigate = useNavigate();
   const { lobbyCode = 'NEW' } = useParams();
@@ -33,18 +45,25 @@ export function LobbyIndexPage() {
     isHost,
     joinedLobby,
     me,
-    raceStarted,
+    sessionStarted,
     copiedInvite,
     setNickname,
     setCarId,
     submit,
     toggleReady,
     leave,
-    startRace,
+    selectGame,
+    startSession,
+    kickPlayer,
     copyInviteLink,
   } = useLobbySocket(formattedCode);
   const effectiveCode = joinedLobby?.code ?? formattedCode;
   const readyToLaunch = allDriversReady(joinedLobby);
+  const canStartSession = Boolean(
+    joinedLobby &&
+      readyToLaunch &&
+      (joinedLobby.selectedGame !== 'race' || joinedLobby.selectedVariant),
+  );
 
   useEffect(() => {
     if (isCreateRoute && joinedLobby?.code && joinedLobby.code !== 'NEW') {
@@ -53,21 +72,28 @@ export function LobbyIndexPage() {
   }, [isCreateRoute, joinedLobby, navigate]);
 
   useEffect(() => {
-    if (raceStarted) {
-      navigate(`/race/live/${raceStarted.sessionId}`, {
+    if (sessionStarted) {
+      const target =
+        sessionStarted.game === 'lights'
+          ? '/hub/minigames/lights'
+          : sessionStarted.game === 'penalty'
+            ? '/hub/minigames/penalty'
+            : `/race/live/${sessionStarted.sessionId}`;
+
+      navigate(target, {
         replace: true,
-        state: raceStarted,
+        state: sessionStarted,
       });
     }
-  }, [navigate, raceStarted]);
+  }, [navigate, sessionStarted]);
 
   return (
     <section className="panel lobby-panel">
       <p className="eyebrow">{isCreateRoute ? 'Parco Chiuso' : 'Griglia Privata'}</p>
       <h1>{isCreateRoute ? 'Crea Lobby Live' : `Lobby ${effectiveCode}`}</h1>
       <p className="lede">
-        Qui parte la versione seria: nickname, auto, link vero da girare agli amici e partenza live
-        senza tornare alle hash route del prototipo.
+        Lobby neutra al gioco: roster, link, selezione titolo, varianti corse e controllo host senza
+        rami bot appesi alla navigazione.
       </p>
 
       <div className="lobby-grid">
@@ -116,6 +142,55 @@ export function LobbyIndexPage() {
         </form>
 
         <article className="card lobby-card">
+          <h2>Selezione Gioco</h2>
+          {joinedLobby ? (
+            <>
+              <p className="lobby-meta">{`Scelto: ${gameLabel(joinedLobby.selectedGame)}`}</p>
+              <div className="action-row">
+                <button
+                  className={`button ${joinedLobby.selectedGame === 'lights' ? 'button-primary' : 'button-secondary'}`}
+                  type="button"
+                  disabled={!isHost || isBusy}
+                  onClick={() => selectGame('lights', null)}
+                >
+                  Semaforo
+                </button>
+                <button
+                  className={`button ${joinedLobby.selectedGame === 'penalty' ? 'button-primary' : 'button-secondary'}`}
+                  type="button"
+                  disabled={!isHost || isBusy}
+                  onClick={() => selectGame('penalty', null)}
+                >
+                  Rigori
+                </button>
+                <button
+                  className={`button ${joinedLobby.selectedGame === 'race' ? 'button-primary' : 'button-secondary'}`}
+                  type="button"
+                  disabled={!isHost || isBusy}
+                  onClick={() => selectGame('race', joinedLobby.selectedVariant ?? 'sprint-circuit')}
+                >
+                  Corse
+                </button>
+              </div>
+              {joinedLobby.selectedGame === 'race' ? (
+                <div className="action-row">
+                  <button
+                    className={`button ${joinedLobby.selectedVariant === 'sprint-circuit' ? 'button-primary' : 'button-secondary'}`}
+                    type="button"
+                    disabled={!isHost || isBusy}
+                    onClick={() => selectGame('race', 'sprint-circuit')}
+                  >
+                    Sprint Circuit
+                  </button>
+                </div>
+              ) : null}
+            </>
+          ) : (
+            <p className="lobby-meta">La selezione gioco si sblocca appena entri nella room.</p>
+          )}
+        </article>
+
+        <article className="card lobby-card">
           <h2>Invite Link</h2>
           <p className="lobby-meta">{`/lobby/${effectiveCode}`}</p>
           <div className="action-row">
@@ -144,9 +219,20 @@ export function LobbyIndexPage() {
                       {player.carId} · {joinedLobby.hostId === player.id ? 'HOST' : 'GRID'}
                     </span>
                   </div>
-                  <span className={`lobby-pill ${player.ready ? 'is-ready' : ''}`}>
-                    {player.ready ? 'PRONTO' : 'BOX'}
-                  </span>
+                  <div className="lobby-player-actions">
+                    <span className={`lobby-pill ${player.ready ? 'is-ready' : ''}`}>
+                      {player.ready ? 'PRONTO' : 'BOX'}
+                    </span>
+                    {isHost && joinedLobby.hostId !== player.id ? (
+                      <button
+                        className="button button-secondary button-compact"
+                        type="button"
+                        onClick={() => kickPlayer(player.id)}
+                      >
+                        {`Kick ${player.nickname}`}
+                      </button>
+                    ) : null}
+                  </div>
                 </li>
               ))}
             </ul>
@@ -170,10 +256,10 @@ export function LobbyIndexPage() {
             <button
               className="button button-primary"
               type="button"
-              disabled={!readyToLaunch || isBusy}
-              onClick={startRace}
+              disabled={!canStartSession || isBusy}
+              onClick={startSession}
             >
-              Avvia Gara Live
+              Avvia Sessione
             </button>
           ) : null}
         </div>
