@@ -4,6 +4,7 @@ import test from 'node:test';
 
 import {
   clampRaceAnalogVector,
+  DRAG_SHIFT_QUALITY,
   isLobbySelectionStartable,
   isRaceGameInput,
   LOBBY_RACE_MODES,
@@ -17,6 +18,10 @@ import {
 } from './index.js';
 import type {
   ClientToServerEvents,
+  DragGearInput,
+  DragGearSnapshot,
+  DragShiftQuality,
+  DragShiftSummary,
   DragSprintLane,
   DragSprintMode,
   DragSprintObstacleState,
@@ -456,6 +461,117 @@ test('exports race shell snapshot contract shape', () => {
   assert.equal(snapshot.hud.objective, 'Hit every crossing gate');
   assert.equal(snapshot.hud.inputLabel, 'Analog 56%');
   assert.deepEqual(snapshot.mode, {});
+});
+
+test('exports drag gear input intent shapes', () => {
+  const throttleInput: DragGearInput = {
+    kind: 'drag-throttle',
+    pressed: true,
+    sequence: 1,
+    clientTimeMs: 1000,
+  };
+  const shiftInput: DragGearInput = {
+    kind: 'drag-shift',
+    sequence: 2,
+    clientTimeMs: 1100,
+  };
+  const inputPayloads: GameInputPayload[] = [throttleInput, shiftInput];
+  const shiftQualities: DragShiftQuality[] = ['early', 'good', 'perfect', 'late'];
+  const authoritativeFields = [
+    'speed',
+    'rpm',
+    'distance',
+    'finishTimeMs',
+    'ranking',
+    'summary',
+  ];
+
+  assert.deepEqual(Object.values(DRAG_SHIFT_QUALITY), shiftQualities);
+  assert.equal(throttleInput.kind, 'drag-throttle');
+  assert.equal(throttleInput.pressed, true);
+  assert.equal(throttleInput.sequence, 1);
+  assert.equal(throttleInput.clientTimeMs, 1000);
+  assert.equal(shiftInput.kind, 'drag-shift');
+  assert.equal(shiftInput.sequence, 2);
+  assert.equal(shiftInput.clientTimeMs, 1100);
+  assert.deepEqual(inputPayloads, [throttleInput, shiftInput]);
+
+  for (const input of inputPayloads) {
+    for (const field of authoritativeFields) {
+      assert.equal(field in input, false);
+    }
+  }
+});
+
+test('exports drag gear snapshot telemetry shape', () => {
+  const lastShiftQuality: DragShiftQuality = 'perfect';
+  const snapshot: DragGearSnapshot = {
+    sessionId: 'session-drag-gear',
+    lobbyCode: 'ABCD12',
+    trackId: 'drag-strip',
+    status: RACE_STATUS.racing,
+    tick: 24,
+    startedAt: 1_713_980_000_000,
+    countdown: 0,
+    distanceTargetM: 402,
+    shiftWindow: {
+      goodMinRpm: 6200,
+      perfectMinRpm: 6900,
+      perfectMaxRpm: 7400,
+      goodMaxRpm: 7900,
+      redlineRpm: 8500,
+    },
+    playersState: [
+      {
+        playerId: 'player-1',
+        nickname: 'Host',
+        gear: 2,
+        maxGear: 4,
+        rpm: 7200,
+        speedKmh: 128,
+        distanceM: 146,
+        distanceTargetM: 402,
+        throttlePressed: true,
+        lastShiftQuality,
+        shiftSummary: {
+          early: 0,
+          good: 1,
+          perfect: 1,
+          late: 0,
+          total: 2,
+        },
+        finished: false,
+        finishTimeMs: null,
+        rank: null,
+      },
+    ],
+  };
+
+  assert.equal(snapshot.playersState[0]?.rpm, 7200);
+  assert.equal(snapshot.playersState[0]?.gear, 2);
+  assert.equal(snapshot.playersState[0]?.maxGear, 4);
+  assert.equal(snapshot.playersState[0]?.speedKmh, 128);
+  assert.equal(snapshot.playersState[0]?.distanceM, 146);
+  assert.equal(snapshot.playersState[0]?.distanceTargetM, 402);
+  assert.equal(snapshot.shiftWindow.perfectMinRpm, 6900);
+  assert.equal(snapshot.playersState[0]?.lastShiftQuality, 'perfect');
+  assert.equal(snapshot.playersState[0]?.shiftSummary.total, 2);
+});
+
+test('exports drag shift summary shape', () => {
+  const summary: DragShiftSummary = {
+    early: 1,
+    good: 2,
+    perfect: 3,
+    late: 4,
+    total: 10,
+  };
+
+  assert.equal(summary.early, 1);
+  assert.equal(summary.good, 2);
+  assert.equal(summary.perfect, 3);
+  assert.equal(summary.late, 4);
+  assert.equal(summary.total, 10);
 });
 
 test('exports race input guard and analog clamp helpers', () => {
