@@ -59,6 +59,8 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 .car-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;position:relative;z-index:1}
 .slide-count,.laps-b{font-size:6px;background:#151525;border:1px solid #333;color:var(--green);padding:6px 8px;line-height:1.6}
 .slide-count{color:var(--napoli)}
+.laps-stack{display:grid;gap:5px;max-width:min(360px,58vw);text-align:right}
+.laps-real{font-size:5.2px;line-height:1.8;color:#8aa0ba;background:#090d18;border:1px solid #253047;padding:6px 8px}
 .car-hero{display:grid;grid-template-columns:150px minmax(0,1fr);gap:20px;align-items:center;position:relative;z-index:1;margin:18px 0}
 .car-icon{font-size:92px;text-align:center;display:block;text-shadow:0 0 24px rgba(255,215,0,.18)}
 .car-name{font-size:clamp(13px,2.8vw,24px);color:var(--gold);line-height:1.5;text-shadow:3px 3px 0 #000;margin-bottom:10px}
@@ -107,6 +109,10 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 #screen-result{justify-content:center;text-align:center;background:linear-gradient(135deg,#0a0a12 0%,#0a2030 100%)}
 #confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:100}
 .res-lbl{font-size:8.5px;color:var(--gray);margin-bottom:8px;letter-spacing:3px}
+.res-gift{margin:12px auto 4px;padding:12px;border:3px solid var(--green);background:#07140d;box-shadow:5px 5px 0 #000;max-width:540px}
+.res-gift-k{font-size:5.5px;color:var(--green);letter-spacing:2px;margin-bottom:7px}
+.res-gift-title{font-size:10px;line-height:1.8;color:var(--gold);text-shadow:2px 2px 0 #000}
+.res-gift-body{font-size:6px;line-height:2;color:#b8c7dd;margin-top:7px}
 .res-icon{font-size:76px;margin:16px 0;animation:floatY 3s ease-in-out infinite}
 @keyframes floatY{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
 .res-name{font-size:clamp(14px,4vw,30px);color:var(--gold);text-shadow:4px 4px 0 #000,0 0 40px rgba(255,215,0,.7);margin:16px 0;animation:glitch 5s infinite}
@@ -278,7 +284,10 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
     <div class="car-stage" id="car-stage">
       <div class="car-top">
         <div class="slide-count" id="car-count">01 / 12</div>
-        <div class="laps-b" id="car-laps">2 GIRI</div>
+        <div class="laps-stack">
+          <div class="laps-b" id="car-laps">REGALO: 2 GIRI</div>
+          <div class="laps-real" id="car-laps-real">1 giro per capire, 1 per fare il fenomeno.</div>
+        </div>
       </div>
       <div class="car-hero">
         <span class="car-icon" id="car-icon">🏎️</span>
@@ -324,42 +333,42 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
   <div class="screen-sub" id="track-sub">scegli dove sfrecciare, campione</div>
   <div class="tracks-grid">
 
-    <div class="track-card locked">
+    <div class="track-card locked clickable" data-lock="monaco">
       <div class="track-flag">🇲🇨</div>
       <div class="track-lock">🔒</div>
       <div class="track-name">Monaco</div>
       <div class="track-msg">Prenotato da Leclerc.<br>Fatti i cazzi tuoi.</div>
     </div>
 
-    <div class="track-card locked">
+    <div class="track-card locked clickable" data-lock="monza">
       <div class="track-flag">🇮🇹</div>
       <div class="track-lock">🔒</div>
       <div class="track-name">Monza</div>
       <div class="track-msg">Chiuso. Leclerc ha distrutto<br>il guard rail al T1. Di nuovo.</div>
     </div>
 
-    <div class="track-card locked">
+    <div class="track-card locked clickable" data-lock="nurburgring">
       <div class="track-flag">🇩🇪</div>
       <div class="track-lock">🔒</div>
       <div class="track-name">Nürburgring</div>
       <div class="track-msg">Patente B non accettata.<br>Patente C nemmeno.</div>
     </div>
 
-    <div class="track-card locked">
+    <div class="track-card locked clickable" data-lock="silverstone">
       <div class="track-flag">🇬🇧</div>
       <div class="track-lock">🔒</div>
       <div class="track-name">Silverstone</div>
       <div class="track-msg">Brexit.<br>Non esiste più.</div>
     </div>
 
-    <div class="track-card locked">
+    <div class="track-card locked clickable" data-lock="suzuka">
       <div class="track-flag">🇯🇵</div>
       <div class="track-lock">🔒</div>
       <div class="track-name">Suzuka</div>
       <div class="track-msg">Troppo lontano.<br>Costa come una nave cargo.</div>
     </div>
 
-    <div class="track-card locked">
+    <div class="track-card locked clickable" data-lock="napoli">
       <div class="track-flag">🔵</div>
       <div class="track-lock">🔒</div>
       <div class="track-name">SSC Napoli Arena</div>
@@ -389,6 +398,11 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 <section id="screen-result" class="screen">
   <div style="z-index:1;text-align:center;padding:20px;max-width:640px">
     <div class="res-lbl">IL SUBRATA RACE CLUB PRESENTA:</div>
+    <div class="res-gift" id="res-gift">
+      <div class="res-gift-k">REGALO UFFICIALE</div>
+      <div class="res-gift-title" id="res-gift-title">GIRI VERI IN PISTA</div>
+      <div class="res-gift-body" id="res-gift-body">Il box 4 sta preparando il voucher.</div>
+    </div>
     <div class="res-icon" id="res-icon">🏎️</div>
     <div class="res-lbl" style="font-size:7.5px;margin-top:8px">BLITZ HA SCELTO:</div>
     <div class="res-name" id="res-name">FERRARI 458</div>
@@ -583,6 +597,16 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
   <button class="btn btn-red" id="btn-close-pene">► CHIUDI (sei una persona seria)</button>
 </div>
 
+<!-- ═══ MODAL: LOCKED TRACKS ═══ -->
+<div class="modal" id="modal-track-lock">
+  <div class="modal-title" id="track-lock-title">🔒 TRACCIATO BLOCCATO</div>
+  <div style="font-size:52px;margin:8px 0" id="track-lock-icon">🚧</div>
+  <div class="modal-body" id="track-lock-body">
+    La direzione gara sta inventando una scusa.
+  </div>
+  <button class="btn btn-red" id="btn-close-track-lock">► CHIUDI E FAI FINTA DI NIENTE</button>
+</div>
+
 <script>
 // ── State ──
 const S={
@@ -611,6 +635,54 @@ const CAR_ICONS={
   tesla:'🔋', panda:'🚗', nave:'🚢',
 };
 const CAR_ORDER=['f458','f488','fpf','pgt3','f812','alfa','hevo','hsto','htec','f8t','mc450','tesla','panda','nave'];
+const LAP_GIFTS={
+  f458:{laps:'REGALO: 2 GIRI', note:'Warm-up + giro lanciato. In pista vera te li danno perche la 458 urla ma non ti odia subito.'},
+  f488:{laps:'REGALO: 2 GIRI', note:'Uno per capire il turbo, uno per scoprire che non lo hai capito. Formula realistica.'},
+  fpf:{laps:'REGALO: 2 GIRI', note:'Primo giro da aperitivo, secondo da pentimento. La pista vera accetta il compromesso.'},
+  pgt3:{laps:'REGALO: 2 GIRI', note:'La GT3 merita due passaggi: uno chirurgico, uno per sporcare il camice.'},
+  f812:{laps:'REGALO: 1 GIRO', note:'V12 davanti e assicurazione sudata: nella realta un giro basta a far tremare il box.'},
+  alfa:{laps:'REGALO: 2 GIRI', note:'Uno per innamorarti, uno per ricordarti che e una Quadrifoglio e non terapia.'},
+  hevo:{laps:'REGALO: 1 GIRO', note:'V10 da parcheggio illegale: in pista vera te lo fanno assaggiare, poi ti tolgono il piatto.'},
+  hsto:{laps:'REGALO: 1 GIRO', note:'Carbonio, alettone, ego: un giro reale e gia una testimonianza davanti al giudice.'},
+  htec:{laps:'REGALO: 1 GIRO', note:'Ultima Huracan, zero tempo da sprecare. Giro secco, rumore, fine archivio.'},
+  f8t:{laps:'REGALO: 1 GIRO', note:'Tributo al V8: una cerimonia breve, rumorosa, fiscalmente sospetta.'},
+  mc450:{laps:'REGALO: 1 GIRO', note:'Macchina emotivamente costosa. Un giro in pista vera e la durata giusta dell illusione.'},
+  tesla:{laps:'REGALO: 0 GIRI', note:'Non entra nel regalo. Se vuoi un iPad, vai al centro commerciale.'},
+  panda:{laps:'REGALO: 0 GIRI', note:'La Panda e sacra. Guardarla conta gia come esperienza mistica.'},
+  nave:{laps:'REGALO: 0 GIRI', note:'Servirebbe una pista con pescaggio. Il box ha detto no con rispetto nautico.'},
+};
+const LOCKED_TRACKS={
+  monaco:{
+    title:'🇲🇨 MONACO RESPINGE BLITZ',
+    icon:'🧾',
+    body:'Accesso negato.<br><br>Leclerc ha lasciato un biglietto al cancello: "Questo posto e mio, tu fai il giro del parcheggio".<br><br><span style="font-size:5.5px;color:#445">La security ha annuito in monegasco.</span>'
+  },
+  monza:{
+    title:'🇮🇹 MONZA IN MANUTENZIONE MORALE',
+    icon:'🚧',
+    body:'T1 chiusa per eccesso di ottimismo Ferrari.<br><br>Il guard rail ha visto Blitz arrivare e ha presentato ferie immediate.<br><br><span style="font-size:5.5px;color:#445">Riprova quando la parabolica smette di ridere.</span>'
+  },
+  nurburgring:{
+    title:'🇩🇪 NÜRBURGRING NON HA FIDUCIA',
+    icon:'📋',
+    body:'Il modulo richiede patente, casco e una personalita stabile.<br><br>Blitz ha consegnato solo entusiasmo e una playlist discutibile.<br><br><span style="font-size:5.5px;color:#445">La Germania ha detto "nein" con il timbro.</span>'
+  },
+  silverstone:{
+    title:'🇬🇧 SILVERSTONE HA CHIUSO IL CANCELLO',
+    icon:'☔',
+    body:'Piove, c e Brexit e il commissario non capisce perche sei qui.<br><br>La pista sarebbe disponibile, ma solo pagando in sterline e dignita.<br><br><span style="font-size:5.5px;color:#445">Dignita non trovata nel wallet.</span>'
+  },
+  suzuka:{
+    title:'🇯🇵 SUZUKA TROPPO SERIA',
+    icon:'🛳️',
+    body:'La Esse di Suzuka ha visto la tua traiettoria mentale e si e autosospesa.<br><br>La MSC Subrata I sta cercando un passaggio, arrivo previsto: mai.<br><br><span style="font-size:5.5px;color:#445">Costo spedizione: 44 scuse.</span>'
+  },
+  napoli:{
+    title:'🔵 ARENA NAPOLI SOTTO SCUDETTO',
+    icon:'4',
+    body:'Ingresso riservato ai campioni con almeno quattro prove di napoletanita agonistica.<br><br>Blitz ha portato una macchina, non una fede calcistica certificata.<br><br><span style="font-size:5.5px;color:#445">Il numero e sempre il 4. Non fare domande.</span>'
+  }
+};
 const CAR_DETAILS={
   f458:{
     laps:'2 GIRI', name:'Ferrari 458 Italia', icon:'🏎️',
@@ -791,8 +863,12 @@ function onEnter(id){
     clearBoatTimer();
     var ic=document.getElementById('res-icon');
     var nm=document.getElementById('res-name');
+    var carId=S.selectedCar||'f458';
+    var gift=lapGift(carId);
     ic.textContent=S.selectedCar?CAR_ICONS[S.selectedCar]:'🏎️';
     nm.textContent=S.selectedCar?CAR_NAMES[S.selectedCar].toUpperCase():'???';
+    document.getElementById('res-gift-title').textContent=gift.laps.replace('REGALO: ','')+' VERI SULLA A.N. GIANNI DE LUCA';
+    document.getElementById('res-gift-body').textContent='Voucher non simbolico: '+gift.note;
     startConfetti();
   }
 }
@@ -809,6 +885,10 @@ function currentCarId(){
   return cars[S.carIndex];
 }
 
+function lapGift(id){
+  return LAP_GIFTS[id]||{laps:'REGALO: '+((CAR_DETAILS[id]&&CAR_DETAILS[id].laps)||'ND'),note:'Il box 4 sta ancora facendo i conti.'};
+}
+
 function statColor(value){
   if(value>=90)return '#33ff66';
   if(value>=70)return '#ffd700';
@@ -823,7 +903,9 @@ function renderCarSlide(){
   if(!stage||!car)return;
   stage.className='car-stage'+(car.trap?' tesla':'')+(car.easter?' easter':'');
   document.getElementById('car-count').textContent=String(S.carIndex+1).padStart(2,'0')+' / '+String(cars.length).padStart(2,'0');
-  document.getElementById('car-laps').textContent=car.laps;
+  var gift=lapGift(id);
+  document.getElementById('car-laps').textContent=gift.laps;
+  document.getElementById('car-laps-real').textContent=gift.note;
   document.getElementById('car-laps').style.color=car.trap?'var(--red)':car.easter?'var(--napoli)':'var(--green)';
   document.getElementById('car-icon').textContent=car.icon;
   document.getElementById('car-name').textContent=car.name;
@@ -885,7 +967,18 @@ document.getElementById('btn-change').addEventListener('click',function(){showSc
 document.getElementById('btn-hub-result').addEventListener('click',goToHub);
 document.getElementById('btn-close-konami').addEventListener('click',function(){closeModal('modal-konami');});
 document.getElementById('btn-close-pene').addEventListener('click',function(){closeModal('modal-pene');});
+document.getElementById('btn-close-track-lock').addEventListener('click',function(){closeModal('modal-track-lock');});
 document.getElementById('btn-pene').addEventListener('click',function(){openModal('modal-pene');});
+document.querySelectorAll('.track-card.locked.clickable[data-lock]').forEach(function(card){
+  card.addEventListener('click',function(){
+    var data=LOCKED_TRACKS[card.dataset.lock];
+    if(!data)return;
+    document.getElementById('track-lock-title').textContent=data.title;
+    document.getElementById('track-lock-icon').textContent=data.icon;
+    document.getElementById('track-lock-body').innerHTML=data.body;
+    openModal('modal-track-lock');
+  });
+});
 document.getElementById('btn-gianni').addEventListener('click',function(){showAccessAnim();setTimeout(function(){showScreen('lights');},1200);});
 document.getElementById('share-btn').addEventListener('click',shareResult);
 document.getElementById('btn-back-tracks').addEventListener('click',function(){showScreen('cars');});

@@ -273,3 +273,52 @@ test('showScreen("penalty") resets the penalty minigame', () => {
   assert.equal(game.context.PG.goals, 0);
   assert.equal(game.elements.get('pen-score').textContent, 'GOL: 0 / 3');
 });
+
+test('car selection explains the gifted lap count with a track reality note', () => {
+  const game = loadGame();
+
+  game.context.showScreen('cars');
+
+  assert.equal(game.elements.get('car-laps').textContent, 'REGALO: 2 GIRI');
+  assert.match(game.elements.get('car-laps-real').textContent, /pista vera/i);
+
+  game.context.moveCarSlide(4);
+
+  assert.equal(game.elements.get('car-laps').textContent, 'REGALO: 1 GIRO');
+  assert.match(game.elements.get('car-laps-real').textContent, /V12/i);
+});
+
+test('result screen states the actual gift voucher for the selected car', () => {
+  const game = loadGame();
+
+  game.context.showScreen('cars');
+  game.context.moveCarSlide(4);
+  game.context.chooseCurrentCar();
+  game.context.showScreen('result');
+
+  assert.equal(
+    game.elements.get('res-gift-title').textContent,
+    '1 GIRO VERI SULLA A.N. GIANNI DE LUCA',
+  );
+  assert.match(game.elements.get('res-gift-body').textContent, /Voucher non simbolico/i);
+  assert.match(game.elements.get('res-gift-body').textContent, /V12/i);
+});
+
+test('locked tracks are clickable and backed by ignorant modal copy', () => {
+  const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+  const lockedClickableTracks = [
+    ...html.matchAll(/class="track-card locked clickable" data-lock="([^"]+)"/g),
+  ].map((match) => match[1]);
+
+  assert.deepEqual(lockedClickableTracks, [
+    'monaco',
+    'monza',
+    'nurburgring',
+    'silverstone',
+    'suzuka',
+    'napoli',
+  ]);
+  assert.match(html, /id="modal-track-lock"/);
+  assert.match(html, /MONACO RESPINGE BLITZ/);
+  assert.match(html, /NÜRBURGRING NON HA FIDUCIA/);
+});
