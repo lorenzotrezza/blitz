@@ -130,6 +130,15 @@ Plans:
 - Reuse analog control and track rule helpers from Phase 4.
 - Add geometry tests for figure-eight checkpoints and crossing order.
 
+**Plans:** 5 plans
+
+Plans:
+- [ ] 05-01-PLAN.md - Phase 4 prerequisite gate and shared figure-eight contracts
+- [ ] 05-02-PLAN.md - Deterministic figure-eight gate, crossing, and penalty rules
+- [ ] 05-03-PLAN.md - Authoritative figure-eight runtime and registry integration
+- [ ] 05-04-PLAN.md - Fullscreen figure-eight page, crossing canvas, HUD, and controls
+- [ ] 05-05-PLAN.md - Figure-eight routing, results summary, and final regression gate
+
 ## Phase 6: Lobby, Results, And Regression Polish
 
 **Goal:** Make the rebuilt race catalog clear in the party flow and verify all modes integrate with lobby, sessions, and results.
