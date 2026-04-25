@@ -1,263 +1,94 @@
 import {
   GAME_SESSION_STATUS,
-  LOBBY_RACE_MODES,
+  PLAYER_CONNECTION_STATE,
   RACE_STATUS,
-  type DragSprintLane,
-  type DragSprintObstacleState,
-  type DragSprintPickupState,
-  type DragSprintPlayerState,
-  type DragSprintSnapshot,
-  type DragSprintStanding,
   type GameInputPayload,
   type GameResultEntry,
   type GameSessionEnvelope,
   type LobbyState,
+  type RaceStatus,
   type SessionFinishedPayload,
-  type SteeringInput,
 } from '@blitz/shared';
 
 import type { GameRuntimeInstance, RuntimeCallbacks } from '../runtime.js';
+import {
+  DEFAULT_DRAG_GEAR_TUNING,
+  advanceDragGearPlayer,
+  applyDragGearInput,
+  buildDragGearRankings,
+  buildDragShiftSummary,
+  createInitialDragGearPlayer,
+  readDragGearInput,
+  type DragGearPlayerRuleState,
+  type DragGearTuning,
+  type DragShiftQuality,
+  type DragShiftWindow,
+} from './dragGearRules.js';
 
 const DEFAULT_COUNTDOWN_MS = 3_000;
-const DEFAULT_DISTANCE_TARGET = 360;
-const DEFAULT_MAX_SPEED = 24;
-const DEFAULT_ACCELERATION = 12;
-const DEFAULT_BRAKE = 12;
-const DEFAULT_DRAG = 1;
-const DEFAULT_LANE_CHANGE_COOLDOWN_TICKS = 2;
-const DEFAULT_SURVIVAL_TIMEOUT_TICKS = 2;
-const TRACK_ID = 'drag-strip';
+const TRACK_ID = 'straight-drag-gear';
 
 type TimerHandle = ReturnType<typeof setTimeout> | null;
 
-export interface DragSprintRuntimeOptions extends RuntimeCallbacks<DragSprintSnapshot> {
+export interface DragGearPlayerSnapshot {
+  playerId: string;
+  nickname: string;
+  gear: number;
+  maxGear: number;
+  rpm: number;
+  speedKmh: number;
+  distanceM: number;
+  distanceTargetM: number;
+  throttlePressed: boolean;
+  lastShiftQuality: DragShiftQuality | null;
+  shiftSummary: {
+    early: number;
+    good: number;
+    perfect: number;
+    late: number;
+    total: number;
+  };
+  finished: boolean;
+  finishTimeMs: number | null;
+  rank: number | null;
+}
+
+export interface DragGearSnapshot extends Record<string, unknown> {
+  sessionId: string;
+  lobbyCode: string;
+  trackId: string;
+  status: RaceStatus;
+  tick: number;
+  startedAt: number | null;
+  countdown: number | null;
+  distanceTargetM: number;
+  shiftWindow: DragShiftWindow;
+  playersState: DragGearPlayerSnapshot[];
+}
+
+export interface DragSprintRuntimeOptions extends RuntimeCallbacks<DragGearSnapshot> {
   countdownMs?: number;
   distanceTarget?: number;
-  laneChangeCooldownTicks?: number;
   now?: () => number;
   schedule?: (callback: () => void, delayMs: number) => TimerHandle;
   cancel?: (timer: Exclude<TimerHandle, null>) => void;
-}
-
-const OBSTACLE_STREAM: DragSprintObstacleState[] = [
-  {
-    id: 'drag-obstacle-1',
-    type: 'cone',
-    lane: 0,
-    distance: 36,
-    speed: 0,
-  },
-  {
-    id: 'drag-obstacle-2',
-    type: 'slow-car',
-    lane: 2,
-    distance: 72,
-    speed: 4,
-  },
-];
-
-const PICKUP_STREAM: DragSprintPickupState[] = [
-  {
-    id: 'drag-pickup-1',
-    type: 'nitro',
-    lane: 1,
-    distance: 28,
-  },
-  {
-    id: 'drag-pickup-2',
-    type: 'shield',
-    lane: 0,
-    distance: 64,
-  },
-];
-
-function clamp(value: number, min: number, max: number) {
-  return Math.min(max, Math.max(min, value));
-}
-
-function readSteer(value: unknown): SteeringInput {
-  if (value === -1 || value === 0 || value === 1) {
-    return value;
-  }
-
-  return 0;
-}
-
-function readBoolean(value: unknown) {
-  return value === true;
-}
-
-function formatFinishTime(finishTimeMs: number | null) {
-  if (finishTimeMs === null) {
-    return null;
-  }
-
-  return `${(finishTimeMs / 1000).toFixed(1)}s`;
-}
-
-type DragSprintLobbyPlayer = LobbyState['players'][number];
-
-const BEST_OF_3_TOTAL_ROUNDS = 3;
-
-function cloneObstacles() {
-  return OBSTACLE_STREAM.map((obstacle) => ({ ...obstacle }));
-}
-
-function clonePickups() {
-  return PICKUP_STREAM.map((pickup) => ({ ...pickup }));
-}
-
-function createPlayerState(player: DragSprintLobbyPlayer, playerIndex: number): DragSprintPlayerState {
-  const lane = clamp(playerIndex, 0, 2) as DragSprintLane;
-
-  return {
-    playerId: player.id,
-    nickname: player.nickname,
-    lane,
-    distance: 0,
-    speed: 0,
-    status: 'racing',
-    activePowerUp: null,
-  };
-}
-
-function createPlayerStates(players: DragSprintLobbyPlayer[]) {
-  return players.map((player, index) => createPlayerState(player, index));
-}
-
-function createFinishTimes(players: DragSprintLobbyPlayer[]) {
-  return Object.fromEntries(players.map((player) => [player.id, null])) as Record<string, number | null>;
-}
-
-function createNumberMap(players: DragSprintLobbyPlayer[], initialValue: number) {
-  return Object.fromEntries(players.map((player) => [player.id, initialValue])) as Record<string, number>;
-}
-
-function buildFinishLineRankings(
-  playersState: DragSprintPlayerState[],
-  finishTimesMs: Record<string, number | null>,
-): GameResultEntry[] {
-  return [...playersState]
-    .sort((left, right) => {
-      const leftFinish = finishTimesMs[left.playerId];
-      const rightFinish = finishTimesMs[right.playerId];
-
-      if (leftFinish !== null && rightFinish !== null) {
-        return leftFinish - rightFinish;
-      }
-
-      if (leftFinish !== null) {
-        return -1;
-      }
-
-      if (rightFinish !== null) {
-        return 1;
-      }
-
-      return right.distance - left.distance;
-    })
-    .map((player, index) => ({
-      playerId: player.playerId,
-      rank: index + 1,
-      label:
-        formatFinishTime(finishTimesMs[player.playerId]) ?? `${Math.round(player.distance)}m`,
-      value: finishTimesMs[player.playerId] ?? Math.round(player.distance),
-    }));
-}
-
-function buildBestOf3Standings(
-  players: DragSprintLobbyPlayer[],
-  pointsByPlayerId: Record<string, number>,
-  roundWinsByPlayerId: Record<string, number>,
-  cumulativeTimeByPlayerId: Record<string, number>,
-): DragSprintStanding[] {
-  return players
-    .map((player) => ({
-      playerId: player.id,
-      nickname: player.nickname,
-      points: pointsByPlayerId[player.id] ?? 0,
-      roundWins: roundWinsByPlayerId[player.id] ?? 0,
-      cumulativeTimeMs: cumulativeTimeByPlayerId[player.id] ?? 0,
-    }))
-    .sort((left, right) => {
-      if (left.points !== right.points) {
-        return right.points - left.points;
-      }
-
-      if (left.cumulativeTimeMs !== right.cumulativeTimeMs) {
-        return left.cumulativeTimeMs - right.cumulativeTimeMs;
-      }
-
-      if (left.roundWins !== right.roundWins) {
-        return right.roundWins - left.roundWins;
-      }
-
-      return left.playerId.localeCompare(right.playerId);
-    });
-}
-
-function buildBestOf3Rankings(standings: DragSprintStanding[]): GameResultEntry[] {
-  return standings.map((entry, index) => ({
-    playerId: entry.playerId,
-    rank: index + 1,
-    label: `${entry.points} pts · ${entry.cumulativeTimeMs} ms`,
-    value: entry.points,
-  }));
-}
-
-function buildSurvivalRankings(
-  playersState: DragSprintPlayerState[],
-  outcomeTimesMs: Record<string, number | null>,
-): GameResultEntry[] {
-  return [...playersState]
-    .sort((left, right) => {
-      const leftPriority = left.status === 'eliminated' ? 1 : 0;
-      const rightPriority = right.status === 'eliminated' ? 1 : 0;
-
-      if (leftPriority !== rightPriority) {
-        return leftPriority - rightPriority;
-      }
-
-      const leftOutcome = outcomeTimesMs[left.playerId] ?? -1;
-      const rightOutcome = outcomeTimesMs[right.playerId] ?? -1;
-
-      if (leftOutcome !== rightOutcome) {
-        return rightOutcome - leftOutcome;
-      }
-
-      if (left.distance !== right.distance) {
-        return right.distance - left.distance;
-      }
-
-      return left.playerId.localeCompare(right.playerId);
-    })
-    .map((player, index) => {
-      const outcomeTimeMs = outcomeTimesMs[player.playerId];
-
-      return {
-        playerId: player.playerId,
-        rank: index + 1,
-        label: formatFinishTime(outcomeTimeMs) ?? `${Math.round(player.distance)}m`,
-        value: outcomeTimeMs ?? Math.round(player.distance),
-      };
-    });
 }
 
 export function createDragSprintRuntime(
   lobby: LobbyState,
   sessionId: string,
   options: DragSprintRuntimeOptions = {},
-): GameRuntimeInstance<DragSprintSnapshot> {
+): GameRuntimeInstance<DragGearSnapshot> {
   const countdownMs = options.countdownMs ?? DEFAULT_COUNTDOWN_MS;
-  const distanceTarget = Math.max(30, options.distanceTarget ?? DEFAULT_DISTANCE_TARGET);
-  const laneChangeCooldownTicks =
-    options.laneChangeCooldownTicks ?? DEFAULT_LANE_CHANGE_COOLDOWN_TICKS;
-  const mode =
-    lobby.settings.raceMode === LOBBY_RACE_MODES.bestOf3
-      ? LOBBY_RACE_MODES.bestOf3
-      : lobby.settings.raceMode === LOBBY_RACE_MODES.survival
-        ? LOBBY_RACE_MODES.survival
-        : LOBBY_RACE_MODES.finishLine;
+  const distanceTargetM = Math.max(
+    30,
+    options.distanceTarget ?? DEFAULT_DRAG_GEAR_TUNING.distanceTargetM,
+  );
+  const tuning: DragGearTuning = {
+    ...DEFAULT_DRAG_GEAR_TUNING,
+    distanceTargetM,
+    maxGear: 4,
+  };
   const now = options.now ?? (() => Date.now());
   const schedule =
     options.schedule ??
@@ -267,47 +98,27 @@ export function createDragSprintRuntime(
     ((timer: Exclude<TimerHandle, null>) => {
       clearTimeout(timer);
     });
+  const lobbyPlayers = lobby.players.filter(
+    (player) => player.connectionState === PLAYER_CONNECTION_STATE.connected,
+  );
 
   let countdownTimer: TimerHandle = null;
-  let activePlayers = [...lobby.players];
-  let currentRound = 1;
-  let pointsByPlayerId = createNumberMap(activePlayers, 0);
-  let roundWinsByPlayerId = createNumberMap(activePlayers, 0);
-  let cumulativeTimeByPlayerId = createNumberMap(activePlayers, 0);
   let startedAtMs: number | null = null;
-  let finishTimesMs = createFinishTimes(activePlayers);
-  let outcomeTimesMs = createFinishTimes(activePlayers);
-  let inputTickByPlayerId = createNumberMap(activePlayers, 0);
-  let lastLaneChangeTickByPlayerId = createNumberMap(activePlayers, -laneChangeCooldownTicks);
-  let lastActionStateTickByPlayerId = createNumberMap(activePlayers, 0);
+  let lastAdvancedAtMs: number | null = null;
+  let tick = 0;
+  let finishedEmitted = false;
+  const activePlayerIds = new Set(lobbyPlayers.map((player) => player.id));
+  let players = lobbyPlayers.map((player) =>
+    createInitialDragGearPlayer(
+      {
+        playerId: player.id,
+        nickname: player.nickname,
+      },
+      tuning,
+    ),
+  );
 
-  const buildStateSnapshot = (snapshot: DragSprintSnapshot) => {
-    if (mode !== LOBBY_RACE_MODES.bestOf3) {
-      return snapshot;
-    }
-
-    return {
-      ...snapshot,
-      round: currentRound,
-      totalRounds: BEST_OF_3_TOTAL_ROUNDS,
-      standings: buildBestOf3Standings(
-        activePlayers,
-        pointsByPlayerId,
-        roundWinsByPlayerId,
-        cumulativeTimeByPlayerId,
-      ),
-    };
-  };
-
-  const resetRoundTracking = () => {
-    finishTimesMs = createFinishTimes(activePlayers);
-    outcomeTimesMs = createFinishTimes(activePlayers);
-    inputTickByPlayerId = createNumberMap(activePlayers, 0);
-    lastLaneChangeTickByPlayerId = createNumberMap(activePlayers, -laneChangeCooldownTicks);
-    lastActionStateTickByPlayerId = createNumberMap(activePlayers, 0);
-  };
-
-  let state: GameSessionEnvelope<DragSprintSnapshot> = {
+  let state: GameSessionEnvelope<DragGearSnapshot> = {
     sessionId,
     lobbyCode: lobby.code,
     game: 'race',
@@ -315,223 +126,199 @@ export function createDragSprintRuntime(
     status: GAME_SESSION_STATUS.countdown,
     countdown: Math.ceil(countdownMs / 1000),
     results: null,
-    state: {
-      sessionId,
-      lobbyCode: lobby.code,
-      trackId: TRACK_ID,
-      mode,
-      status: RACE_STATUS.countdown,
-      tick: 0,
-      startedAt: null,
-      countdown: Math.ceil(countdownMs / 1000),
-      distanceTarget,
-      playersState: createPlayerStates(activePlayers),
-      obstacles: cloneObstacles(),
-      pickups: clonePickups(),
-    } as DragSprintSnapshot,
-  };
-  state = {
-    ...state,
-    state: buildStateSnapshot(state.state),
+    state: createSnapshot(RACE_STATUS.countdown, Math.ceil(countdownMs / 1000)),
   };
 
-  const clearCountdown = () => {
-    if (!countdownTimer) {
+  function createSnapshot(status: RaceStatus, countdown: number | null): DragGearSnapshot {
+    return {
+      sessionId,
+      lobbyCode: lobby.code,
+      trackId: 'straight-drag-gear',
+      status,
+      tick,
+      startedAt: startedAtMs,
+      countdown,
+      distanceTargetM,
+      shiftWindow: tuning.shiftWindow,
+      playersState: players.map(toPlayerSnapshot),
+    };
+  }
+
+  function toPlayerSnapshot(player: DragGearPlayerRuleState): DragGearPlayerSnapshot {
+    return {
+      playerId: player.playerId,
+      nickname: player.nickname,
+      gear: player.gear,
+      maxGear: player.maxGear,
+      rpm: player.rpm,
+      speedKmh: player.speedKmh,
+      distanceM: player.distanceM,
+      distanceTargetM: player.distanceTargetM,
+      throttlePressed: player.throttlePressed,
+      lastShiftQuality: player.lastShiftQuality,
+      shiftSummary: buildDragShiftSummary(player),
+      finished: player.finished,
+      finishTimeMs: player.finishTimeMs,
+      rank: player.rank,
+    };
+  }
+
+  function setState(status: RaceStatus, results = state.results) {
+    state = {
+      ...state,
+      status:
+        status === RACE_STATUS.finished
+          ? GAME_SESSION_STATUS.finished
+          : status === RACE_STATUS.racing
+            ? GAME_SESSION_STATUS.active
+            : GAME_SESSION_STATUS.countdown,
+      countdown: status === RACE_STATUS.countdown ? state.countdown : 0,
+      results,
+      state: createSnapshot(status, status === RACE_STATUS.countdown ? state.countdown : 0),
+    };
+
+    return state;
+  }
+
+  function emitState() {
+    options.onState?.(state);
+    return state;
+  }
+
+  function clearCountdown() {
+    if (countdownTimer === null) {
       return;
     }
 
     cancel(countdownTimer);
     countdownTimer = null;
-  };
+  }
 
-  const emitState = () => {
-    options.onState?.(state);
-    return state;
-  };
+  function activateRace() {
+    const currentTimeMs = now();
 
-  const setRoundState = (
-    playersState: DragSprintPlayerState[],
-    tick: number,
-    status: DragSprintSnapshot['status'],
-  ) => {
-    state = {
-      ...state,
-      status: status === RACE_STATUS.finished ? GAME_SESSION_STATUS.finished : GAME_SESSION_STATUS.active,
-      countdown: 0,
-      state: buildStateSnapshot({
-        ...state.state,
-        status,
-        tick,
-        countdown: 0,
-        startedAt: startedAtMs,
-        playersState,
-        obstacles: cloneObstacles(),
-        pickups: clonePickups(),
-      }),
-    };
-  };
-
-  const activateRace = () => {
-    startedAtMs = now();
-    resetRoundTracking();
-    setRoundState(createPlayerStates(activePlayers), 0, RACE_STATUS.racing);
+    startedAtMs = currentTimeMs;
+    lastAdvancedAtMs = currentTimeMs;
+    tick = 0;
+    players = players.map((player) => ({
+      ...player,
+      elapsedMs: 0,
+    }));
+    setState(RACE_STATUS.racing, null);
     emitState();
-  };
 
-  const emitFinished = () => {
-    const payload: SessionFinishedPayload = {
-      sessionId,
-      lobbyCode: lobby.code,
-      game: 'race',
-      variant: 'drag-sprint',
-      results: state.results!,
-    };
+    return state;
+  }
 
-    options.onFinished?.(payload);
-  };
+  function advanceDragPlayersToNow() {
+    if (state.state.status !== RACE_STATUS.racing) {
+      return;
+    }
 
-  const finalizeBestOf3Session = (tick: number, playersState: DragSprintPlayerState[]) => {
-    const standings = buildBestOf3Standings(
-      activePlayers,
-      pointsByPlayerId,
-      roundWinsByPlayerId,
-      cumulativeTimeByPlayerId,
+    const currentTimeMs = now();
+    const previousTimeMs = lastAdvancedAtMs ?? startedAtMs ?? currentTimeMs;
+    const elapsedMs = Math.max(0, currentTimeMs - previousTimeMs);
+
+    if (elapsedMs <= 0) {
+      return;
+    }
+
+    let remainingElapsedMs = elapsedMs;
+
+    while (remainingElapsedMs > 0) {
+      const stepMs = Math.min(remainingElapsedMs, 1_000);
+
+      players = players.map((player) =>
+        activePlayerIds.has(player.playerId)
+          ? advanceDragGearPlayer(player, stepMs, tuning, player.elapsedMs)
+          : player,
+      );
+      remainingElapsedMs -= stepMs;
+    }
+
+    lastAdvancedAtMs = currentTimeMs;
+    tick += 1;
+  }
+
+  function updateRanks(rankings: GameResultEntry[]) {
+    const rankByPlayerId = new Map(
+      rankings.map((ranking) => [ranking.playerId, ranking.rank] as const),
     );
 
-    state = {
-      ...state,
-      status: GAME_SESSION_STATUS.finished,
-      countdown: 0,
-      results: {
-        rankings: buildBestOf3Rankings(standings),
-        summary: {
-          mode: LOBBY_RACE_MODES.bestOf3,
-          track: TRACK_ID,
-          distanceTarget,
-          rounds: BEST_OF_3_TOTAL_ROUNDS,
-        },
+    players = players.map((player) => ({
+      ...player,
+      rank: rankByPlayerId.get(player.playerId) ?? null,
+    }));
+  }
+
+  function buildResults(winner: DragGearPlayerRuleState) {
+    const summary = buildDragShiftSummary(winner);
+
+    return {
+      rankings: buildDragGearRankings(players),
+      summary: {
+        mode: 'drag-gear',
+        track: TRACK_ID,
+        distanceTargetM,
+        finishTimeMs: winner.finishTimeMs,
+        perfectShifts: summary.perfect,
+        goodShifts: summary.good,
+        earlyShifts: summary.early,
+        lateShifts: summary.late,
+        totalShifts: summary.total,
       },
-      state: buildStateSnapshot({
-        ...state.state,
-        status: RACE_STATUS.finished,
-        tick,
-        countdown: 0,
-        startedAt: startedAtMs,
-        playersState,
-        obstacles: cloneObstacles(),
-        pickups: clonePickups(),
-      }),
     };
+  }
 
+  function finishRace(winner: DragGearPlayerRuleState) {
+    if (state.status === GAME_SESSION_STATUS.finished) {
+      return state;
+    }
+
+    const results = buildResults(winner);
+
+    updateRanks(results.rankings);
+    setState(RACE_STATUS.finished, results);
     emitState();
-    emitFinished();
-    return state;
-  };
 
-  const finalizeSurvivalSession = (tick: number, playersState: DragSprintPlayerState[]) => {
-    const elapsedMs = Math.max(0, now() - (startedAtMs ?? now()));
-    const activePlayersState = playersState.filter((player) => player.status !== 'eliminated');
-    const winnerId = activePlayersState.length === 1 ? activePlayersState[0]!.playerId : null;
-    const finalizedPlayers =
-      winnerId === null
-        ? playersState
-        : playersState.map((player) =>
-            player.playerId === winnerId
-              ? {
-                  ...player,
-                  status: 'finished' as const,
-                }
-              : player,
-          );
-
-    if (winnerId !== null && outcomeTimesMs[winnerId] === null) {
-      outcomeTimesMs = {
-        ...outcomeTimesMs,
-        [winnerId]: elapsedMs,
+    if (!finishedEmitted) {
+      finishedEmitted = true;
+      const payload: SessionFinishedPayload = {
+        sessionId,
+        lobbyCode: lobby.code,
+        game: 'race',
+        variant: 'drag-sprint',
+        results,
       };
+
+      options.onFinished?.(payload);
     }
 
-    state = {
-      ...state,
-      status: GAME_SESSION_STATUS.finished,
-      countdown: 0,
-      results: {
-        rankings: buildSurvivalRankings(finalizedPlayers, outcomeTimesMs),
-        summary: {
-          mode: LOBBY_RACE_MODES.survival,
-          track: TRACK_ID,
-          distanceTarget,
-          winnerId,
-        },
-      },
-      state: buildStateSnapshot({
-        ...state.state,
-        status: RACE_STATUS.finished,
-        tick,
-        countdown: 0,
-        startedAt: startedAtMs,
-        playersState: finalizedPlayers,
-        obstacles: cloneObstacles(),
-        pickups: clonePickups(),
-      }),
-    };
-
-    emitState();
-    emitFinished();
     return state;
-  };
+  }
 
-  const finishBestOf3Round = (tick: number, playersState: DragSprintPlayerState[]) => {
-    const roundPlacements = [...playersState].sort((left, right) => {
-      const leftFinish = finishTimesMs[left.playerId] ?? Number.POSITIVE_INFINITY;
-      const rightFinish = finishTimesMs[right.playerId] ?? Number.POSITIVE_INFINITY;
+  function maybeFinishAfterAdvance() {
+    const winner = players.find((player) => player.finished);
 
-      if (leftFinish !== rightFinish) {
-        return leftFinish - rightFinish;
-      }
-
-      return left.playerId.localeCompare(right.playerId);
-    });
-    const playerCount = roundPlacements.length;
-
-    const nextPoints = { ...pointsByPlayerId };
-    const nextRoundWins = { ...roundWinsByPlayerId };
-    const nextCumulativeTimes = { ...cumulativeTimeByPlayerId };
-
-    roundPlacements.forEach((player, index) => {
-      const finishTimeMs = finishTimesMs[player.playerId] ?? 0;
-      nextPoints[player.playerId] = (nextPoints[player.playerId] ?? 0) + (playerCount - index);
-      nextCumulativeTimes[player.playerId] =
-        (nextCumulativeTimes[player.playerId] ?? 0) + finishTimeMs;
-
-      if (index === 0) {
-        nextRoundWins[player.playerId] = (nextRoundWins[player.playerId] ?? 0) + 1;
-      }
-    });
-
-    pointsByPlayerId = nextPoints;
-    roundWinsByPlayerId = nextRoundWins;
-    cumulativeTimeByPlayerId = nextCumulativeTimes;
-
-    if (currentRound >= BEST_OF_3_TOTAL_ROUNDS) {
-      return finalizeBestOf3Session(tick, playersState);
+    if (winner) {
+      return finishRace(winner);
     }
 
-    currentRound += 1;
-    startedAtMs = now();
-    resetRoundTracking();
-    setRoundState(createPlayerStates(activePlayers), 0, RACE_STATUS.racing);
-    emitState();
-    return state;
-  };
+    return null;
+  }
+
+  function updatePlayer(playerId: string, nextPlayer: DragGearPlayerRuleState) {
+    players = players.map((player) =>
+      player.playerId === playerId ? nextPlayer : player,
+    );
+  }
 
   return {
     sessionId,
     lobbyCode: lobby.code,
     start() {
       if (countdownMs <= 0) {
-        activateRace();
-        return state;
+        return activateRace();
       }
 
       emitState();
@@ -546,278 +333,89 @@ export function createDragSprintRuntime(
         return state;
       }
 
-      const playerIndex = state.state.playersState.findIndex((player) => player.playerId === playerId);
+      const player = players.find((entry) => entry.playerId === playerId);
 
-      if (playerIndex < 0) {
+      if (!player || !activePlayerIds.has(playerId)) {
         return state;
       }
 
-      const tick = state.state.tick + 1;
-      const steer = readSteer(input.steer);
-      const accelerate = readBoolean(input.accelerate);
-      const brake = readBoolean(input.brake);
-      const elapsedMs = Math.max(0, now() - (startedAtMs ?? now()));
-      const nextPlayers = state.state.playersState.map((player) => ({ ...player }));
+      const dragInput = readDragGearInput(input);
 
-      if (mode === LOBBY_RACE_MODES.survival) {
-        for (let index = 0; index < nextPlayers.length; index += 1) {
-          const player = nextPlayers[index]!;
-
-          if (
-            player.status !== 'racing' ||
-            tick - (lastActionStateTickByPlayerId[player.playerId] ?? 0) <= DEFAULT_SURVIVAL_TIMEOUT_TICKS
-          ) {
-            continue;
-          }
-
-          nextPlayers[index] = {
-            ...player,
-            speed: 0,
-            status: 'eliminated',
-          };
-
-          if (outcomeTimesMs[player.playerId] === null) {
-            outcomeTimesMs = {
-              ...outcomeTimesMs,
-              [player.playerId]: elapsedMs,
-            };
-          }
-        }
-      }
-
-      const currentPlayer = nextPlayers[playerIndex]!;
-
-      if (currentPlayer.status !== 'racing') {
-        if (mode === LOBBY_RACE_MODES.survival) {
-          const activeRacers = nextPlayers.filter((player) => player.status === 'racing');
-
-          if (activeRacers.length <= 1) {
-            return finalizeSurvivalSession(tick, nextPlayers);
-          }
-
-          state = {
-            ...state,
-            status: GAME_SESSION_STATUS.active,
-            state: buildStateSnapshot({
-              ...state.state,
-              tick,
-              status: RACE_STATUS.racing,
-              playersState: nextPlayers,
-              obstacles: cloneObstacles(),
-              pickups: clonePickups(),
-            }),
-          };
-          emitState();
-        }
-
+      if (dragInput === null) {
         return state;
       }
 
-      const playerTick = (inputTickByPlayerId[playerId] ?? 0) + 1;
-      const nextSpeed = clamp(
-        currentPlayer.speed +
-          (accelerate ? DEFAULT_ACCELERATION : 0) -
-          (brake ? DEFAULT_BRAKE : 0) -
-          DEFAULT_DRAG,
-        0,
-        DEFAULT_MAX_SPEED,
+      // Advance all held-throttle physics before scoring drag-shift timing.
+      advanceDragPlayersToNow();
+
+      const advancedFinish = maybeFinishAfterAdvance();
+
+      if (advancedFinish) {
+        return advancedFinish;
+      }
+
+      const updatedPlayer = players.find((entry) => entry.playerId === playerId);
+
+      if (!updatedPlayer) {
+        return state;
+      }
+
+      const nextPlayer = applyDragGearInput(
+        {
+          status: state.state.status,
+          player: updatedPlayer,
+        },
+        dragInput,
+        tuning,
       );
-      const canChangeLane =
-        playerTick - (lastLaneChangeTickByPlayerId[playerId] ?? 0) >= laneChangeCooldownTicks;
-      let nextLane = currentPlayer.lane;
 
-      inputTickByPlayerId = {
-        ...inputTickByPlayerId,
-        [playerId]: playerTick,
-      };
+      updatePlayer(playerId, nextPlayer);
 
-      if (steer !== 0 && canChangeLane) {
-        nextLane = clamp(currentPlayer.lane + steer, 0, 2) as DragSprintLane;
+      const inputFinish = maybeFinishAfterAdvance();
 
-        if (nextLane !== currentPlayer.lane) {
-          lastLaneChangeTickByPlayerId = {
-            ...lastLaneChangeTickByPlayerId,
-            [playerId]: playerTick,
-          };
-        }
+      if (inputFinish) {
+        return inputFinish;
       }
 
-      const nextDistance = clamp(currentPlayer.distance + nextSpeed, 0, distanceTarget);
-      const collidedObstacle =
-        mode === LOBBY_RACE_MODES.survival
-          ? OBSTACLE_STREAM.find(
-              (obstacle) =>
-                obstacle.lane === nextLane &&
-                currentPlayer.distance < obstacle.distance &&
-                nextDistance >= obstacle.distance,
-            ) ?? null
-          : null;
-      const nextStatus =
-        mode === LOBBY_RACE_MODES.survival
-          ? collidedObstacle
-            ? 'eliminated'
-            : 'racing'
-          : nextDistance >= distanceTarget
-            ? 'finished'
-            : 'racing';
-      nextPlayers[playerIndex] = {
-        ...currentPlayer,
-        lane: nextLane,
-        speed: nextStatus === 'eliminated' ? 0 : nextSpeed,
-        distance: collidedObstacle?.distance ?? nextDistance,
-        status: nextStatus,
-      };
-
-      if (mode === LOBBY_RACE_MODES.survival) {
-        lastActionStateTickByPlayerId = {
-          ...lastActionStateTickByPlayerId,
-          [playerId]: tick,
-        };
-
-        if (nextStatus === 'eliminated' && outcomeTimesMs[playerId] === null) {
-          outcomeTimesMs = {
-            ...outcomeTimesMs,
-            [playerId]: elapsedMs,
-          };
-        }
-      }
-
-      const finishTimeMs =
-        nextDistance >= distanceTarget
-          ? (finishTimesMs[playerId] ?? Math.max(0, now() - (startedAtMs ?? now())))
-          : finishTimesMs[playerId];
-      finishTimesMs = {
-        ...finishTimesMs,
-        [playerId]: finishTimeMs,
-      };
-
-      if (mode === LOBBY_RACE_MODES.bestOf3) {
-        const roundComplete = nextPlayers.every((player) => player.status === 'finished');
-
-        if (roundComplete) {
-          return finishBestOf3Round(tick, nextPlayers);
-        }
-
-        setRoundState(nextPlayers, tick, RACE_STATUS.racing);
-        emitState();
-        return state;
-      }
-
-      if (mode === LOBBY_RACE_MODES.survival) {
-        const activeRacers = nextPlayers.filter((player) => player.status === 'racing');
-
-        if (activeRacers.length <= 1) {
-          return finalizeSurvivalSession(tick, nextPlayers);
-        }
-
-        state = {
-          ...state,
-          status: GAME_SESSION_STATUS.active,
-          state: buildStateSnapshot({
-            ...state.state,
-            tick,
-            status: RACE_STATUS.racing,
-            playersState: nextPlayers,
-            obstacles: cloneObstacles(),
-            pickups: clonePickups(),
-          }),
-          results: null,
-        };
-
-        emitState();
-        return state;
-      }
-
-      const winnerReachedFinish = nextPlayers.some((player) => player.distance >= distanceTarget);
-
-      state = {
-        ...state,
-        status: winnerReachedFinish ? GAME_SESSION_STATUS.finished : GAME_SESSION_STATUS.active,
-        state: buildStateSnapshot({
-          ...state.state,
-          tick,
-          status: winnerReachedFinish ? RACE_STATUS.finished : RACE_STATUS.racing,
-          playersState: nextPlayers,
-          obstacles: cloneObstacles(),
-          pickups: clonePickups(),
-        }),
-        results: winnerReachedFinish
-          ? {
-              rankings: buildFinishLineRankings(nextPlayers, finishTimesMs),
-              summary: {
-                mode: LOBBY_RACE_MODES.finishLine,
-                track: TRACK_ID,
-                distanceTarget,
-              },
-            }
-          : null,
-      };
-
+      tick += 1;
+      setState(RACE_STATUS.racing, null);
       emitState();
-
-      if (winnerReachedFinish) {
-        emitFinished();
-      }
 
       return state;
     },
     removePlayer(playerId) {
-      activePlayers = activePlayers.filter((player) => player.id !== playerId);
-      const nextPlayers = state.state.playersState.filter((player) => player.playerId !== playerId);
-      const { [playerId]: _finishTime, ...nextFinishTimes } = finishTimesMs;
-      const { [playerId]: _outcomeTime, ...nextOutcomeTimes } = outcomeTimesMs;
-      const { [playerId]: _inputTick, ...nextInputTicks } = inputTickByPlayerId;
-      const { [playerId]: _laneChangeTick, ...nextLaneChangeTicks } = lastLaneChangeTickByPlayerId;
-      const { [playerId]: _lastActionTick, ...nextLastActionTicks } = lastActionStateTickByPlayerId;
-      const { [playerId]: _points, ...nextPoints } = pointsByPlayerId;
-      const { [playerId]: _roundWins, ...nextRoundWins } = roundWinsByPlayerId;
-      const { [playerId]: _cumulativeTime, ...nextCumulativeTimes } = cumulativeTimeByPlayerId;
+      const player = players.find((entry) => entry.playerId === playerId);
 
-      finishTimesMs = nextFinishTimes;
-      outcomeTimesMs = nextOutcomeTimes;
-      inputTickByPlayerId = nextInputTicks;
-      lastLaneChangeTickByPlayerId = nextLaneChangeTicks;
-      lastActionStateTickByPlayerId = nextLastActionTicks;
-      pointsByPlayerId = nextPoints;
-      roundWinsByPlayerId = nextRoundWins;
-      cumulativeTimeByPlayerId = nextCumulativeTimes;
+      if (!player) {
+        return;
+      }
+
+      updatePlayer(playerId, {
+        ...player,
+        throttlePressed: false,
+      });
+      activePlayerIds.delete(playerId);
+
+      const remainingRacers = players.filter(
+        (entry) => activePlayerIds.has(entry.playerId) && !entry.finished,
+      );
 
       if (
-        mode === LOBBY_RACE_MODES.bestOf3 &&
-        state.status !== GAME_SESSION_STATUS.finished &&
-        state.state.status === RACE_STATUS.racing
+        state.state.status === RACE_STATUS.racing &&
+        activePlayerIds.size > 0 &&
+        remainingRacers.length === 0
       ) {
-        if (nextPlayers.length === 0) {
-          finalizeBestOf3Session(state.state.tick, nextPlayers);
-          return;
-        }
+        const winner =
+          players.find((entry) => activePlayerIds.has(entry.playerId) && entry.finished) ??
+          players.find((entry) => entry.finished);
 
-        if (nextPlayers.every((player) => player.status === 'finished')) {
-          finishBestOf3Round(state.state.tick, nextPlayers);
+        if (winner) {
+          finishRace(winner);
           return;
         }
       }
 
-      if (
-        mode === LOBBY_RACE_MODES.survival &&
-        state.status !== GAME_SESSION_STATUS.finished &&
-        state.state.status === RACE_STATUS.racing
-      ) {
-        const activeRacers = nextPlayers.filter((player) => player.status === 'racing');
-
-        if (activeRacers.length <= 1) {
-          finalizeSurvivalSession(state.state.tick, nextPlayers);
-          return;
-        }
-      }
-
-      state = {
-        ...state,
-        state: buildStateSnapshot({
-          ...state.state,
-          playersState: nextPlayers,
-        }),
-      };
+      setState(state.state.status, state.results);
       emitState();
     },
     dispose() {
