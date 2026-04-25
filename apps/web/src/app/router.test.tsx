@@ -57,20 +57,38 @@ describe('createAppRouter', () => {
     expect(screen.getByRole('heading', { name: /lobby abcd12/i })).toBeInTheDocument();
   });
 
-  test('renders the native practice route at /practice', () => {
-    renderRoute('/practice');
+  test('renders the single-player catalog at /hub/single', () => {
+    renderRoute('/hub/single');
 
-    expect(screen.getByRole('heading', { name: /allenamento libero/i })).toBeInTheDocument();
-    expect(screen.getByLabelText(/retro race canvas/i)).toBeInTheDocument();
-    expect(screen.getByText(/bot: off/i)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /catalogo singolo/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /semaforo/i })).toHaveAttribute(
+      'href',
+      '/hub/minigames/lights',
+    );
+    expect(screen.getByRole('link', { name: /rigori/i })).toHaveAttribute(
+      'href',
+      '/hub/minigames/penalty',
+    );
+    expect(screen.queryByRole('link', { name: /bot race/i })).not.toBeInTheDocument();
   });
 
-  test('renders the native bot route at /race/bot', () => {
+  test('renders the multiplayer lobby entry at /hub/multiplayer', () => {
+    renderRoute('/hub/multiplayer');
+
+    expect(screen.getByRole('heading', { name: /ingresso multiplayer/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /crea lobby/i })).toHaveAttribute('href', '/lobby/new');
+  });
+
+  test('redirects the obsolete practice route to /hub/single', () => {
+    renderRoute('/practice');
+
+    expect(screen.getByRole('heading', { name: /catalogo singolo/i })).toBeInTheDocument();
+  });
+
+  test('redirects the obsolete bot route to /hub/single', () => {
     renderRoute('/race/bot');
 
-    expect(screen.getByRole('heading', { name: /bot race/i })).toBeInTheDocument();
-    expect(screen.getByLabelText(/retro race canvas/i)).toBeInTheDocument();
-    expect(screen.getByText(/bot: on/i)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /catalogo singolo/i })).toBeInTheDocument();
   });
 
   test('renders the lights minigame page at /hub/minigames/lights', () => {

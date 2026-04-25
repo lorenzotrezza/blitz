@@ -15,7 +15,7 @@ describe('legacy game document', () => {
     expect(bundledDocument).toBe(sourceDocument);
   });
 
-  test('contains hub entry points and a retry control for the lights minigame', () => {
+  test('contains party hub exits and a retry control for the lights minigame', () => {
     const sourceDocument = readFileSync(legacySourcePath, 'utf8');
 
     expect(sourceDocument).toContain('id="btn-hub-intro"');
@@ -24,7 +24,7 @@ describe('legacy game document', () => {
     expect(sourceDocument).toContain("window.top.location.href='/hub'");
   });
 
-  test('supports booting directly into hub minigame screens from the query string', () => {
+  test('supports booting directly into party arcade minigame screens from the query string', () => {
     const sourceDocument = readFileSync(legacySourcePath, 'utf8');
 
     expect(sourceDocument).toContain('new URLSearchParams(window.location.search)');

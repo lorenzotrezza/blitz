@@ -24,7 +24,8 @@ const singleCards: ModeCard[] = [
   },
   {
     title: 'Corse',
-    description: 'La famiglia corse converge su Sprint Circuit. Il runtime nuovo arriva nei task successivi.',
+    description:
+      'Sprint Circuit ora vive nel flow party multiplayer. Il vecchio ramo practice/bot non e piu esposto come prodotto.',
     kicker: 'Sprint Circuit',
   },
 ];

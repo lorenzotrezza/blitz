@@ -29,3 +29,14 @@ npm run build --workspace @blitz/web
 ```
 
 All three commands completed successfully in the local workspace.
+
+## Party Arcade Refresh
+
+On 2026-04-25 the router was refreshed again for the party arcade architecture:
+
+- `/` stayed legacy
+- `/hub` became mode-first
+- `/practice` and `/race/bot` were retired as primary product routes and redirected to `/hub/single`
+- multiplayer session routes moved under the neutral lobby/results flow
+
+That refresh was verified by the updated `apps/web/src/app/router.test.tsx` suite.
