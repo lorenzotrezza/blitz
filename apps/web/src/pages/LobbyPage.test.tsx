@@ -153,11 +153,29 @@ describe('LobbyPage', () => {
     expect(screen.getByRole('button', { name: /kick subratapal/i })).toBeInTheDocument();
   });
 
-  test('host can pick both race variants and drag sprint rulesets', () => {
+  test('host can pick both race variants and drag sprint rulesets through lobby UI transitions', () => {
     const selectGame = vi.fn();
     const updateSettings = vi.fn();
+    let joinedLobby = createLobbySnapshot();
 
-    mockUseLobbySocket.mockReturnValue({
+    selectGame.mockImplementation((_game, variant) => {
+      joinedLobby = createLobbySnapshot({
+        selectedVariant: variant,
+        settings: joinedLobby.settings,
+      });
+    });
+
+    updateSettings.mockImplementation((settings) => {
+      joinedLobby = createLobbySnapshot({
+        selectedVariant: joinedLobby.selectedVariant,
+        settings: {
+          ...joinedLobby.settings,
+          ...settings,
+        },
+      });
+    });
+
+    mockUseLobbySocket.mockImplementation(() => ({
       draft: {
         nickname: 'Blitz',
         carId: 'f812',
@@ -166,12 +184,7 @@ describe('LobbyPage', () => {
       isBusy: false,
       isConnected: true,
       isHost: true,
-      joinedLobby: createLobbySnapshot({
-        selectedVariant: 'drag-sprint',
-        settings: {
-          raceMode: LOBBY_RACE_MODES.bestOf3,
-        },
-      }),
+      joinedLobby,
       me: {
         id: 'socket-host',
         nickname: 'Blitz',
@@ -191,20 +204,36 @@ describe('LobbyPage', () => {
       kickPlayer: vi.fn(),
       copyInviteLink: vi.fn(),
       copiedInvite: false,
-    });
+    }));
 
-    renderRoute('/lobby/ABCD12');
+    let view = renderRoute('/lobby/ABCD12');
 
     expect(screen.getByRole('button', { name: /sprint circuit/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /drag sprint/i })).toBeInTheDocument();
+    expect(screen.getByText(/griglia 2\/8/i)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /finish line/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /best of 3/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /survival/i })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /drag sprint/i }));
+    view.unmount();
+    view = renderRoute('/lobby/ABCD12');
+
     expect(screen.getByRole('button', { name: /finish line/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /best of 3/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /survival/i })).toBeInTheDocument();
-    expect(screen.getByText(/griglia 2\/8/i)).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: /drag sprint/i }));
-    fireEvent.click(screen.getByRole('button', { name: /sprint circuit/i }));
     fireEvent.click(screen.getByRole('button', { name: /best of 3/i }));
+    view.unmount();
+    view = renderRoute('/lobby/ABCD12');
+
+    fireEvent.click(screen.getByRole('button', { name: /sprint circuit/i }));
+    view.unmount();
+    renderRoute('/lobby/ABCD12');
+
+    expect(screen.queryByRole('button', { name: /finish line/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /best of 3/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /survival/i })).not.toBeInTheDocument();
 
     expect(selectGame).toHaveBeenCalledWith('race', 'drag-sprint');
     expect(selectGame).toHaveBeenCalledWith('race', 'sprint-circuit');
