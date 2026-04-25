@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import {
+  type GameSessionEnvelope,
   RACE_STATUS,
   SOCKET_EVENTS,
-  type RaceFinishedPayload,
   type RaceSnapshot,
+  type SessionFinishedPayload,
   type SteeringInput,
 } from '@blitz/shared';
 
@@ -12,7 +13,7 @@ import { getBlitzSocket } from './socket';
 
 export interface LiveRaceSocketState {
   snapshot: RaceSnapshot | null;
-  finished: RaceFinishedPayload | null;
+  finished: SessionFinishedPayload | null;
   steer: SteeringInput;
   braking: boolean;
   setSteer: (value: SteeringInput) => void;
@@ -23,7 +24,7 @@ export function useLiveRaceSocket(sessionId: string): LiveRaceSocketState {
   const socket = useMemo(() => getBlitzSocket(), []);
   const tickRef = useRef(0);
   const [snapshot, setSnapshot] = useState<RaceSnapshot | null>(null);
-  const [finished, setFinished] = useState<RaceFinishedPayload | null>(null);
+  const [finished, setFinished] = useState<SessionFinishedPayload | null>(null);
   const [steer, setSteer] = useState<SteeringInput>(0);
   const [braking, setBrake] = useState(false);
 
@@ -32,28 +33,28 @@ export function useLiveRaceSocket(sessionId: string): LiveRaceSocketState {
       socket.connect();
     }
 
-    const handleRaceSnapshot = (payload: RaceSnapshot) => {
-      if (payload.sessionId !== sessionId) {
+    const handleSessionState = (payload: GameSessionEnvelope) => {
+      if (payload.sessionId !== sessionId || payload.game !== 'race') {
         return;
       }
 
-      setSnapshot(payload);
+      setSnapshot(payload.state as RaceSnapshot);
     };
 
-    const handleRaceFinished = (payload: RaceFinishedPayload) => {
-      if (payload.sessionId !== sessionId) {
+    const handleSessionFinished = (payload: SessionFinishedPayload) => {
+      if (payload.sessionId !== sessionId || payload.game !== 'race') {
         return;
       }
 
       setFinished(payload);
     };
 
-    socket.on(SOCKET_EVENTS.server.raceSnapshot, handleRaceSnapshot);
-    socket.on(SOCKET_EVENTS.server.raceFinished, handleRaceFinished);
+    socket.on(SOCKET_EVENTS.server.sessionState, handleSessionState);
+    socket.on(SOCKET_EVENTS.server.sessionFinished, handleSessionFinished);
 
     return () => {
-      socket.off(SOCKET_EVENTS.server.raceSnapshot, handleRaceSnapshot);
-      socket.off(SOCKET_EVENTS.server.raceFinished, handleRaceFinished);
+      socket.off(SOCKET_EVENTS.server.sessionState, handleSessionState);
+      socket.off(SOCKET_EVENTS.server.sessionFinished, handleSessionFinished);
     };
   }, [sessionId, socket]);
 
@@ -86,7 +87,7 @@ export function useLiveRaceSocket(sessionId: string): LiveRaceSocketState {
       }
 
       tickRef.current += 1;
-      socket.emit(SOCKET_EVENTS.client.playerInput, {
+      socket.emit(SOCKET_EVENTS.client.gameInput, {
         tick: tickRef.current,
         steer,
         accelerate: !braking,

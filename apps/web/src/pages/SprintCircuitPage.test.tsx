@@ -25,7 +25,7 @@ function createSnapshot(): RaceSnapshot {
   return {
     sessionId: 'session-1',
     lobbyCode: 'ABCD12',
-    trackId: 'track-oval',
+    trackId: 'sprint-circuit',
     status: RACE_STATUS.racing,
     tick: 12,
     startedAt: 1_713_980_000_000,
@@ -34,28 +34,28 @@ function createSnapshot(): RaceSnapshot {
       {
         playerId: 'socket-host',
         nickname: 'Blitz',
-        x: 180,
-        y: 260,
+        x: 120,
+        y: 88,
         vx: 0,
         vy: 2,
         angle: 0.3,
-        lap: 0,
-        checkpoint: 1,
-        progress: 0.34,
+        lap: 1,
+        checkpoint: 2,
+        progress: 0.54,
         penalties: 0,
         speed: 3.8,
       },
       {
         playerId: 'socket-guest',
         nickname: 'SubrataPal',
-        x: 220,
-        y: 230,
+        x: 288,
+        y: 200,
         vx: 0,
         vy: 2,
         angle: 0.45,
-        lap: 0,
-        checkpoint: 1,
-        progress: 0.38,
+        lap: 1,
+        checkpoint: 3,
+        progress: 0.58,
         penalties: 0,
         speed: 4.1,
       },
@@ -76,14 +76,14 @@ beforeEach(() => {
   });
 });
 
-describe('RacePage', () => {
-  test('renders the live race canvas and entrants', () => {
+describe('SprintCircuitPage', () => {
+  test('renders the sprint circuit canvas and entrants', () => {
     renderRoute('/race/live/session-1');
 
-    expect(screen.getByRole('heading', { name: /live race/i })).toBeInTheDocument();
-    expect(screen.getByLabelText(/live race canvas/i)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /sprint circuit/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/sprint circuit canvas/i)).toBeInTheDocument();
     expect(screen.getByText(/blitz/i)).toBeInTheDocument();
     expect(screen.getByText(/subratapal/i)).toBeInTheDocument();
-    expect(screen.getAllByText(/session-1/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/checkpoint 2/i)).toBeInTheDocument();
   });
 });

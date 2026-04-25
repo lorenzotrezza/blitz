@@ -2,6 +2,7 @@ import type { LobbyState, PartyGame, PartyGameVariant } from '@blitz/shared';
 
 import { createLightsRuntime } from './lights/runtime.js';
 import { createPenaltyRuntime } from './penalty/runtime.js';
+import { createSprintCircuitRuntime } from './race/sprintCircuit.js';
 import type { GameRuntimeFactory } from './runtime.js';
 
 export interface GameRegistryEntry {
@@ -55,6 +56,16 @@ const DEFAULT_GAME_REGISTRY: GameRegistryEntry[] = [
     game: 'race',
     variant: 'sprint-circuit',
     countdown: 3,
+    createRuntime(lobby: LobbyState, sessionId: string, callbacks) {
+      return createSprintCircuitRuntime(lobby, sessionId, {
+        onState(payload) {
+          callbacks.onState?.(payload);
+        },
+        onFinished(payload) {
+          callbacks.onFinished?.(payload);
+        },
+      });
+    },
   },
 ];
 

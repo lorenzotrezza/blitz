@@ -30,7 +30,7 @@ export interface RaceBotState extends RaceEntrantState {
   botId: string;
 }
 
-export interface RaceSnapshot {
+export interface RaceSnapshot extends Record<string, unknown> {
   sessionId: string;
   lobbyCode: string;
   trackId: string;

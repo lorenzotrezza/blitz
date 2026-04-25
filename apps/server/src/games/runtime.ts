@@ -5,12 +5,12 @@ import type {
   SessionFinishedPayload,
 } from '@blitz/shared';
 
-export interface RuntimeCallbacks<TState = Record<string, unknown> | null> {
+export interface RuntimeCallbacks<TState = unknown | null> {
   onState?: (payload: GameSessionEnvelope<TState>) => void;
   onFinished?: (payload: SessionFinishedPayload) => void;
 }
 
-export interface GameRuntimeInstance<TState = Record<string, unknown> | null> {
+export interface GameRuntimeInstance<TState = unknown | null> {
   sessionId: string;
   lobbyCode: string;
   start(): GameSessionEnvelope<TState>;
@@ -23,6 +23,6 @@ export interface GameRuntimeFactory {
   (
     lobby: LobbyState,
     sessionId: string,
-    callbacks: RuntimeCallbacks,
+    callbacks: RuntimeCallbacks<unknown | null>,
   ): GameRuntimeInstance;
 }

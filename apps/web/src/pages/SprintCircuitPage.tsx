@@ -1,16 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
-import { RACE_STATUS, type RaceStartedPayload } from '@blitz/shared';
+import { RACE_STATUS, type SessionFinishedPayload, type SessionStartedPayload } from '@blitz/shared';
 
+import { drawSprintCircuitTrack, SPRINT_CIRCUIT_SIZE } from '../game/sprintCircuitTrack';
 import { useLiveRaceSocket } from '../lib/useLiveRaceSocket';
 
-export function RacePage() {
+export function SprintCircuitPage() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
   const { sessionId = 'pending' } = useParams();
-  const initialState = (location.state as RaceStartedPayload | null) ?? null;
+  const initialState = (location.state as SessionStartedPayload | null) ?? null;
   const [countdown, setCountdown] = useState<number | null>(initialState?.countdown ?? null);
   const { snapshot, finished, steer, braking, setSteer, setBrake } = useLiveRaceSocket(sessionId);
 
@@ -70,39 +71,20 @@ export function RacePage() {
       return;
     }
 
-    context.clearRect(0, 0, canvas.width, canvas.height);
-    context.fillStyle = '#07070f';
-    context.fillRect(0, 0, canvas.width, canvas.height);
-
-    context.fillStyle = '#0b3012';
-    context.fillRect(24, 24, canvas.width - 48, canvas.height - 48);
-    context.strokeStyle = '#d9dde5';
-    context.lineWidth = 38;
-    context.beginPath();
-    context.ellipse(canvas.width / 2, canvas.height / 2, 126, 182, 0, 0, Math.PI * 2);
-    context.stroke();
-
-    context.strokeStyle = '#2c2c35';
-    context.lineWidth = 22;
-    context.beginPath();
-    context.ellipse(canvas.width / 2, canvas.height / 2, 126, 182, 0, 0, Math.PI * 2);
-    context.stroke();
-
-    context.setLineDash([10, 14]);
-    context.strokeStyle = '#ffffff';
-    context.lineWidth = 4;
-    context.beginPath();
-    context.ellipse(canvas.width / 2, canvas.height / 2, 126, 182, 0, 0, Math.PI * 2);
-    context.stroke();
-    context.setLineDash([]);
+    drawSprintCircuitTrack(context);
 
     snapshot.playersState.forEach((entrant, index) => {
       const colors = ['#ffd700', '#00aadd', '#ff3333', '#33ff66'];
 
+      context.save();
+      context.translate(entrant.x, entrant.y);
+      context.rotate(entrant.angle);
       context.fillStyle = colors[index % colors.length]!;
-      context.fillRect(entrant.x - 12, entrant.y - 18, 24, 36);
+      context.fillRect(-11, -17, 22, 34);
       context.fillStyle = '#050505';
-      context.fillRect(entrant.x - 8, entrant.y - 12, 16, 9);
+      context.fillRect(-7, -11, 14, 8);
+      context.restore();
+
       context.fillStyle = '#ddeeff';
       context.font = '8px "Press Start 2P", monospace';
       context.textAlign = 'center';
@@ -113,10 +95,10 @@ export function RacePage() {
   return (
     <section className="panel live-panel">
       <p className="eyebrow">Realtime Session</p>
-      <h1>Live Race</h1>
+      <h1>Sprint Circuit</h1>
       <p className="lede">
-        Session <strong>{sessionId}</strong> su pista condivisa. Countdown live, input al server e
-        classifica vera appena cala la bandiera.
+        Pista vera, checkpoint leggibili, giri completi e collisioni soft. L’ovale prototipo non
+        esiste piu in questo flow.
       </p>
 
       {countdown && countdown > 0 && !snapshot ? (
@@ -132,8 +114,8 @@ export function RacePage() {
           <strong>{sessionId}</strong>
         </div>
         <div className="retro-hud-box">
-          <span className="retro-hud-label">STATO</span>
-          <strong>{snapshot?.status ?? 'waiting'}</strong>
+          <span className="retro-hud-label">TRACK</span>
+          <strong>{snapshot?.trackId ?? 'sprint-circuit'}</strong>
         </div>
         <div className="retro-hud-box">
           <span className="retro-hud-label">ENTRANTI</span>
@@ -149,9 +131,9 @@ export function RacePage() {
         <canvas
           ref={canvasRef}
           className="race-canvas-native"
-          width={420}
-          height={560}
-          aria-label="Live race canvas"
+          width={SPRINT_CIRCUIT_SIZE.width}
+          height={SPRINT_CIRCUIT_SIZE.height}
+          aria-label="Sprint circuit canvas"
         />
       </div>
 
@@ -164,7 +146,7 @@ export function RacePage() {
                 <div>
                   <strong>{entrant.nickname}</strong>
                   <span className="lobby-player-meta">
-                    prog {Math.round(entrant.progress * 100)}% · penalita {entrant.penalties}
+                    lap {entrant.lap} · checkpoint {entrant.checkpoint} · penalita {entrant.penalties}
                   </span>
                 </div>
                 <span className={`lobby-pill ${entrant.speed > 0 ? 'is-ready' : ''}`}>
@@ -178,7 +160,7 @@ export function RacePage() {
         <div className="card live-card">
           <h2>Comandi</h2>
           <p className="lobby-meta">
-            Frecce tastiera o controlli touch. Server-authoritative, quindi niente sorpassi gratis.
+            Sterzo arcade, freno reale, progressione checkpoint-based. Ogni input passa dal server.
           </p>
           <div className="race-controls">
             <button
@@ -228,7 +210,9 @@ export function RacePage() {
           <p className="lobby-meta">
             {snapshot?.status === RACE_STATUS.racing
               ? 'La gara e live.'
-              : 'In attesa del primo snapshot racing.'}
+              : snapshot?.status === RACE_STATUS.finished
+                ? 'Bandiera a scacchi.'
+                : 'In attesa del verde.'}
           </p>
         </div>
       </div>
