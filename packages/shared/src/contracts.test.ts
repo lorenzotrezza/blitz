@@ -167,9 +167,12 @@ test('exports the expected drag sprint snapshot shape', () => {
   const rightLane: DragSprintLane = 2;
   const nitro: DragSprintPowerUpType = 'nitro';
   const shield: DragSprintPowerUpType = 'shield';
+  const magnet: DragSprintPowerUpType = 'magnet';
   const repair: DragSprintPowerUpType = 'repair';
   const construction: DragSprintObstacleType = 'construction';
   const cone: DragSprintObstacleType = 'cone';
+  const oil: DragSprintObstacleType = 'oil';
+  const slowCar: DragSprintObstacleType = 'slow-car';
   const racingStatus: DragSprintPlayerStatus = 'racing';
   const finishedStatus: DragSprintPlayerStatus = 'finished';
   const eliminatedStatus: DragSprintPlayerStatus = 'eliminated';
@@ -217,8 +220,11 @@ test('exports the expected drag sprint snapshot shape', () => {
   assert.equal(centerLane, 1);
   assert.equal(rightLane, 2);
   assert.equal(nitro, 'nitro');
+  assert.equal(magnet, 'magnet');
   assert.equal(repair, 'repair');
   assert.equal(cone, 'cone');
+  assert.equal(oil, 'oil');
+  assert.equal(slowCar, 'slow-car');
   assert.equal(finishedStatus, 'finished');
   assert.equal(eliminatedStatus, 'eliminated');
   assert.equal(snapshot.mode, 'finish-line');
