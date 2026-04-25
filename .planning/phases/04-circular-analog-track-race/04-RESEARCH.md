@@ -407,17 +407,15 @@ export function evaluateGateCrossing(
 | A3 | Gate tunneling is a practical risk at higher speed if validation only checks final pose. | Common Pitfalls | If wrong, segment crossing tests may be extra work, but they still protect lap validation. |
 | A4 | New players will perceive immediate off-track penalties as too punitive on phones. | Common Pitfalls | If wrong, tuning constants can be tightened after playtesting without changing architecture. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Should `circle-track` be exposed in the lobby before Phase 6?** [VERIFIED: .planning/ROADMAP.md]
+1. **RESOLVED: Should `circle-track` be exposed in the lobby before Phase 6?** [VERIFIED: .planning/ROADMAP.md]
    - What we know: Phase 4 must be startable/playable through the existing session flow, while Phase 6 owns final lobby catalog polish. [VERIFIED: .planning/phases/04-circular-analog-track-race/04-CONTEXT.md; VERIFIED: .planning/ROADMAP.md]
-   - What's unclear: Whether lobby UI should show polished user-facing cards now or only enough selection/startability to test the mode. [VERIFIED: .planning/ROADMAP.md]
-   - Recommendation: Add minimal startability/route support now, defer full lobby copy/card polish to Phase 6. [VERIFIED: .planning/phases/04-circular-analog-track-race/04-CONTEXT.md]
+   - Resolution: Add minimal startability and route support now so Phase 4 can be played through the existing session flow. Defer full lobby catalog cards, polished selection copy, and broad catalog cleanup to Phase 6. [VERIFIED: .planning/phases/04-circular-analog-track-race/04-CONTEXT.md; VERIFIED: .planning/ROADMAP.md]
 
-2. **Should `ResultsPage` get generic summary rendering now?** [VERIFIED: apps/web/src/pages/ResultsPage.tsx]
+2. **RESOLVED: Should `ResultsPage` get generic summary rendering now?** [VERIFIED: apps/web/src/pages/ResultsPage.tsx]
    - What we know: Phase 4 success requires penalty/lap summary availability, and existing results page currently renders rankings only. [VERIFIED: .planning/phases/04-circular-analog-track-race/04-UI-SPEC.md; VERIFIED: apps/web/src/pages/ResultsPage.tsx]
-   - What's unclear: Whether to make the summary renderer generic for all modes or circle-specific. [ASSUMED]
-   - Recommendation: Add small generic `results.summary` rendering with circle labels, avoiding broad Phase 6 result redesign. [VERIFIED: packages/shared/src/contracts.ts]
+   - Resolution: Add a small Circle Track summary renderer now for `results.summary.mode === 'Circle Track'`, showing `Time`, `Laps`, and `Penalties`. Avoid a broad result-page redesign and leave non-circle result polish to Phase 6. [VERIFIED: packages/shared/src/contracts.ts; VERIFIED: .planning/phases/04-circular-analog-track-race/04-UI-SPEC.md]
 
 ## Environment Availability
 
