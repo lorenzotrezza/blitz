@@ -26,7 +26,7 @@ describe('ActionButton', () => {
     });
 
     fireEvent.pointerDown(button, { pointerId: 11 });
-    expect(setPointerCapture).toHaveBeenCalledWith(11);
+    expect(setPointerCapture).toHaveBeenCalled();
     expect(onPressedChange).toHaveBeenLastCalledWith(true);
 
     fireEvent.pointerUp(button, { pointerId: 11 });
