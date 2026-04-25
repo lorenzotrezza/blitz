@@ -101,14 +101,14 @@ function buildRoutes() {
           element: <ModeSelectPage mode="single" />,
         },
         {
-          path: '/race/live/:sessionId',
-          element: <SprintCircuitPage />,
-        },
-        {
           path: '/results/:sessionId',
           element: <ResultsPage />,
         },
       ],
+    },
+    {
+      path: '/race/live/:sessionId',
+      element: <SprintCircuitPage />,
     },
   ];
 }

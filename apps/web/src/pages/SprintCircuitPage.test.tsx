@@ -7,11 +7,22 @@ import { RACE_STATUS, type RaceSnapshot, type SessionFinishedPayload } from '@bl
 
 import { createAppRouter } from '../app/router';
 
-const { mockSubmitInput, mockUseLiveRaceSocket, mockUsePostGameActions } = vi.hoisted(() => ({
-  mockSubmitInput: vi.fn(),
-  mockUseLiveRaceSocket: vi.fn(),
-  mockUsePostGameActions: vi.fn(),
-}));
+const { mockNavigate, mockSubmitInput, mockUseLiveRaceSocket, mockUsePostGameActions } =
+  vi.hoisted(() => ({
+    mockNavigate: vi.fn(),
+    mockSubmitInput: vi.fn(),
+    mockUseLiveRaceSocket: vi.fn(),
+    mockUsePostGameActions: vi.fn(),
+  }));
+
+vi.mock('react-router-dom', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('react-router-dom')>();
+
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  };
+});
 
 vi.mock('../lib/useLiveRaceSocket', () => ({
   useLiveRaceSocket: mockUseLiveRaceSocket,
@@ -24,7 +35,10 @@ vi.mock('../lib/usePostGameActions', () => ({
 function renderRoute(initialEntry: string) {
   const router = createAppRouter({ initialEntries: [initialEntry] });
 
-  return render(<RouterProvider router={router} />);
+  return {
+    router,
+    ...render(<RouterProvider router={router} />),
+  };
 }
 
 function createSnapshot(): RaceSnapshot {
@@ -91,6 +105,7 @@ function createFinishedPayload(): SessionFinishedPayload {
 
 beforeEach(() => {
   window.sessionStorage.clear();
+  mockNavigate.mockReset();
   mockSubmitInput.mockReset();
   mockUseLiveRaceSocket.mockReset();
   mockUseLiveRaceSocket.mockReturnValue({
@@ -150,9 +165,14 @@ describe('SprintCircuitPage', () => {
     renderRoute('/race/live/session-1');
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /risultati finali/i })).toBeInTheDocument();
+      expect(window.sessionStorage.getItem('blitz-results:session-1')).toBe(
+        JSON.stringify(finished),
+      );
     });
-    expect(window.sessionStorage.getItem('blitz-results:session-1')).toBe(JSON.stringify(finished));
+    expect(mockNavigate).toHaveBeenCalledWith('/results/session-1', {
+      replace: true,
+      state: finished,
+    });
   });
 
   test('emits shared typed race input from route controls', () => {
