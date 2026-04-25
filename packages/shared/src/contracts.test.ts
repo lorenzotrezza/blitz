@@ -24,12 +24,18 @@ import type {
   DragSprintPlayerStatus,
   DragSprintPowerUpType,
   DragSprintSnapshot,
+  GameInputPayload,
   LobbyState,
   PartyLobbyState,
   PlayerInfo,
   PlayerInput,
   RaceBotState,
+  RaceGameInput,
+  RaceGameInputKind,
   RacePlayerState,
+  RaceShellModeId,
+  RaceShellSnapshot,
+  RaceShellStatus,
   RaceSnapshot,
   ServerToClientEvents,
 } from './index.js';
@@ -348,6 +354,104 @@ test('exports the expected player input packet shape without client identity', (
   assert.equal(input.steer, 1);
   assert.equal(input.accelerate, true);
   assert.equal(input.brake, false);
+});
+
+test('exports discriminated race game input contract shapes', () => {
+  const analogKind: RaceGameInputKind = 'analog';
+  const circleMode: RaceShellModeId = 'circle';
+  const analogInput: RaceGameInput = {
+    kind: 'analog',
+    sequence: 1,
+    clientTimeMs: 1_713_980_000_123,
+    modeId: circleMode,
+    vector: {
+      x: 0.5,
+      y: -0.25,
+      magnitude: 0.56,
+    },
+  };
+
+  const buttonInput: RaceGameInput = {
+    kind: 'button',
+    sequence: 2,
+    clientTimeMs: 1_713_980_000_223,
+    modeId: 'drag',
+    button: 'primary',
+    state: 'pressed',
+  };
+
+  const actionInput: RaceGameInput = {
+    kind: 'action',
+    sequence: 3,
+    clientTimeMs: 1_713_980_000_323,
+    modeId: 'drag',
+    action: 'shift',
+  };
+
+  const legacyInput: PlayerInput = {
+    tick: 13,
+    steer: 1,
+    accelerate: true,
+    brake: false,
+  };
+  const existingPayload: GameInputPayload = { reactionAtMs: 123 };
+
+  assert.equal(analogInput.kind, 'analog');
+  assert.equal(analogInput.kind, analogKind);
+  assert.equal(analogInput.modeId, 'circle');
+  assert.equal(analogInput.vector.x, 0.5);
+  assert.equal(analogInput.vector.y, -0.25);
+  assert.equal(analogInput.vector.magnitude, 0.56);
+  assert.equal('playerId' in analogInput, false);
+  assert.equal(buttonInput.kind, 'button');
+  assert.equal(buttonInput.button, 'primary');
+  assert.equal(buttonInput.state, 'pressed');
+  assert.equal(actionInput.kind, 'action');
+  assert.equal(actionInput.action, 'shift');
+  assert.equal(actionInput.sequence, 3);
+  assert.equal(legacyInput.steer, 1);
+  assert.equal(existingPayload.reactionAtMs, 123);
+});
+
+test('exports race shell snapshot contract shape', () => {
+  const modeId: RaceShellModeId = 'figure-eight';
+  const status: RaceShellStatus = 'racing';
+  const snapshot: RaceShellSnapshot = {
+    sessionId: 'session-shell',
+    lobbyCode: 'ABCD12',
+    modeId: 'figure-eight',
+    status,
+    countdown: 0,
+    tick: 24,
+    players: [
+      {
+        playerId: 'player-1',
+        nickname: 'Host',
+        progress: 0.42,
+        speed: 38,
+        penalty: null,
+      },
+    ],
+    hud: {
+      objective: 'Hit every crossing gate',
+      progressLabel: 'Lap 1 / 3',
+      speedLabel: '38 km/h',
+      penaltyLabel: 'Clean',
+      inputLabel: 'Analog 56%',
+      modeMetricLabel: 'Next gate',
+      modeMetricValue: 'North',
+    },
+    mode: {},
+  };
+
+  assert.equal(snapshot.modeId, 'figure-eight');
+  assert.equal(snapshot.modeId, modeId);
+  assert.equal(snapshot.status, 'racing');
+  assert.equal(snapshot.countdown, 0);
+  assert.equal(snapshot.players[0]?.playerId, 'player-1');
+  assert.equal(snapshot.hud.objective, 'Hit every crossing gate');
+  assert.equal(snapshot.hud.inputLabel, 'Analog 56%');
+  assert.deepEqual(snapshot.mode, {});
 });
 
 test('exports typed socket contracts for client and server event payloads', () => {
