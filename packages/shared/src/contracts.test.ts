@@ -3,7 +3,9 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 import {
+  clampRaceAnalogVector,
   isLobbySelectionStartable,
+  isRaceGameInput,
   LOBBY_RACE_MODES,
   LOBBY_STATUS,
   MAX_LOBBY_PLAYERS,
@@ -410,7 +412,7 @@ test('exports discriminated race game input contract shapes', () => {
   assert.equal(actionInput.action, 'shift');
   assert.equal(actionInput.sequence, 3);
   assert.equal(legacyInput.steer, 1);
-  assert.equal(existingPayload.reactionAtMs, 123);
+  assert.deepEqual(existingPayload, { reactionAtMs: 123 });
 });
 
 test('exports race shell snapshot contract shape', () => {
@@ -452,6 +454,82 @@ test('exports race shell snapshot contract shape', () => {
   assert.equal(snapshot.hud.objective, 'Hit every crossing gate');
   assert.equal(snapshot.hud.inputLabel, 'Analog 56%');
   assert.deepEqual(snapshot.mode, {});
+});
+
+test('exports race input guard and analog clamp helpers', () => {
+  assert.deepEqual(
+    clampRaceAnalogVector({
+      x: 1.2345,
+      y: Number.POSITIVE_INFINITY,
+      magnitude: -0.2,
+    }),
+    {
+      x: 1,
+      y: 0,
+      magnitude: 0,
+    },
+  );
+
+  assert.equal(
+    isRaceGameInput({
+      kind: 'analog',
+      sequence: 1,
+      clientTimeMs: 1_713_980_000_123,
+      modeId: 'circle',
+      vector: {
+        x: 0.4,
+        y: -0.2,
+        magnitude: 0.45,
+      },
+    }),
+    true,
+  );
+  assert.equal(
+    isRaceGameInput({
+      kind: 'button',
+      sequence: 2,
+      clientTimeMs: 1_713_980_000_223,
+      modeId: 'drag',
+      button: 'secondary',
+      state: 'released',
+    }),
+    true,
+  );
+  assert.equal(
+    isRaceGameInput({
+      kind: 'action',
+      sequence: 3,
+      clientTimeMs: 1_713_980_000_323,
+      modeId: 'drag',
+      action: 'shift',
+    }),
+    true,
+  );
+  assert.equal(
+    isRaceGameInput({
+      kind: 'analog',
+      sequence: -1,
+      clientTimeMs: 1_713_980_000_123,
+      modeId: 'circle',
+      vector: {
+        x: 0,
+        y: 0,
+        magnitude: 0,
+      },
+    }),
+    false,
+  );
+  assert.equal(
+    isRaceGameInput({
+      kind: 'button',
+      sequence: 4,
+      clientTimeMs: 1_713_980_000_423,
+      modeId: 'drag',
+      button: 'primary',
+      state: 'held',
+    }),
+    false,
+  );
 });
 
 test('exports typed socket contracts for client and server event payloads', () => {
@@ -531,7 +609,8 @@ test('exports typed socket contracts for client and server event payloads', () =
       assert.equal(payload.code, 'ABCD12');
     },
     [SOCKET_EVENTS.client.gameInput]: (payload) => {
-      assert.equal(payload.reactionAtMs, 180);
+      assert.equal('reactionAtMs' in payload, true);
+      assert.equal((payload as { reactionAtMs?: unknown }).reactionAtMs, 180);
     },
     [SOCKET_EVENTS.client.postGameAction]: (payload) => {
       assert.equal(payload.action, 'return-to-lobby');

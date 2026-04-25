@@ -8,6 +8,109 @@ export type RaceStatus = (typeof RACE_STATUS)[keyof typeof RACE_STATUS];
 
 export type SteeringInput = -1 | 0 | 1;
 
+export const RACE_SHELL_MODE_IDS = {
+  drag: 'drag',
+  dodge: 'dodge',
+  circle: 'circle',
+  figureEight: 'figure-eight',
+} as const;
+
+export type RaceShellModeId =
+  (typeof RACE_SHELL_MODE_IDS)[keyof typeof RACE_SHELL_MODE_IDS];
+
+export const RACE_SHELL_STATUS = {
+  countdown: 'countdown',
+  racing: 'racing',
+  finished: 'finished',
+} as const;
+
+export type RaceShellStatus = (typeof RACE_SHELL_STATUS)[keyof typeof RACE_SHELL_STATUS];
+
+export const RACE_GAME_INPUT_KIND = {
+  analog: 'analog',
+  button: 'button',
+  action: 'action',
+} as const;
+
+export type RaceGameInputKind =
+  (typeof RACE_GAME_INPUT_KIND)[keyof typeof RACE_GAME_INPUT_KIND];
+
+export const RACE_GAME_BUTTONS = {
+  primary: 'primary',
+  secondary: 'secondary',
+} as const;
+
+export type RaceGameButton = (typeof RACE_GAME_BUTTONS)[keyof typeof RACE_GAME_BUTTONS];
+
+export const RACE_GAME_BUTTON_STATES = {
+  pressed: 'pressed',
+  released: 'released',
+} as const;
+
+export type RaceGameButtonState =
+  (typeof RACE_GAME_BUTTON_STATES)[keyof typeof RACE_GAME_BUTTON_STATES];
+
+export interface RaceAnalogVector {
+  x: number;
+  y: number;
+  magnitude: number;
+}
+
+export interface RaceInputBase {
+  kind: RaceGameInputKind;
+  sequence: number;
+  clientTimeMs: number;
+  modeId: RaceShellModeId;
+}
+
+export interface RaceAnalogInput extends RaceInputBase {
+  kind: 'analog';
+  vector: RaceAnalogVector;
+}
+
+export interface RaceButtonInput extends RaceInputBase {
+  kind: 'button';
+  button: RaceGameButton;
+  state: RaceGameButtonState;
+}
+
+export interface RaceActionInput extends RaceInputBase {
+  kind: 'action';
+  action: string;
+}
+
+export type RaceGameInput = RaceAnalogInput | RaceButtonInput | RaceActionInput;
+
+export interface RaceShellPlayer {
+  playerId: string;
+  nickname: string;
+  progress: number;
+  speed: number;
+  penalty: string | null;
+}
+
+export interface RaceShellHud {
+  objective: string;
+  progressLabel: string;
+  speedLabel: string;
+  penaltyLabel: string;
+  inputLabel: string;
+  modeMetricLabel: string;
+  modeMetricValue: string;
+}
+
+export interface RaceShellSnapshot extends Record<string, unknown> {
+  sessionId: string;
+  lobbyCode: string;
+  modeId: RaceShellModeId;
+  status: RaceShellStatus;
+  countdown: number | null;
+  tick: number;
+  players: RaceShellPlayer[];
+  hud: RaceShellHud;
+  mode: Record<string, unknown>;
+}
+
 export interface RaceEntrantState {
   nickname: string;
   x: number;
@@ -108,6 +211,90 @@ export interface PlayerInput {
   steer: SteeringInput;
   accelerate: boolean;
   brake: boolean;
+}
+
+function roundToThousandth(value: number) {
+  return Math.round(value * 1000) / 1000;
+}
+
+function clampFiniteNumber(value: number, min: number, max: number) {
+  if (!Number.isFinite(value)) {
+    return 0;
+  }
+
+  return roundToThousandth(Math.min(max, Math.max(min, value)));
+}
+
+function isObjectRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function hasNumber(value: unknown) {
+  return typeof value === 'number';
+}
+
+function isFiniteNonNegative(value: unknown) {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0;
+}
+
+function isRaceShellModeId(value: unknown): value is RaceShellModeId {
+  return Object.values(RACE_SHELL_MODE_IDS).includes(value as RaceShellModeId);
+}
+
+export function clampRaceAnalogVector(vector: RaceAnalogVector): RaceAnalogVector {
+  return {
+    x: clampFiniteNumber(vector.x, -1, 1),
+    y: clampFiniteNumber(vector.y, -1, 1),
+    magnitude: clampFiniteNumber(vector.magnitude, 0, 1),
+  };
+}
+
+// Shared guards help runtimes reject malformed race input; Socket.IO types are not server validation.
+export function isRaceGameInput(input: unknown): input is RaceGameInput {
+  if (!isObjectRecord(input)) {
+    return false;
+  }
+
+  if (!isRaceShellModeId(input.modeId)) {
+    return false;
+  }
+
+  if (!isFiniteNonNegative(input.sequence) || !isFiniteNonNegative(input.clientTimeMs)) {
+    return false;
+  }
+
+  if (input.kind === RACE_GAME_INPUT_KIND.analog) {
+    if (!isObjectRecord(input.vector)) {
+      return false;
+    }
+
+    const vector = input.vector;
+
+    if (!hasNumber(vector.x) || !hasNumber(vector.y) || !hasNumber(vector.magnitude)) {
+      return false;
+    }
+
+    clampRaceAnalogVector({
+      x: vector.x,
+      y: vector.y,
+      magnitude: vector.magnitude,
+    });
+
+    return true;
+  }
+
+  if (input.kind === RACE_GAME_INPUT_KIND.button) {
+    return (
+      Object.values(RACE_GAME_BUTTONS).includes(input.button as RaceGameButton) &&
+      Object.values(RACE_GAME_BUTTON_STATES).includes(input.state as RaceGameButtonState)
+    );
+  }
+
+  if (input.kind === RACE_GAME_INPUT_KIND.action) {
+    return typeof input.action === 'string' && input.action.length > 0;
+  }
+
+  return false;
 }
 
 export const SOFT_COLLISION_PUSHBACK = 18;

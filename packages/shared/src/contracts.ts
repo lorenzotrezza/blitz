@@ -1,4 +1,4 @@
-import type { PlayerInput, RaceSnapshot } from './game.js';
+import type { PlayerInput, RaceGameInput, RaceSnapshot } from './game.js';
 import type {
   LobbySettings,
   LobbyState,
@@ -75,7 +75,7 @@ export interface StartRacePayload {
   code: string;
 }
 
-export type GameInputPayload = Record<string, unknown>;
+export type GameInputPayload = RaceGameInput | PlayerInput | Record<string, unknown>;
 
 export interface LobbyErrorPayload {
   code: string;
