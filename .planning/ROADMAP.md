@@ -59,6 +59,16 @@ Plans:
 - The ideal shift window must be visible enough to learn quickly.
 - A single-player or two-player manual test should clearly show better timing wins.
 
+**Plans:** 6 plans
+
+Plans:
+- [ ] 02-01-PLAN.md — Phase 1 prerequisite gate and shared drag gear contracts
+- [ ] 02-02-PLAN.md — Deterministic drag gear scoring and acceleration rules
+- [ ] 02-03-PLAN.md — Server runtime adapter for `race:drag-sprint`
+- [ ] 02-04-PLAN.md — Drag HUD, RPM meter, straight track, and action controls
+- [ ] 02-05-PLAN.md — Fullscreen drag route and throttle/shift input lifecycle
+- [ ] 02-06-PLAN.md — Drag results summary and final verification gate
+
 ## Phase 3: Straight Obstacle Race
 
 **Goal:** Create a separate straight race where obstacle avoidance and slowdown recovery are the core skill loop.
