@@ -6,12 +6,12 @@ import { loadConfig } from './config.js';
 test('loadConfig returns default server settings', () => {
   const config = loadConfig({});
 
-  assert.equal(config.port, 3000);
+  assert.equal(config.port, 3004);
   assert.equal(config.socketCorsOrigin, '*');
 });
 
 test('loadConfig rejects malformed PORT values', () => {
-  assert.throws(() => loadConfig({ PORT: '3000abc' }), /Invalid PORT value/);
+  assert.throws(() => loadConfig({ PORT: '3004abc' }), /Invalid PORT value/);
   assert.throws(() => loadConfig({ PORT: '1e3' }), /Invalid PORT value/);
 });
 

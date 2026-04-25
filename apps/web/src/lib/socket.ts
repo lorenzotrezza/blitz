@@ -27,10 +27,10 @@ export function resolveSocketUrl(options: ResolveSocketUrlOptions = {}) {
   }
 
   if (options.dev) {
-    return 'http://127.0.0.1:3000';
+    return 'http://127.0.0.1:3004';
   }
 
-  return 'http://127.0.0.1:3000';
+  return 'http://127.0.0.1:3004';
 }
 
 export function getBlitzSocket(): BlitzClientSocket {
