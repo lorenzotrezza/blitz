@@ -229,12 +229,12 @@ function isObjectRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
-function hasNumber(value: unknown) {
-  return typeof value === 'number';
-}
-
 function isFiniteNonNegative(value: unknown) {
   return typeof value === 'number' && Number.isFinite(value) && value >= 0;
+}
+
+function hasFiniteNumber(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value);
 }
 
 function isRaceShellModeId(value: unknown): value is RaceShellModeId {
@@ -269,15 +269,22 @@ export function isRaceGameInput(input: unknown): input is RaceGameInput {
     }
 
     const vector = input.vector;
+    const x = vector.x;
+    const y = vector.y;
+    const magnitude = vector.magnitude;
 
-    if (!hasNumber(vector.x) || !hasNumber(vector.y) || !hasNumber(vector.magnitude)) {
+    if (
+      !hasFiniteNumber(x) ||
+      !hasFiniteNumber(y) ||
+      !hasFiniteNumber(magnitude)
+    ) {
       return false;
     }
 
     clampRaceAnalogVector({
-      x: vector.x,
-      y: vector.y,
-      magnitude: vector.magnitude,
+      x,
+      y,
+      magnitude,
     });
 
     return true;

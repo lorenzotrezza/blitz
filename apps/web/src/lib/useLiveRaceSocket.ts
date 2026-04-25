@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import {
   type GameSessionEnvelope,
+  PARTY_GAME_VARIANTS,
   SOCKET_EVENTS,
   type RaceGameInput,
   type RaceSnapshot,
@@ -37,7 +38,11 @@ export function useLiveRaceSocket(sessionId: string): LiveRaceSocketState {
     };
 
     const handleSessionState = (payload: GameSessionEnvelope) => {
-      if (payload.sessionId !== sessionId || payload.game !== 'race') {
+      if (
+        payload.sessionId !== sessionId ||
+        payload.game !== 'race' ||
+        payload.variant !== PARTY_GAME_VARIANTS.sprintCircuit
+      ) {
         return;
       }
 
@@ -45,7 +50,11 @@ export function useLiveRaceSocket(sessionId: string): LiveRaceSocketState {
     };
 
     const handleSessionFinished = (payload: SessionFinishedPayload) => {
-      if (payload.sessionId !== sessionId || payload.game !== 'race') {
+      if (
+        payload.sessionId !== sessionId ||
+        payload.game !== 'race' ||
+        payload.variant !== PARTY_GAME_VARIANTS.sprintCircuit
+      ) {
         return;
       }
 

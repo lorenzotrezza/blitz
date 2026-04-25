@@ -9,13 +9,17 @@ import { ActionButton } from './ActionButton';
 describe('ActionButton', () => {
   test('emits action button press and release states', () => {
     const onPressedChange = vi.fn();
+    const onKeyDown = vi.fn();
+    const onKeyUp = vi.fn();
 
     const { rerender } = render(
-      <ActionButton
-        label="GO"
-        button={RACE_GAME_BUTTONS.primary}
-        onPressedChange={onPressedChange}
-      />,
+      <div onKeyDown={onKeyDown} onKeyUp={onKeyUp}>
+        <ActionButton
+          label="GO"
+          button={RACE_GAME_BUTTONS.primary}
+          onPressedChange={onPressedChange}
+        />
+      </div>,
     );
 
     const button = screen.getByRole('button', { name: /go/i });
@@ -42,9 +46,11 @@ describe('ActionButton', () => {
 
     fireEvent.keyDown(button, { key: ' ' });
     expect(onPressedChange).toHaveBeenLastCalledWith(true);
+    expect(onKeyDown).not.toHaveBeenCalled();
 
     fireEvent.keyUp(button, { key: ' ' });
     expect(onPressedChange).toHaveBeenLastCalledWith(false);
+    expect(onKeyUp).not.toHaveBeenCalled();
 
     fireEvent.keyDown(button, { key: 'Enter' });
     expect(onPressedChange).toHaveBeenLastCalledWith(true);

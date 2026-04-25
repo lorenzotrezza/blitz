@@ -52,11 +52,34 @@ function formatInputLabel(
 function createShellSnapshot(
   snapshot: RaceSnapshot | null,
   fallbackSessionId: string,
+  fallbackLobbyCode: string,
   fallbackCountdown: number | null,
   inputLabel: string,
 ): RaceShellSnapshot | null {
   if (!snapshot) {
-    return null;
+    if (fallbackCountdown === null) {
+      return null;
+    }
+
+    return {
+      sessionId: fallbackSessionId,
+      lobbyCode: fallbackLobbyCode,
+      modeId: 'circle',
+      status: RACE_STATUS.countdown,
+      countdown: fallbackCountdown,
+      tick: 0,
+      players: [],
+      hud: {
+        objective: 'Prepare to race',
+        progressLabel: '0%',
+        speedLabel: '0 km/h',
+        penaltyLabel: 'Clear',
+        inputLabel,
+        modeMetricLabel: 'Start',
+        modeMetricValue: String(fallbackCountdown),
+      },
+      mode: {},
+    };
   }
 
   const leadPlayer =
@@ -116,10 +139,19 @@ export function SprintCircuitPage() {
       createShellSnapshot(
         snapshot,
         sessionId,
+        initialState?.lobbyCode ?? 'pending',
         countdown,
         formatInputLabel(analog, primaryPressed, secondaryPressed),
       ),
-    [analog, countdown, primaryPressed, secondaryPressed, sessionId, snapshot],
+    [
+      analog,
+      countdown,
+      initialState?.lobbyCode,
+      primaryPressed,
+      secondaryPressed,
+      sessionId,
+      snapshot,
+    ],
   );
   const controlsEnabled = snapshot?.status === RACE_STATUS.racing;
 
@@ -267,7 +299,7 @@ export function SprintCircuitPage() {
           </div>
         </>
       }
-      stateOverlay={!isConnected ? <GameErrorState /> : snapshot ? null : <GameEmptyState />}
+      stateOverlay={!isConnected ? <GameErrorState /> : shellSnapshot ? null : <GameEmptyState />}
     />
   );
 }

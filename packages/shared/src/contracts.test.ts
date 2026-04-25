@@ -521,10 +521,26 @@ test('exports race input guard and analog clamp helpers', () => {
     }),
     false,
   );
+  for (const badValue of [Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY]) {
+    assert.equal(
+      isRaceGameInput({
+        kind: 'analog',
+        sequence: 4,
+        clientTimeMs: 1_713_980_000_123,
+        modeId: 'circle',
+        vector: {
+          x: badValue,
+          y: 0,
+          magnitude: 0,
+        },
+      }),
+      false,
+    );
+  }
   assert.equal(
     isRaceGameInput({
       kind: 'button',
-      sequence: 4,
+      sequence: 5,
       clientTimeMs: 1_713_980_000_423,
       modeId: 'drag',
       button: 'primary',

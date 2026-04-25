@@ -3,7 +3,12 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { RouterProvider } from 'react-router-dom';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { RACE_STATUS, type RaceSnapshot, type SessionFinishedPayload } from '@blitz/shared';
+import {
+  PARTY_GAME_VARIANTS,
+  RACE_STATUS,
+  type RaceSnapshot,
+  type SessionFinishedPayload,
+} from '@blitz/shared';
 
 import { createAppRouter } from '../app/router';
 
@@ -32,7 +37,16 @@ vi.mock('../lib/usePostGameActions', () => ({
   usePostGameActions: mockUsePostGameActions,
 }));
 
-function renderRoute(initialEntry: string) {
+function renderRoute(
+  initialEntry:
+    | string
+    | {
+        pathname: string;
+        search?: string;
+        hash?: string;
+        state?: unknown;
+      },
+) {
   const router = createAppRouter({ initialEntries: [initialEntry] });
 
   return {
@@ -89,7 +103,7 @@ function createFinishedPayload(): SessionFinishedPayload {
     sessionId: 'session-1',
     lobbyCode: 'ABCD12',
     game: 'race',
-    variant: null,
+    variant: PARTY_GAME_VARIANTS.sprintCircuit,
     results: {
       rankings: [
         {
@@ -140,6 +154,30 @@ describe('SprintCircuitPage', () => {
     expect(screen.getByLabelText(/steer/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'GO' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'BRAKE' })).toBeInTheDocument();
+  });
+
+  test('renders initial countdown before a live snapshot arrives', () => {
+    mockUseLiveRaceSocket.mockReturnValue({
+      isConnected: true,
+      snapshot: null,
+      finished: null,
+      submitInput: mockSubmitInput,
+    });
+
+    renderRoute({
+      pathname: '/race/live/session-1',
+      state: {
+        sessionId: 'session-1',
+        lobbyCode: 'ABCD12',
+        game: 'race',
+        variant: PARTY_GAME_VARIANTS.sprintCircuit,
+        countdown: 3,
+      },
+    });
+
+    expect(screen.getByText(/prepare to race/i)).toBeInTheDocument();
+    expect(screen.getAllByText('3').length).toBeGreaterThan(0);
+    expect(screen.queryByText(/waiting for race/i)).not.toBeInTheDocument();
   });
 
   test('renders without normal app chrome or card layout classes', () => {

@@ -46,6 +46,7 @@ export function ActionButton({
     }
 
     event.preventDefault();
+    event.stopPropagation();
     emitPressed(true);
   };
 
@@ -55,6 +56,7 @@ export function ActionButton({
     }
 
     event.preventDefault();
+    event.stopPropagation();
     emitPressed(false);
   };
 
