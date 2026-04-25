@@ -185,6 +185,15 @@ test('exports the expected drag sprint snapshot shape', () => {
     status: racingStatus,
     activePowerUp: nitro,
   };
+  const idlePlayerState: DragSprintPlayerState = {
+    playerId: 'player-2',
+    nickname: 'Guest',
+    lane: leftLane,
+    distance: 120,
+    speed: 0,
+    status: finishedStatus,
+    activePowerUp: null,
+  };
   const obstacleState: DragSprintObstacleState = {
     id: 'obstacle-1',
     type: construction,
@@ -212,6 +221,20 @@ test('exports the expected drag sprint snapshot shape', () => {
     obstacles: [obstacleState],
     pickups: [pickupState],
   };
+  const pendingSnapshot: DragSprintSnapshot = {
+    sessionId: 'session-drag-pending',
+    lobbyCode: 'ABCD12',
+    trackId: 'drag-strip',
+    mode: survivalMode,
+    status: RACE_STATUS.countdown,
+    tick: 0,
+    countdown: null,
+    startedAt: null,
+    distanceTarget: null,
+    playersState: [idlePlayerState],
+    obstacles: [],
+    pickups: [],
+  };
 
   assert.equal(mode, 'finish-line');
   assert.equal(bestOf3Mode, 'best-of-3');
@@ -231,8 +254,15 @@ test('exports the expected drag sprint snapshot shape', () => {
   assert.equal(snapshot.trackId, 'drag-strip');
   assert.equal(snapshot.playersState[0]?.status, racingStatus);
   assert.equal(snapshot.playersState[0]?.lane, centerLane);
+  assert.equal(snapshot.playersState[0]?.activePowerUp, nitro);
   assert.equal(snapshot.obstacles[0]?.type, construction);
   assert.equal(snapshot.pickups[0]?.type, shield);
+  assert.equal(pendingSnapshot.mode, 'survival');
+  assert.equal(pendingSnapshot.status, RACE_STATUS.countdown);
+  assert.equal(pendingSnapshot.playersState[0]?.activePowerUp, null);
+  assert.equal(pendingSnapshot.startedAt, null);
+  assert.equal(pendingSnapshot.countdown, null);
+  assert.equal(pendingSnapshot.distanceTarget, null);
 });
 
 test('keeps host ownership in lobby state rather than duplicating it in player info', () => {
