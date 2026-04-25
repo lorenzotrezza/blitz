@@ -41,8 +41,9 @@ created: 2026-04-25
 | 03-01-01 | 01 | 1 | DODGE-01, DODGE-04, DODGE-05 | T-03-01 | Shared input is intent-only; snapshots/results are server-owned fields | contract | `pnpm --filter @blitz/shared test` | Partial | pending |
 | 03-02-01 | 02 | 1 | DODGE-01, DODGE-02, DODGE-03 | T-03-01, T-03-02 | Server clamps malformed steering and computes collisions/hits itself | unit | `pnpm --filter @blitz/server test -- src/games/race/straightObstacleRules.test.ts` | No - Wave 0 | pending |
 | 03-03-01 | 03 | 2 | DODGE-01, DODGE-02, DODGE-03, DODGE-05 | T-03-01, T-03-02, T-03-03 | Runtime accepts only player intent and emits authoritative snapshots/results | runtime | `pnpm --filter @blitz/server test -- src/games/race/straightObstacle.test.ts` | No - Wave 0 | pending |
-| 03-04-01 | 04 | 3 | DODGE-01, DODGE-04 | T-03-04 | UI exposes warning/slowdown state as React text and resets steering on cancel | web | `pnpm --filter @blitz/web test -- StraightObstacleRacePage.test.tsx` | No - Wave 0 | pending |
-| 03-05-01 | 05 | 3 | DODGE-05 | T-03-04 | Results render obstacle hits from typed result metadata, not label parsing | web | `pnpm --filter @blitz/web test -- ResultsPage.test.tsx` | Partial | pending |
+| 03-04-01 | 04 | 3 | DODGE-01, DODGE-04 | T-03-04 | Component HUD exposes warning/slowdown state as React text and steering resets on cancel | web | `pnpm --filter @blitz/web test -- DodgeRoadView.test.tsx DodgeHud.test.tsx DodgeSteeringPad.test.tsx useDodgeRaceControls.test.tsx` | No - Wave 0 | pending |
+| 03-05-01 | 05 | 4 | DODGE-01, DODGE-04 | T-03-04 | Fullscreen route uses Phase 1 shell, submits steering intent, and navigates to results on finish | web | `pnpm --filter @blitz/web test -- StraightObstacleRacePage.test.tsx` | No - Wave 0 | pending |
+| 03-06-01 | 06 | 5 | DODGE-05 | T-03-02, T-03-04 | Results render obstacle hits from typed result metadata, not label parsing, then root gates run | web + phase gate | `pnpm --filter @blitz/web test -- ResultsPage.test.tsx && pnpm test && pnpm run build` | Partial | pending |
 
 ---
 

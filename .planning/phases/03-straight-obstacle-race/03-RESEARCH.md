@@ -420,22 +420,19 @@ function resetSteer() {
 | A4 | `GameResultEntry.details` or equivalent per-entry metadata is acceptable. | Architecture Patterns / Pitfalls | If contract shape must remain unchanged, hit counts need another representation. |
 | A5 | Initial car/obstacle bounds and tuning constants need implementation play-test. | Common Pitfalls / Code Examples | Wrong tuning can make the race too easy, unfair, or unreadable on phones. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Should Phase 3 introduce `straight-obstacle` or reuse `traffic-survival`?**  
+1. **RESOLVED: Phase 3 introduces `straight-obstacle` and leaves `traffic-survival` untouched.**  
    - What we know: `traffic-survival` exists in shared variants but is not registered/startable. [VERIFIED: `packages/shared/src/lobby.ts`; `apps/server/src/games/registry.ts`]  
-   - What's unclear: Whether `traffic-survival` is a legacy name the project wants to keep. [ASSUMED]  
-   - Recommendation: Use `straight-obstacle` for clarity unless the planner finds a compatibility reason to reuse `traffic-survival`. [ASSUMED]
+   - Resolution: Use `PARTY_GAME_VARIANTS.straightObstacle = 'straight-obstacle'`, register `race:straight-obstacle`, and keep `traffic-survival` unchanged for later catalog cleanup. [VERIFIED: `.planning/phases/03-straight-obstacle-race/03-01-PLAN.md`; `.planning/phases/03-straight-obstacle-race/03-03-PLAN.md`]
 
-2. **Should results extend `GameResultEntry` or use mode-specific summary keys?**  
+2. **RESOLVED: Extend result entries with optional typed details.**  
    - What we know: Current result entries have `label` and `value`; summary is flat scalar metadata. [VERIFIED: `packages/shared/src/contracts.ts`]  
-   - What's unclear: Whether other phases already plan a generic result-detail extension. [VERIFIED: Phase 2 research recommends details but no implementation is present]  
-   - Recommendation: Add optional `details?: Record<string, string | number | boolean | null>` to `GameResultEntry` and use it for `finishTimeMs` and `obstacleHits`. [ASSUMED]
+   - Resolution: Add optional `details?: Record<string, string | number | boolean | null>` to `GameResultEntry` and use `details.finishTimeMs` plus `details.obstacleHits` for straight-obstacle results. Do not parse hit counts from ranking labels. [VERIFIED: `.planning/phases/03-straight-obstacle-race/03-01-PLAN.md`; `.planning/phases/03-straight-obstacle-race/03-06-PLAN.md`]
 
-3. **Is Phase 1 executed before Phase 3 starts?**  
+3. **RESOLVED: Phase 3 plans gate on Phase 1 and Phase 2 source outputs.**  
    - What we know: STATE says Phase 1 is planned and source audit found no shell primitives. [VERIFIED: `.planning/STATE.md`; source grep]  
-   - What's unclear: Whether the planner will run Phase 3 before Phase 1 implementation lands. [ASSUMED]  
-   - Recommendation: Make Phase 3 web tasks explicitly depend on Phase 1 shell/control files, with a Wave 0 check. [VERIFIED: `03-UI-SPEC.md`]
+   - Resolution: `03-01-PLAN.md` includes a prerequisite gate, and web plans read expected Phase 1 shell/control files. If those files are absent during execution, the executor must stop and report prerequisite phase not executed instead of inventing a duplicate shell. [VERIFIED: `.planning/phases/03-straight-obstacle-race/03-01-PLAN.md`; `.planning/phases/03-straight-obstacle-race/03-05-PLAN.md`]
 
 ## Environment Availability
 
