@@ -1,10 +1,15 @@
-import type { PartyGame, PartyGameVariant } from '@blitz/shared';
+import type { LobbyState, PartyGame, PartyGameVariant } from '@blitz/shared';
+
+import { createLightsRuntime } from './lights/runtime.js';
+import { createPenaltyRuntime } from './penalty/runtime.js';
+import type { GameRuntimeFactory } from './runtime.js';
 
 export interface GameRegistryEntry {
   key: string;
   game: PartyGame;
   variant: PartyGameVariant;
   countdown: number | null;
+  createRuntime?: GameRuntimeFactory;
 }
 
 export interface GameRuntimeRegistry {
@@ -18,12 +23,32 @@ const DEFAULT_GAME_REGISTRY: GameRegistryEntry[] = [
     game: 'lights',
     variant: null,
     countdown: 3,
+    createRuntime(lobby: LobbyState, sessionId: string, callbacks) {
+      return createLightsRuntime(lobby, sessionId, {
+        onState(payload) {
+          callbacks.onState?.(payload);
+        },
+        onFinished(payload) {
+          callbacks.onFinished?.(payload);
+        },
+      });
+    },
   },
   {
     key: 'penalty',
     game: 'penalty',
     variant: null,
     countdown: 3,
+    createRuntime(lobby: LobbyState, sessionId: string, callbacks) {
+      return createPenaltyRuntime(lobby, sessionId, {
+        onState(payload) {
+          callbacks.onState?.(payload);
+        },
+        onFinished(payload) {
+          callbacks.onFinished?.(payload);
+        },
+      });
+    },
   },
   {
     key: 'race:sprint-circuit',

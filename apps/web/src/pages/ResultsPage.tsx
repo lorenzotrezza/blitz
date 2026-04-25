@@ -1,6 +1,6 @@
 import { Link, useLocation, useParams } from 'react-router-dom';
 
-import type { RaceFinishedPayload } from '@blitz/shared';
+import type { RaceFinishedPayload, SessionFinishedPayload } from '@blitz/shared';
 
 function formatFinishTime(finishTimeMs: number | null) {
   if (finishTimeMs === null) {
@@ -10,32 +10,79 @@ function formatFinishTime(finishTimeMs: number | null) {
   return `${(finishTimeMs / 1000).toFixed(1)}s`;
 }
 
+function normalizePayload(payload: SessionFinishedPayload | RaceFinishedPayload | null): SessionFinishedPayload | null {
+  if (!payload) {
+    return null;
+  }
+
+  if ('results' in payload) {
+    return payload;
+  }
+
+  return {
+    sessionId: payload.sessionId,
+    lobbyCode: payload.lobbyCode,
+    game: 'race',
+    variant: null,
+    results: {
+      rankings: payload.standings.map((standing) => ({
+        playerId: standing.entrantId,
+        rank: standing.position,
+        label: formatFinishTime(standing.finishTimeMs),
+        value: standing.finishTimeMs,
+      })),
+    },
+  };
+}
+
+function readLobbyRoster() {
+  const raw = window.localStorage.getItem('blitz-active-lobby');
+
+  if (!raw) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(raw) as {
+      players?: Array<{ id: string; nickname: string }>;
+    };
+  } catch {
+    return null;
+  }
+}
+
 export function ResultsPage() {
   const location = useLocation();
   const { sessionId = 'pending' } = useParams();
-  const locationPayload = (location.state as RaceFinishedPayload | null) ?? null;
+  const locationPayload =
+    (location.state as SessionFinishedPayload | RaceFinishedPayload | null) ?? null;
   const storedPayload = window.sessionStorage.getItem(`blitz-results:${sessionId}`);
-  const payload =
+  const payload = normalizePayload(
     locationPayload ??
-    (storedPayload ? (JSON.parse(storedPayload) as RaceFinishedPayload) : null);
+      (storedPayload
+        ? (JSON.parse(storedPayload) as SessionFinishedPayload | RaceFinishedPayload)
+        : null),
+  );
+  const roster = readLobbyRoster();
 
   return (
     <section className="panel results-panel">
-      <p className="eyebrow">Post-Race</p>
-      <h1>Classifica Finale</h1>
+      <p className="eyebrow">Post-Game</p>
+      <h1>Risultati Finali</h1>
       <p className="lede">
-        Session <strong>{sessionId}</strong> chiusa. Qui restano ordine d’arrivo, tempi e ritorno
-        rapido al garage.
+        Session <strong>{sessionId}</strong> chiusa. La board finale e comune a ogni gioco della
+        party arcade.
       </p>
 
       {payload ? (
         <ol className="results-list">
-          {payload.standings.map((standing) => (
-            <li className="results-row" key={standing.entrantId}>
-              <span>#{standing.position}</span>
-              <strong>{standing.entrantId}</strong>
-              <span>{standing.entrantType.toUpperCase()}</span>
-              <span>{formatFinishTime(standing.finishTimeMs)}</span>
+          {payload.results.rankings.map((entry) => (
+            <li className="results-row" key={entry.playerId}>
+              <span>#{entry.rank}</span>
+              <strong>
+                {roster?.players?.find((player) => player.id === entry.playerId)?.nickname ?? entry.playerId}
+              </strong>
+              <span>{entry.label ?? entry.value ?? 'ND'}</span>
             </li>
           ))}
         </ol>

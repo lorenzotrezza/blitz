@@ -3,10 +3,12 @@ import { Link, NavLink, Outlet, createBrowserRouter, createMemoryRouter } from '
 import { BotRacePage } from '../pages/BotRacePage';
 import { HubPage } from '../pages/HubPage';
 import { LandingPage } from '../pages/LandingPage';
+import { LightsSessionPage } from '../pages/LightsSessionPage';
 import { LobbyIndexPage, LobbyPage } from '../pages/LobbyPage';
 import { MinigameLightsPage } from '../pages/MinigameLightsPage';
 import { MinigamePenaltyPage } from '../pages/MinigamePenaltyPage';
 import { ModeSelectPage } from '../pages/ModeSelectPage';
+import { PenaltySessionPage } from '../pages/PenaltySessionPage';
 import { PracticePage } from '../pages/PracticePage';
 import { RacePage } from '../pages/RacePage';
 import { ResultsPage } from '../pages/ResultsPage';
@@ -71,8 +73,16 @@ function buildRoutes() {
           element: <MinigameLightsPage />,
         },
         {
+          path: '/session/lights/:sessionId',
+          element: <LightsSessionPage />,
+        },
+        {
           path: '/hub/minigames/penalty',
           element: <MinigamePenaltyPage />,
+        },
+        {
+          path: '/session/penalty/:sessionId',
+          element: <PenaltySessionPage />,
         },
         {
           path: '/lobby/:lobbyCode',

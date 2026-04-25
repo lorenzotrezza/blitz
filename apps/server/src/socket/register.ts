@@ -5,13 +5,16 @@ import {
   LOBBY_STATUS,
   SOCKET_EVENTS,
   ClientToServerEvents,
+  GameSessionEnvelope,
   type LobbyErrorPayload,
   type LobbyState,
+  SessionFinishedPayload,
   ServerToClientEvents,
 } from '@blitz/shared';
 import { Server, type Socket } from 'socket.io';
 
 import type { ServerConfig } from '../config.js';
+import { createGameManager } from '../games/manager.js';
 import { createGameRuntimeRegistry, type GameRuntimeRegistry } from '../games/registry.js';
 import {
   LobbyServiceError,
@@ -78,6 +81,20 @@ export function registerSockets(
   });
   const lobbyService = options.lobbyService ?? createLobbyService();
   const gameRegistry = options.gameRegistry ?? createGameRuntimeRegistry();
+  const gameManager = createGameManager({
+    onState(payload: GameSessionEnvelope) {
+      io.to(payload.lobbyCode).emit(SOCKET_EVENTS.server.sessionState, payload);
+    },
+    onFinished(payload: SessionFinishedPayload) {
+      const resultsLobby = lobbyService.setStatus({
+        code: payload.lobbyCode,
+        status: LOBBY_STATUS.results,
+      });
+
+      emitLobbySnapshot(io, resultsLobby);
+      io.to(payload.lobbyCode).emit(SOCKET_EVENTS.server.sessionFinished, payload);
+    },
+  });
 
   async function startSession(code: string, playerId: string) {
     const lobby = lobbyService.getLobby(code);
@@ -106,13 +123,17 @@ export function registerSockets(
     });
     emitLobbySnapshot(io, sessionLobby);
 
-    io.to(lobby.code).emit(SOCKET_EVENTS.server.sessionStarted, {
-      sessionId: randomUUID(),
-      lobbyCode: lobby.code,
-      game: gameEntry.game,
-      variant: gameEntry.variant,
-      countdown: gameEntry.countdown,
-    });
+    const startedPayload = gameEntry.createRuntime
+      ? gameManager.startLobbySession(sessionLobby, gameEntry)
+      : {
+          sessionId: randomUUID(),
+          lobbyCode: lobby.code,
+          game: gameEntry.game,
+          variant: gameEntry.variant,
+          countdown: gameEntry.countdown,
+        };
+
+    io.to(lobby.code).emit(SOCKET_EVENTS.server.sessionStarted, startedPayload);
   }
 
   io.on('connection', (socket) => {
@@ -213,6 +234,10 @@ export function registerSockets(
       });
     });
 
+    socket.on(SOCKET_EVENTS.client.gameInput, (payload) => {
+      gameManager.applyInput(socket.id, payload);
+    });
+
     socket.on(SOCKET_EVENTS.client.startRace, async (payload) => {
       await handleLobbyMutation(socket, async () => {
         await startSession(payload.code, socket.id);
@@ -220,6 +245,7 @@ export function registerSockets(
     });
 
     socket.on('disconnect', () => {
+      gameManager.removePlayer(socket.id);
       const lobby = lobbyService.disconnectPlayer(socket.id);
 
       if (lobby) {

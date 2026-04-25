@@ -75,9 +75,9 @@ export function LobbyIndexPage() {
     if (sessionStarted) {
       const target =
         sessionStarted.game === 'lights'
-          ? '/hub/minigames/lights'
+          ? `/session/lights/${sessionStarted.sessionId}`
           : sessionStarted.game === 'penalty'
-            ? '/hub/minigames/penalty'
+            ? `/session/penalty/${sessionStarted.sessionId}`
             : `/race/live/${sessionStarted.sessionId}`;
 
       navigate(target, {
