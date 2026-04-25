@@ -6,12 +6,29 @@ import {
   LOBBY_STATUS,
   PLAYER_CONNECTION_STATE,
   RACE_STATUS,
-  type DragSprintSnapshot,
   type LobbyState,
   type SessionFinishedPayload,
 } from '@blitz/shared';
 
+import { createGameRuntimeRegistry } from '../registry.js';
 import { createDragSprintRuntime } from './dragSprint.js';
+import type {
+  DragGearPlayerRuleState,
+  DragShiftWindow,
+} from './dragGearRules.js';
+
+interface DragGearRuntimeSnapshot {
+  sessionId: string;
+  lobbyCode: string;
+  trackId: string;
+  status: string;
+  tick: number;
+  startedAt: number | null;
+  countdown: number | null;
+  distanceTargetM: number;
+  shiftWindow: DragShiftWindow;
+  playersState: DragGearPlayerRuleState[];
+}
 
 function createLobby(overrides: Partial<LobbyState['settings']> = {}): LobbyState {
   return {
@@ -52,108 +69,245 @@ function createLobby(overrides: Partial<LobbyState['settings']> = {}): LobbyStat
   };
 }
 
-test('advances players on a fixed three-lane drag strip with deterministic finish-line rules', () => {
+test('starts a straight drag gear race from the existing registry variant', () => {
+  const registryEntry = createGameRuntimeRegistry().resolve('race', 'drag-sprint');
+
+  assert.equal(registryEntry?.key, 'race:drag-sprint');
+  assert.ok(registryEntry.createRuntime);
+
   const runtime = createDragSprintRuntime(createLobby(), 'session-drag', {
     countdownMs: 0,
-    distanceTarget: 120,
-    now: () => 2_000,
+    now: () => 1_000,
   });
-
   const started = runtime.start();
-  const first = runtime.applyInput('socket-host', {
-    tick: 1,
-    steer: 1,
-    accelerate: true,
-    brake: false,
-  });
-  const guestTraffic = runtime.applyInput('socket-guest', {
-    tick: 999,
-    steer: 0,
-    accelerate: true,
-    brake: false,
-  });
-  const cooldownBlocked = runtime.applyInput('socket-host', {
-    tick: 100,
-    steer: 1,
-    accelerate: true,
-    brake: false,
-  });
-  const laneChangedAgain = runtime.applyInput('socket-host', {
-    tick: 3,
-    steer: 1,
-    accelerate: true,
-    brake: false,
-  });
-  const braked = runtime.applyInput('socket-host', {
-    tick: 4,
-    steer: 0,
-    accelerate: false,
-    brake: true,
-  });
+  const snapshot = started.state as unknown as DragGearRuntimeSnapshot;
 
-  assert.ok(first);
-  assert.ok(cooldownBlocked);
-  assert.ok(laneChangedAgain);
-  assert.ok(braked);
-
-  const startedSnapshot = started.state as DragSprintSnapshot;
-  const firstSnapshot = first.state as DragSprintSnapshot;
-  const guestTrafficSnapshot = guestTraffic?.state as DragSprintSnapshot;
-  const cooldownSnapshot = cooldownBlocked.state as DragSprintSnapshot;
-  const laneChangedSnapshot = laneChangedAgain.state as DragSprintSnapshot;
-  const brakedSnapshot = braked.state as DragSprintSnapshot;
-
-  assert.equal(startedSnapshot.trackId, 'drag-strip');
-  assert.equal(startedSnapshot.mode, 'finish-line');
-  assert.equal(startedSnapshot.distanceTarget, 120);
+  assert.equal(started.variant, 'drag-sprint');
+  assert.equal(started.status, 'active');
+  assert.equal(snapshot.status, RACE_STATUS.racing);
+  assert.equal(snapshot.trackId, 'straight-drag-gear');
+  assert.equal(snapshot.distanceTargetM, 402);
   assert.deepEqual(
-    startedSnapshot.playersState.map((player) => player.lane),
-    [0, 1, 2],
-  );
-  assert.equal(startedSnapshot.status, RACE_STATUS.racing);
-
-  assert.equal(firstSnapshot.playersState[0]?.lane, 1);
-  assert.ok(
-    (firstSnapshot.playersState[0]?.speed ?? 0) > (startedSnapshot.playersState[0]?.speed ?? 0),
-  );
-  assert.equal(firstSnapshot.tick, 1);
-  assert.equal(guestTrafficSnapshot.tick, 2);
-  assert.equal(cooldownSnapshot.playersState[0]?.lane, 1);
-  assert.equal(cooldownSnapshot.tick, 3);
-  assert.equal(laneChangedSnapshot.playersState[0]?.lane, 2);
-  assert.ok(
-    (brakedSnapshot.playersState[0]?.speed ?? 0) < (laneChangedSnapshot.playersState[0]?.speed ?? 0),
-  );
-  assert.deepEqual(
-    brakedSnapshot.obstacles.map((obstacle) => ({
-      id: obstacle.id,
-      lane: obstacle.lane,
-      type: obstacle.type,
+    snapshot.playersState.map((player) => ({
+      gear: player.gear,
+      maxGear: player.maxGear,
     })),
     [
-      { id: 'drag-obstacle-1', lane: 0, type: 'cone' },
-      { id: 'drag-obstacle-2', lane: 2, type: 'slow-car' },
-    ],
-  );
-  assert.deepEqual(
-    brakedSnapshot.pickups.map((pickup) => ({
-      id: pickup.id,
-      lane: pickup.lane,
-      type: pickup.type,
-    })),
-    [
-      { id: 'drag-pickup-1', lane: 1, type: 'nitro' },
-      { id: 'drag-pickup-2', lane: 0, type: 'shield' },
+      { gear: 1, maxGear: 4 },
+      { gear: 1, maxGear: 4 },
+      { gear: 1, maxGear: 4 },
     ],
   );
 });
 
-test('finishes a drag sprint session when a driver reaches the fixed distance target', () => {
-  const finishedPayloads: SessionFinishedPayload[] = [];
+test('advances throttle and shift input through authoritative server state', () => {
   let nowMs = 5_000;
   const runtime = createDragSprintRuntime(createLobby(), 'session-drag', {
     countdownMs: 0,
-    distanceTarget: 45,
+    now: () => nowMs,
+  });
+
+  const started = runtime.start();
+  const startingPlayer = (started.state as unknown as DragGearRuntimeSnapshot).playersState[0]!;
+  const throttled = runtime.applyInput('socket-host', {
+    kind: 'drag-throttle',
+    pressed: true,
+    sequence: 1,
+    clientTimeMs: 1,
+  });
+
+  assert.ok(throttled);
+  nowMs += 900;
+
+  const shifted = runtime.applyInput('socket-host', {
+    kind: 'drag-shift',
+    sequence: 2,
+    clientTimeMs: 2,
+  });
+
+  assert.ok(shifted);
+
+  const throttledPlayer =
+    (throttled.state as unknown as DragGearRuntimeSnapshot).playersState[0]!;
+  const shiftedPlayer =
+    (shifted.state as unknown as DragGearRuntimeSnapshot).playersState[0]!;
+
+  assert.equal(throttledPlayer.throttlePressed, true);
+  assert.ok(shiftedPlayer.speedKmh > startingPlayer.speedKmh);
+  assert.ok(shiftedPlayer.rpm > startingPlayer.rpm);
+  assert.ok(shiftedPlayer.distanceM > startingPlayer.distanceM);
+  assert.equal(shiftedPlayer.gear, 2);
+  assert.equal(shiftedPlayer.shiftSummary.total, 1);
+});
+
+test('held throttle progresses without repeated client packets', () => {
+  let nowMs = 10_000;
+  const runtime = createDragSprintRuntime(createLobby(), 'session-drag', {
+    countdownMs: 0,
+    now: () => nowMs,
+  });
+
+  runtime.start();
+  const pressed = runtime.applyInput('socket-host', {
+    kind: 'drag-throttle',
+    pressed: true,
+    sequence: 1,
+    clientTimeMs: 1,
+  });
+
+  assert.ok(pressed);
+
+  const pressedPlayer =
+    (pressed.state as unknown as DragGearRuntimeSnapshot).playersState[0]!;
+  nowMs += 1_200;
+
+  const later = runtime.applyInput('socket-host', {
+    kind: 'drag-throttle',
+    pressed: true,
+    sequence: 2,
+    clientTimeMs: 2,
+  });
+
+  assert.ok(later);
+
+  const laterPlayer =
+    (later.state as unknown as DragGearRuntimeSnapshot).playersState[0]!;
+
+  assert.ok(laterPlayer.rpm > pressedPlayer.rpm);
+  assert.ok(laterPlayer.speedKmh > pressedPlayer.speedKmh);
+  assert.ok(laterPlayer.distanceM > pressedPlayer.distanceM);
+});
+
+test('shift after elapsed hold time scores from updated RPM', () => {
+  let nowMs = 20_000;
+  const runtime = createDragSprintRuntime(createLobby(), 'session-drag', {
+    countdownMs: 0,
+    now: () => nowMs,
+  });
+
+  const started = runtime.start();
+  const startingPlayer = (started.state as unknown as DragGearRuntimeSnapshot).playersState[0]!;
+
+  runtime.applyInput('socket-host', {
+    kind: 'drag-throttle',
+    pressed: true,
+    sequence: 1,
+    clientTimeMs: 1,
+  });
+
+  nowMs += 1_900;
+
+  const shifted = runtime.applyInput('socket-host', {
+    kind: 'drag-shift',
+    sequence: 2,
+    clientTimeMs: 2,
+  });
+
+  assert.ok(shifted);
+
+  const shiftedPlayer =
+    (shifted.state as unknown as DragGearRuntimeSnapshot).playersState[0]!;
+
+  assert.equal(shiftedPlayer.gear, 2);
+  assert.equal(shiftedPlayer.lastShiftQuality, 'perfect');
+  assert.equal(shiftedPlayer.shiftSummary.perfect, 1);
+  assert.equal(shiftedPlayer.shiftSummary.total, 1);
+  assert.notEqual(shiftedPlayer.lastShiftQuality, 'early');
+  assert.ok(shiftedPlayer.rpm > startingPlayer.rpm);
+});
+
+test('ignores old steering repeated shift and non-racing input', () => {
+  let nowMs = 30_000;
+  const runtime = createDragSprintRuntime(createLobby(), 'session-drag', {
+    countdownMs: 0,
+    distanceTarget: 18,
+    now: () => nowMs,
+  });
+
+  runtime.start();
+
+  const steered = runtime.applyInput('socket-host', {
+    steer: 1,
+    accelerate: true,
+    brake: false,
+  });
+
+  assert.ok(steered);
+
+  const steeredPlayer =
+    (steered.state as unknown as DragGearRuntimeSnapshot).playersState[0]!;
+
+  assert.equal(steeredPlayer.gear, 1);
+  assert.equal(steeredPlayer.shiftSummary.total, 0);
+  assert.equal('lane' in steeredPlayer, false);
+  assert.equal('obstacles' in steered.state, false);
+
+  const throttled = runtime.applyInput('socket-host', {
+    kind: 'drag-throttle',
+    pressed: true,
+    sequence: 1,
+    clientTimeMs: 1,
+  });
+
+  assert.ok(throttled);
+  nowMs += 900;
+
+  const shifted = runtime.applyInput('socket-host', {
+    kind: 'drag-shift',
+    sequence: 2,
+    clientTimeMs: 2,
+  });
+  const repeatedShift = runtime.applyInput('socket-host', {
+    kind: 'drag-shift',
+    sequence: 2,
+    clientTimeMs: 3,
+  });
+
+  assert.ok(shifted);
+  assert.ok(repeatedShift);
+  const repeatedShiftPlayer =
+    (repeatedShift.state as unknown as DragGearRuntimeSnapshot).playersState[0];
+  const shiftedPlayer =
+    (shifted.state as unknown as DragGearRuntimeSnapshot).playersState[0];
+
+  assert.equal(repeatedShiftPlayer?.gear, shiftedPlayer?.gear);
+  assert.equal(
+    repeatedShiftPlayer?.shiftSummary.total,
+    shiftedPlayer?.shiftSummary.total,
+  );
+
+  nowMs += 10_000;
+  const finished = runtime.applyInput('socket-host', {
+    kind: 'drag-throttle',
+    pressed: true,
+    sequence: 3,
+    clientTimeMs: 4,
+  });
+
+  assert.ok(finished);
+  assert.equal(finished.status, 'finished');
+
+  const afterFinish = runtime.applyInput('socket-host', {
+    kind: 'drag-shift',
+    sequence: 4,
+    clientTimeMs: 5,
+  });
+
+  assert.ok(afterFinish);
+  const afterFinishPlayer =
+    (afterFinish.state as unknown as DragGearRuntimeSnapshot).playersState[0];
+  const finishedPlayer =
+    (finished.state as unknown as DragGearRuntimeSnapshot).playersState[0];
+
+  assert.equal(afterFinishPlayer?.gear, finishedPlayer?.gear);
+});
+
+test('finishes with rankings and drag shift summary', () => {
+  const finishedPayloads: SessionFinishedPayload[] = [];
+  let nowMs = 40_000;
+  const runtime = createDragSprintRuntime(createLobby(), 'session-drag', {
+    countdownMs: 0,
+    distanceTarget: 20,
     now: () => nowMs,
     onFinished(payload) {
       finishedPayloads.push(payload);
@@ -162,429 +316,55 @@ test('finishes a drag sprint session when a driver reaches the fixed distance ta
 
   runtime.start();
 
-  let state = runtime.applyInput('socket-host', {
-    tick: 1,
-    steer: 0,
-    accelerate: true,
-    brake: false,
+  runtime.applyInput('socket-host', {
+    kind: 'drag-throttle',
+    pressed: true,
+    sequence: 1,
+    clientTimeMs: 1,
   });
-  nowMs += 250;
-  state = runtime.applyInput('socket-host', {
-    tick: 2,
-    steer: 0,
-    accelerate: true,
-    brake: false,
+  nowMs += 1_900;
+  runtime.applyInput('socket-host', {
+    kind: 'drag-shift',
+    sequence: 2,
+    clientTimeMs: 2,
   });
-  nowMs += 250;
-  state = runtime.applyInput('socket-host', {
-    tick: 3,
-    steer: 0,
-    accelerate: true,
-    brake: false,
+  nowMs += 5_000;
+
+  const finished = runtime.applyInput('socket-host', {
+    kind: 'drag-throttle',
+    pressed: true,
+    sequence: 3,
+    clientTimeMs: 3,
   });
 
-  assert.ok(state);
+  assert.ok(finished);
 
-  const snapshot = state.state as DragSprintSnapshot;
-
-  assert.equal(state.status, 'finished');
-  assert.equal(snapshot.status, RACE_STATUS.finished);
-  assert.equal(snapshot.playersState[0]?.status, 'finished');
-  assert.equal(snapshot.playersState[0]?.distance, 45);
-  assert.equal(finishedPayloads.length, 1);
-  assert.deepEqual(finishedPayloads[0]?.results.rankings[0], {
-    playerId: 'socket-host',
-    rank: 1,
-    label: '0.5s',
-    value: 500,
-  });
-});
-
-test('eliminates inactive and crashed drivers in survival mode until the last active racer wins', () => {
-  const finishedPayloads: SessionFinishedPayload[] = [];
-  let nowMs = 20_000;
-  const runtime = createDragSprintRuntime(
-    createLobby({
-      raceMode: LOBBY_RACE_MODES.survival,
-    }),
-    'session-drag-survival',
-    {
-      countdownMs: 0,
-      distanceTarget: 120,
-      now: () => nowMs,
-      onFinished(payload) {
-        finishedPayloads.push(payload);
-      },
-    },
-  );
-
-  function apply(
-    playerId: string,
-    tick: number,
-    steer: -1 | 0 | 1 = 0,
-    accelerate = true,
-    brake = false,
-  ) {
-    const nextState = runtime.applyInput(playerId, {
-      tick,
-      steer,
-      accelerate,
-      brake,
-    });
-
-    assert.ok(nextState);
-    return nextState;
-  }
-
-  const started = runtime.start();
-  const startedSnapshot = started.state as DragSprintSnapshot;
-
-  assert.equal(startedSnapshot.mode, LOBBY_RACE_MODES.survival);
-  assert.equal(startedSnapshot.status, RACE_STATUS.racing);
-
-  nowMs = 20_050;
-  apply('socket-host', 1, 0);
-  nowMs = 20_100;
-  apply('socket-guest', 1, -1);
-  nowMs = 20_150;
-  const timeoutState = apply('socket-host', 2, 0);
-
-  const timeoutSnapshot = timeoutState.state as DragSprintSnapshot;
-
-  assert.equal(timeoutSnapshot.playersState[2]?.status, 'eliminated');
-  assert.equal(timeoutSnapshot.playersState[2]?.distance, 0);
-
-  nowMs = 20_200;
-  apply('socket-guest', 2, 0);
-  nowMs = 20_250;
-  apply('socket-host', 3, 1);
-  nowMs = 20_300;
-  const finished = apply('socket-guest', 3, 0);
-
-  const finishedSnapshot = finished.state as DragSprintSnapshot;
+  const snapshot = finished.state as unknown as DragGearRuntimeSnapshot;
+  const payload = finishedPayloads[0];
 
   assert.equal(finished.status, 'finished');
-  assert.equal(finishedSnapshot.status, RACE_STATUS.finished);
-  assert.equal(finishedSnapshot.playersState[0]?.status, 'finished');
-  assert.equal(finishedSnapshot.playersState[1]?.status, 'eliminated');
-  assert.equal(finishedSnapshot.playersState[1]?.distance, 36);
+  assert.equal(snapshot.status, RACE_STATUS.finished);
   assert.equal(finishedPayloads.length, 1);
-  assert.deepEqual(finishedPayloads[0]?.results.rankings, [
-    {
-      playerId: 'socket-host',
-      rank: 1,
-      label: '0.3s',
-      value: 300,
-    },
-    {
-      playerId: 'socket-guest',
-      rank: 2,
-      label: '0.3s',
-      value: 300,
-    },
-    {
-      playerId: 'socket-third',
-      rank: 3,
-      label: '0.1s',
-      value: 150,
-    },
+  assert.ok(payload);
+  assert.equal(payload.results.rankings[0]?.playerId, 'socket-host');
+  assert.match(payload.results.rankings[0]?.label ?? '', /s$/);
+  assert.deepEqual(Object.keys(payload.results.summary ?? {}).sort(), [
+    'distanceTargetM',
+    'earlyShifts',
+    'finishTimeMs',
+    'goodShifts',
+    'lateShifts',
+    'mode',
+    'perfectShifts',
+    'totalShifts',
+    'track',
   ]);
-  assert.deepEqual(finishedPayloads[0]?.results.summary, {
-    mode: LOBBY_RACE_MODES.survival,
-    track: 'drag-strip',
-    distanceTarget: 120,
-    winnerId: 'socket-host',
-  });
-});
-
-test('resets the strip across three best-of-3 manches and ranks ties by cumulative time', () => {
-  const finishedPayloads: SessionFinishedPayload[] = [];
-  let nowMs = 1_000;
-  const runtime = createDragSprintRuntime(
-    createLobby({
-      raceMode: LOBBY_RACE_MODES.bestOf3,
-    }),
-    'session-drag-best-of-3',
-    {
-      countdownMs: 0,
-      distanceTarget: 30,
-      now: () => nowMs,
-      onFinished(payload) {
-        finishedPayloads.push(payload);
-      },
-    },
-  );
-
-  function accelerate(playerId: string, tick: number, steer: -1 | 0 | 1 = 0) {
-    const nextState = runtime.applyInput(playerId, {
-      tick,
-      steer,
-      accelerate: true,
-      brake: false,
-    });
-
-    assert.ok(nextState);
-    return nextState;
-  }
-
-  const started = runtime.start();
-  const startedSnapshot = started.state as DragSprintSnapshot;
-
-  assert.equal(startedSnapshot.mode, LOBBY_RACE_MODES.bestOf3);
-  assert.equal(startedSnapshot.round, 1);
-  assert.equal(startedSnapshot.totalRounds, 3);
-
-  accelerate('socket-host', 1, 1);
-  accelerate('socket-guest', 1, 0);
-  let state = accelerate('socket-third', 1, -1);
-
-  nowMs = 1_090;
-  accelerate('socket-host', 2, 1);
-  nowMs = 1_200;
-  accelerate('socket-guest', 2, 0);
-  nowMs = 1_300;
-  state = accelerate('socket-third', 2, -1);
-
-  let roundTwoSnapshot = state.state as DragSprintSnapshot;
-  assert.equal(state.status, 'active');
-  assert.equal(roundTwoSnapshot.status, RACE_STATUS.racing);
-  assert.equal(roundTwoSnapshot.round, 2);
-  assert.deepEqual(
-    roundTwoSnapshot.playersState.map((player) => ({
-      lane: player.lane,
-      distance: player.distance,
-      speed: player.speed,
-      status: player.status,
-    })),
-    [
-      { lane: 0, distance: 0, speed: 0, status: 'racing' },
-      { lane: 1, distance: 0, speed: 0, status: 'racing' },
-      { lane: 2, distance: 0, speed: 0, status: 'racing' },
-    ],
-  );
-  assert.deepEqual(
-    roundTwoSnapshot.standings!.map((entry) => ({
-      playerId: entry.playerId,
-      points: entry.points,
-      roundWins: entry.roundWins,
-      cumulativeTimeMs: entry.cumulativeTimeMs,
-    })),
-    [
-      {
-        playerId: 'socket-host',
-        points: 3,
-        roundWins: 1,
-        cumulativeTimeMs: 90,
-      },
-      {
-        playerId: 'socket-guest',
-        points: 2,
-        roundWins: 0,
-        cumulativeTimeMs: 200,
-      },
-      {
-        playerId: 'socket-third',
-        points: 1,
-        roundWins: 0,
-        cumulativeTimeMs: 300,
-      },
-    ],
-  );
-
-  accelerate('socket-host', 3, 0);
-  accelerate('socket-guest', 3, 0);
-  state = accelerate('socket-third', 3, 0);
-
-  nowMs = 1_420;
-  accelerate('socket-host', 4, 0);
-  nowMs = 1_560;
-  accelerate('socket-guest', 4, 0);
-  nowMs = 1_660;
-  state = accelerate('socket-third', 4, 0);
-
-  const roundThreeSnapshot = state.state as DragSprintSnapshot;
-  assert.equal(roundThreeSnapshot.round, 3);
-  assert.deepEqual(
-    roundThreeSnapshot.standings!.map((entry) => ({
-      playerId: entry.playerId,
-      points: entry.points,
-      roundWins: entry.roundWins,
-    })),
-    [
-      { playerId: 'socket-host', points: 6, roundWins: 2 },
-      { playerId: 'socket-guest', points: 4, roundWins: 0 },
-      { playerId: 'socket-third', points: 2, roundWins: 0 },
-    ],
-  );
-
-  accelerate('socket-host', 5, 0);
-  accelerate('socket-guest', 5, 0);
-  state = accelerate('socket-third', 5, 0);
-
-  nowMs = 1_760;
-  accelerate('socket-guest', 6, 0);
-  nowMs = 1_900;
-  accelerate('socket-third', 6, 0);
-  nowMs = 2_060;
-  state = accelerate('socket-host', 6, 0);
-
-  const finishedSnapshot = state.state as DragSprintSnapshot;
-
-  assert.equal(state.status, 'finished');
-  assert.equal(finishedSnapshot.status, RACE_STATUS.finished);
-  assert.equal(finishedSnapshot.round, 3);
-  assert.equal(finishedPayloads.length, 1);
-  assert.deepEqual(
-    finishedSnapshot.standings!.map((entry) => ({
-      playerId: entry.playerId,
-      points: entry.points,
-      roundWins: entry.roundWins,
-      cumulativeTimeMs: entry.cumulativeTimeMs,
-    })),
-    [
-      {
-        playerId: 'socket-guest',
-        points: 7,
-        roundWins: 1,
-        cumulativeTimeMs: 560,
-      },
-      {
-        playerId: 'socket-host',
-        points: 7,
-        roundWins: 2,
-        cumulativeTimeMs: 610,
-      },
-      {
-        playerId: 'socket-third',
-        points: 4,
-        roundWins: 0,
-        cumulativeTimeMs: 900,
-      },
-    ],
-  );
-  assert.deepEqual(finishedPayloads[0]?.results.rankings, [
-    {
-      playerId: 'socket-guest',
-      rank: 1,
-      label: '7 pts · 560 ms',
-      value: 7,
-    },
-    {
-      playerId: 'socket-host',
-      rank: 2,
-      label: '7 pts · 610 ms',
-      value: 7,
-    },
-    {
-      playerId: 'socket-third',
-      rank: 3,
-      label: '4 pts · 900 ms',
-      value: 4,
-    },
-  ]);
-  assert.deepEqual(finishedPayloads[0]?.results.summary, {
-    mode: LOBBY_RACE_MODES.bestOf3,
-    track: 'drag-strip',
-    distanceTarget: 30,
-    rounds: 3,
-  });
-});
-
-test('advances the best-of-3 manche when the last unfinished racer disconnects', () => {
-  let nowMs = 10_000;
-  const stateUpdates: DragSprintSnapshot[] = [];
-  const runtime = createDragSprintRuntime(
-    createLobby({
-      raceMode: LOBBY_RACE_MODES.bestOf3,
-    }),
-    'session-drag-disconnect',
-    {
-      countdownMs: 0,
-      distanceTarget: 30,
-      now: () => nowMs,
-      onState(payload) {
-        stateUpdates.push(payload.state as DragSprintSnapshot);
-      },
-    },
-  );
-
-  function accelerate(playerId: string, tick: number) {
-    const nextState = runtime.applyInput(playerId, {
-      tick,
-      steer: 0,
-      accelerate: true,
-      brake: false,
-    });
-
-    assert.ok(nextState);
-    return nextState;
-  }
-
-  runtime.start();
-
-  accelerate('socket-host', 1);
-  accelerate('socket-guest', 1);
-  accelerate('socket-third', 1);
-
-  nowMs = 10_100;
-  accelerate('socket-host', 2);
-  nowMs = 10_240;
-  const guestFinished = accelerate('socket-guest', 2);
-
-  assert.equal((guestFinished.state as DragSprintSnapshot).round, 1);
-
-  runtime.removePlayer('socket-third');
-
-  const snapshot = stateUpdates.at(-1)!;
-
-  assert.equal(snapshot.round, 2);
-  assert.equal(snapshot.totalRounds, 3);
-  assert.equal(snapshot.status, RACE_STATUS.racing);
-  assert.deepEqual(
-    snapshot.playersState.map((player) => ({
-      playerId: player.playerId,
-      lane: player.lane,
-      distance: player.distance,
-      speed: player.speed,
-      status: player.status,
-    })),
-    [
-      {
-        playerId: 'socket-host',
-        lane: 0,
-        distance: 0,
-        speed: 0,
-        status: 'racing',
-      },
-      {
-        playerId: 'socket-guest',
-        lane: 1,
-        distance: 0,
-        speed: 0,
-        status: 'racing',
-      },
-    ],
-  );
-  assert.deepEqual(
-    snapshot.standings!.map((entry) => ({
-      playerId: entry.playerId,
-      points: entry.points,
-      roundWins: entry.roundWins,
-      cumulativeTimeMs: entry.cumulativeTimeMs,
-    })),
-    [
-      {
-        playerId: 'socket-host',
-        points: 2,
-        roundWins: 1,
-        cumulativeTimeMs: 100,
-      },
-      {
-        playerId: 'socket-guest',
-        points: 1,
-        roundWins: 0,
-        cumulativeTimeMs: 240,
-      },
-    ],
-  );
+  assert.equal(payload.results.summary?.mode, 'drag-gear');
+  assert.equal(payload.results.summary?.track, 'straight-drag-gear');
+  assert.equal(typeof payload.results.summary?.finishTimeMs, 'number');
+  assert.equal(typeof payload.results.summary?.perfectShifts, 'number');
+  assert.equal(typeof payload.results.summary?.goodShifts, 'number');
+  assert.equal(typeof payload.results.summary?.earlyShifts, 'number');
+  assert.equal(typeof payload.results.summary?.lateShifts, 'number');
+  assert.equal(typeof payload.results.summary?.totalShifts, 'number');
 });
