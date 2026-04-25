@@ -44,25 +44,28 @@ export interface RaceSnapshot extends Record<string, unknown> {
 
 export type DragSprintMode = 'finish-line' | 'best-of-3' | 'survival';
 
+export type DragSprintLane = 0 | 1 | 2;
+
 export type DragSprintPowerUpType = 'nitro' | 'shield' | 'magnet' | 'repair';
 
 export type DragSprintObstacleType = 'cone' | 'oil' | 'slow-car' | 'construction';
 
+export type DragSprintPlayerStatus = 'racing' | 'finished' | 'eliminated';
+
 export interface DragSprintPlayerState {
   playerId: string;
   nickname: string;
-  lane: 0 | 1 | 2;
+  lane: DragSprintLane;
   distance: number;
   speed: number;
-  finished: boolean;
-  eliminated: boolean;
+  status: DragSprintPlayerStatus;
   activePowerUp: DragSprintPowerUpType | null;
 }
 
 export interface DragSprintObstacleState {
   id: string;
   type: DragSprintObstacleType;
-  lane: 0 | 1 | 2;
+  lane: DragSprintLane;
   distance: number;
   speed: number;
 }
@@ -70,7 +73,7 @@ export interface DragSprintObstacleState {
 export interface DragSprintPickupState {
   id: string;
   type: DragSprintPowerUpType;
-  lane: 0 | 1 | 2;
+  lane: DragSprintLane;
   distance: number;
 }
 

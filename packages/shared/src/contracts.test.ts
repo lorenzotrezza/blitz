@@ -161,13 +161,42 @@ test('exports the expected drag sprint snapshot shape', () => {
     countdown: 0,
     startedAt: 1_713_980_000_000,
     distanceTarget: 1200,
-    playersState: [],
-    obstacles: [],
-    pickups: [],
+    playersState: [
+      {
+        playerId: 'player-1',
+        nickname: 'Host',
+        lane: 1,
+        distance: 420,
+        speed: 18,
+        status: 'racing',
+        activePowerUp: 'nitro',
+      },
+    ],
+    obstacles: [
+      {
+        id: 'obstacle-1',
+        type: 'construction',
+        lane: 2,
+        distance: 560,
+        speed: 4,
+      },
+    ],
+    pickups: [
+      {
+        id: 'pickup-1',
+        type: 'shield',
+        lane: 0,
+        distance: 610,
+      },
+    ],
   };
 
   assert.equal(snapshot.mode, 'finish-line');
   assert.equal(snapshot.trackId, 'drag-strip');
+  assert.equal(snapshot.playersState[0]?.status, 'racing');
+  assert.equal(snapshot.playersState[0]?.lane, 1);
+  assert.equal(snapshot.obstacles[0]?.type, 'construction');
+  assert.equal(snapshot.pickups[0]?.type, 'shield');
 });
 
 test('keeps host ownership in lobby state rather than duplicating it in player info', () => {
