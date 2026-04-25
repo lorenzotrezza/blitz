@@ -7,6 +7,7 @@ import {
   type DragSprintPickupState,
   type DragSprintPlayerState,
   type DragSprintSnapshot,
+  type DragSprintStanding,
   type GameInputPayload,
   type GameResultEntry,
   type GameSessionEnvelope,
@@ -91,14 +92,6 @@ function formatFinishTime(finishTimeMs: number | null) {
   }
 
   return `${(finishTimeMs / 1000).toFixed(1)}s`;
-}
-
-interface DragSprintStanding {
-  playerId: string;
-  nickname: string;
-  points: number;
-  roundWins: number;
-  cumulativeTimeMs: number;
 }
 
 type DragSprintLobbyPlayer = LobbyState['players'][number];
@@ -352,6 +345,44 @@ export function createDragSprintRuntime(
     options.onFinished?.(payload);
   };
 
+  const finalizeBestOf3Session = (tick: number, playersState: DragSprintPlayerState[]) => {
+    const standings = buildBestOf3Standings(
+      activePlayers,
+      pointsByPlayerId,
+      roundWinsByPlayerId,
+      cumulativeTimeByPlayerId,
+    );
+
+    state = {
+      ...state,
+      status: GAME_SESSION_STATUS.finished,
+      countdown: 0,
+      results: {
+        rankings: buildBestOf3Rankings(standings),
+        summary: {
+          mode: LOBBY_RACE_MODES.bestOf3,
+          track: TRACK_ID,
+          distanceTarget,
+          rounds: BEST_OF_3_TOTAL_ROUNDS,
+        },
+      },
+      state: buildStateSnapshot({
+        ...state.state,
+        status: RACE_STATUS.finished,
+        tick,
+        countdown: 0,
+        startedAt: startedAtMs,
+        playersState,
+        obstacles: cloneObstacles(),
+        pickups: clonePickups(),
+      }),
+    };
+
+    emitState();
+    emitFinished();
+    return state;
+  };
+
   const finishBestOf3Round = (tick: number, playersState: DragSprintPlayerState[]) => {
     const roundPlacements = [...playersState].sort((left, right) => {
       const leftFinish = finishTimesMs[left.playerId] ?? Number.POSITIVE_INFINITY;
@@ -385,41 +416,7 @@ export function createDragSprintRuntime(
     cumulativeTimeByPlayerId = nextCumulativeTimes;
 
     if (currentRound >= BEST_OF_3_TOTAL_ROUNDS) {
-      const standings = buildBestOf3Standings(
-        activePlayers,
-        pointsByPlayerId,
-        roundWinsByPlayerId,
-        cumulativeTimeByPlayerId,
-      );
-
-      state = {
-        ...state,
-        status: GAME_SESSION_STATUS.finished,
-        countdown: 0,
-        results: {
-          rankings: buildBestOf3Rankings(standings),
-          summary: {
-            mode: LOBBY_RACE_MODES.bestOf3,
-            track: TRACK_ID,
-            distanceTarget,
-            rounds: BEST_OF_3_TOTAL_ROUNDS,
-          },
-        },
-        state: buildStateSnapshot({
-          ...state.state,
-          status: RACE_STATUS.finished,
-          tick,
-          countdown: 0,
-          startedAt: startedAtMs,
-          playersState,
-          obstacles: cloneObstacles(),
-          pickups: clonePickups(),
-        }),
-      };
-
-      emitState();
-      emitFinished();
-      return state;
+      return finalizeBestOf3Session(tick, playersState);
     }
 
     currentRound += 1;
@@ -576,6 +573,23 @@ export function createDragSprintRuntime(
       pointsByPlayerId = nextPoints;
       roundWinsByPlayerId = nextRoundWins;
       cumulativeTimeByPlayerId = nextCumulativeTimes;
+
+      if (
+        mode === LOBBY_RACE_MODES.bestOf3 &&
+        state.status !== GAME_SESSION_STATUS.finished &&
+        state.state.status === RACE_STATUS.racing
+      ) {
+        if (nextPlayers.length === 0) {
+          finalizeBestOf3Session(state.state.tick, nextPlayers);
+          return;
+        }
+
+        if (nextPlayers.every((player) => player.status === 'finished')) {
+          finishBestOf3Round(state.state.tick, nextPlayers);
+          return;
+        }
+      }
+
       state = {
         ...state,
         state: buildStateSnapshot({

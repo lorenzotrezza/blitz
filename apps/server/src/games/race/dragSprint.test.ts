@@ -218,17 +218,6 @@ test('resets the strip across three best-of-3 manches and ranks ties by cumulati
     },
   );
 
-  type BestOf3Snapshot = DragSprintSnapshot & {
-    round: number;
-    totalRounds: number;
-    standings: Array<{
-      playerId: string;
-      points: number;
-      roundWins: number;
-      cumulativeTimeMs: number;
-    }>;
-  };
-
   function accelerate(playerId: string, tick: number, steer: -1 | 0 | 1 = 0) {
     const nextState = runtime.applyInput(playerId, {
       tick,
@@ -242,7 +231,7 @@ test('resets the strip across three best-of-3 manches and ranks ties by cumulati
   }
 
   const started = runtime.start();
-  const startedSnapshot = started.state as BestOf3Snapshot;
+  const startedSnapshot = started.state as DragSprintSnapshot;
 
   assert.equal(startedSnapshot.mode, LOBBY_RACE_MODES.bestOf3);
   assert.equal(startedSnapshot.round, 1);
@@ -259,7 +248,7 @@ test('resets the strip across three best-of-3 manches and ranks ties by cumulati
   nowMs = 1_300;
   state = accelerate('socket-third', 2, -1);
 
-  let roundTwoSnapshot = state.state as BestOf3Snapshot;
+  let roundTwoSnapshot = state.state as DragSprintSnapshot;
   assert.equal(state.status, 'active');
   assert.equal(roundTwoSnapshot.status, RACE_STATUS.racing);
   assert.equal(roundTwoSnapshot.round, 2);
@@ -277,7 +266,7 @@ test('resets the strip across three best-of-3 manches and ranks ties by cumulati
     ],
   );
   assert.deepEqual(
-    roundTwoSnapshot.standings.map((entry) => ({
+    roundTwoSnapshot.standings!.map((entry) => ({
       playerId: entry.playerId,
       points: entry.points,
       roundWins: entry.roundWins,
@@ -316,10 +305,10 @@ test('resets the strip across three best-of-3 manches and ranks ties by cumulati
   nowMs = 1_660;
   state = accelerate('socket-third', 4, 0);
 
-  const roundThreeSnapshot = state.state as BestOf3Snapshot;
+  const roundThreeSnapshot = state.state as DragSprintSnapshot;
   assert.equal(roundThreeSnapshot.round, 3);
   assert.deepEqual(
-    roundThreeSnapshot.standings.map((entry) => ({
+    roundThreeSnapshot.standings!.map((entry) => ({
       playerId: entry.playerId,
       points: entry.points,
       roundWins: entry.roundWins,
@@ -342,14 +331,14 @@ test('resets the strip across three best-of-3 manches and ranks ties by cumulati
   nowMs = 2_060;
   state = accelerate('socket-host', 6, 0);
 
-  const finishedSnapshot = state.state as BestOf3Snapshot;
+  const finishedSnapshot = state.state as DragSprintSnapshot;
 
   assert.equal(state.status, 'finished');
   assert.equal(finishedSnapshot.status, RACE_STATUS.finished);
   assert.equal(finishedSnapshot.round, 3);
   assert.equal(finishedPayloads.length, 1);
   assert.deepEqual(
-    finishedSnapshot.standings.map((entry) => ({
+    finishedSnapshot.standings!.map((entry) => ({
       playerId: entry.playerId,
       points: entry.points,
       roundWins: entry.roundWins,
@@ -402,4 +391,103 @@ test('resets the strip across three best-of-3 manches and ranks ties by cumulati
     distanceTarget: 30,
     rounds: 3,
   });
+});
+
+test('advances the best-of-3 manche when the last unfinished racer disconnects', () => {
+  let nowMs = 10_000;
+  const stateUpdates: DragSprintSnapshot[] = [];
+  const runtime = createDragSprintRuntime(
+    createLobby({
+      raceMode: LOBBY_RACE_MODES.bestOf3,
+    }),
+    'session-drag-disconnect',
+    {
+      countdownMs: 0,
+      distanceTarget: 30,
+      now: () => nowMs,
+      onState(payload) {
+        stateUpdates.push(payload.state as DragSprintSnapshot);
+      },
+    },
+  );
+
+  function accelerate(playerId: string, tick: number) {
+    const nextState = runtime.applyInput(playerId, {
+      tick,
+      steer: 0,
+      accelerate: true,
+      brake: false,
+    });
+
+    assert.ok(nextState);
+    return nextState;
+  }
+
+  runtime.start();
+
+  accelerate('socket-host', 1);
+  accelerate('socket-guest', 1);
+  accelerate('socket-third', 1);
+
+  nowMs = 10_100;
+  accelerate('socket-host', 2);
+  nowMs = 10_240;
+  const guestFinished = accelerate('socket-guest', 2);
+
+  assert.equal((guestFinished.state as DragSprintSnapshot).round, 1);
+
+  runtime.removePlayer('socket-third');
+
+  const snapshot = stateUpdates.at(-1)!;
+
+  assert.equal(snapshot.round, 2);
+  assert.equal(snapshot.totalRounds, 3);
+  assert.equal(snapshot.status, RACE_STATUS.racing);
+  assert.deepEqual(
+    snapshot.playersState.map((player) => ({
+      playerId: player.playerId,
+      lane: player.lane,
+      distance: player.distance,
+      speed: player.speed,
+      status: player.status,
+    })),
+    [
+      {
+        playerId: 'socket-host',
+        lane: 0,
+        distance: 0,
+        speed: 0,
+        status: 'racing',
+      },
+      {
+        playerId: 'socket-guest',
+        lane: 1,
+        distance: 0,
+        speed: 0,
+        status: 'racing',
+      },
+    ],
+  );
+  assert.deepEqual(
+    snapshot.standings!.map((entry) => ({
+      playerId: entry.playerId,
+      points: entry.points,
+      roundWins: entry.roundWins,
+      cumulativeTimeMs: entry.cumulativeTimeMs,
+    })),
+    [
+      {
+        playerId: 'socket-host',
+        points: 2,
+        roundWins: 1,
+        cumulativeTimeMs: 100,
+      },
+      {
+        playerId: 'socket-guest',
+        points: 1,
+        roundWins: 0,
+        cumulativeTimeMs: 240,
+      },
+    ],
+  );
 });

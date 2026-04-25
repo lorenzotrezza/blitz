@@ -77,6 +77,14 @@ export interface DragSprintPickupState {
   distance: number;
 }
 
+export interface DragSprintStanding {
+  playerId: string;
+  nickname: string;
+  points: number;
+  roundWins: number;
+  cumulativeTimeMs: number;
+}
+
 export interface DragSprintSnapshot extends Record<string, unknown> {
   sessionId: string;
   lobbyCode: string;
@@ -87,6 +95,9 @@ export interface DragSprintSnapshot extends Record<string, unknown> {
   startedAt: number | null;
   countdown: number | null;
   distanceTarget: number | null;
+  round?: number;
+  totalRounds?: number;
+  standings?: DragSprintStanding[];
   playersState: DragSprintPlayerState[];
   obstacles: DragSprintObstacleState[];
   pickups: DragSprintPickupState[];

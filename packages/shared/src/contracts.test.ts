@@ -241,6 +241,31 @@ test('exports the expected drag sprint snapshot shape', () => {
     lane: leftLane,
     distance: 610,
   };
+  const bestOf3Snapshot: DragSprintSnapshot = {
+    sessionId: 'session-drag-best-of-3',
+    lobbyCode: 'ABCD12',
+    trackId: 'drag-strip',
+    mode: bestOf3Mode,
+    status: RACE_STATUS.racing,
+    tick: 0,
+    countdown: 0,
+    startedAt: 1_713_980_001_000,
+    distanceTarget: 360,
+    round: 2,
+    totalRounds: 3,
+    standings: [
+      {
+        playerId: 'player-1',
+        nickname: 'Host',
+        points: 4,
+        roundWins: 1,
+        cumulativeTimeMs: 540,
+      },
+    ],
+    playersState: [playerState],
+    obstacles: [obstacleState],
+    pickups: [pickupState],
+  };
   const snapshot: DragSprintSnapshot = {
     sessionId: 'session-drag',
     lobbyCode: 'ABCD12',
@@ -291,6 +316,10 @@ test('exports the expected drag sprint snapshot shape', () => {
   assert.equal(snapshot.playersState[0]?.activePowerUp, nitro);
   assert.equal(snapshot.obstacles[0]?.type, construction);
   assert.equal(snapshot.pickups[0]?.type, shield);
+  assert.equal(bestOf3Snapshot.mode, 'best-of-3');
+  assert.equal(bestOf3Snapshot.round, 2);
+  assert.equal(bestOf3Snapshot.totalRounds, 3);
+  assert.equal(bestOf3Snapshot.standings?.[0]?.roundWins, 1);
   assert.equal(pendingSnapshot.mode, 'survival');
   assert.equal(pendingSnapshot.status, RACE_STATUS.countdown);
   assert.equal(pendingSnapshot.playersState[0]?.activePowerUp, null);
