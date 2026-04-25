@@ -1,7 +1,12 @@
 import { useEffect } from 'react';
 import { Outlet, useNavigate, useParams } from 'react-router-dom';
 
-import { LOBBY_RACE_MODES, type LobbyState } from '@blitz/shared';
+import {
+  LOBBY_RACE_MODES,
+  PARTY_GAMES,
+  PARTY_GAME_VARIANTS,
+  type LobbyState,
+} from '@blitz/shared';
 
 import { resolveSessionRoute } from '../lib/sessionRoutes';
 import { useLobbySocket } from '../lib/useLobbySocket';
@@ -18,8 +23,8 @@ const CAR_OPTIONS = [
 ];
 
 const RACE_VARIANTS = [
-  { value: 'sprint-circuit', label: 'Sprint Circuit' },
-  { value: 'drag-sprint', label: 'Drag Sprint' },
+  { value: PARTY_GAME_VARIANTS.sprintCircuit, label: 'Sprint Circuit' },
+  { value: PARTY_GAME_VARIANTS.dragSprint, label: 'Drag Sprint' },
 ] as const;
 
 const DRAG_SPRINT_MODES = [
@@ -33,11 +38,11 @@ function allDriversReady(lobby: LobbyState | null) {
 }
 
 function gameLabel(game: LobbyState['selectedGame']) {
-  if (game === 'lights') {
+  if (game === PARTY_GAMES.lights) {
     return 'Semaforo';
   }
 
-  if (game === 'penalty') {
+  if (game === PARTY_GAMES.penalty) {
     return 'Rigori';
   }
 
@@ -75,7 +80,8 @@ export function LobbyIndexPage() {
   const canStartSession = Boolean(
     joinedLobby &&
       readyToLaunch &&
-      (joinedLobby.selectedGame !== 'race' || joinedLobby.selectedVariant),
+      (joinedLobby.selectedGame !== PARTY_GAMES.race ||
+        joinedLobby.selectedVariant === PARTY_GAME_VARIANTS.sprintCircuit),
   );
   const selectedRaceMode = joinedLobby?.settings.raceMode ?? null;
 
@@ -158,28 +164,33 @@ export function LobbyIndexPage() {
                   className={`button ${joinedLobby.selectedGame === 'lights' ? 'button-primary' : 'button-secondary'}`}
                   type="button"
                   disabled={!isHost || isBusy}
-                  onClick={() => selectGame('lights', null)}
+                  onClick={() => selectGame(PARTY_GAMES.lights, null)}
                 >
                   Semaforo
                 </button>
                 <button
-                  className={`button ${joinedLobby.selectedGame === 'penalty' ? 'button-primary' : 'button-secondary'}`}
+                  className={`button ${joinedLobby.selectedGame === PARTY_GAMES.penalty ? 'button-primary' : 'button-secondary'}`}
                   type="button"
                   disabled={!isHost || isBusy}
-                  onClick={() => selectGame('penalty', null)}
+                  onClick={() => selectGame(PARTY_GAMES.penalty, null)}
                 >
                   Rigori
                 </button>
                 <button
-                  className={`button ${joinedLobby.selectedGame === 'race' ? 'button-primary' : 'button-secondary'}`}
+                  className={`button ${joinedLobby.selectedGame === PARTY_GAMES.race ? 'button-primary' : 'button-secondary'}`}
                   type="button"
                   disabled={!isHost || isBusy}
-                  onClick={() => selectGame('race', joinedLobby.selectedVariant ?? 'sprint-circuit')}
+                  onClick={() =>
+                    selectGame(
+                      PARTY_GAMES.race,
+                      joinedLobby.selectedVariant ?? PARTY_GAME_VARIANTS.sprintCircuit,
+                    )
+                  }
                 >
                   Corse
                 </button>
               </div>
-              {joinedLobby.selectedGame === 'race' ? (
+              {joinedLobby.selectedGame === PARTY_GAMES.race ? (
                 <>
                   <div className="action-row">
                     {RACE_VARIANTS.map((variant) => (
@@ -188,13 +199,13 @@ export function LobbyIndexPage() {
                         className={`button ${joinedLobby.selectedVariant === variant.value ? 'button-primary' : 'button-secondary'}`}
                         type="button"
                         disabled={!isHost || isBusy}
-                        onClick={() => selectGame('race', variant.value)}
+                        onClick={() => selectGame(PARTY_GAMES.race, variant.value)}
                       >
                         {variant.label}
                       </button>
                     ))}
                   </div>
-                  {joinedLobby.selectedVariant === 'drag-sprint' ? (
+                  {joinedLobby.selectedVariant === PARTY_GAME_VARIANTS.dragSprint ? (
                     <div className="action-row">
                       {DRAG_SPRINT_MODES.map((mode) => (
                         <button
