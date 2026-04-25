@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 import {
+  isLobbySelectionStartable,
   LOBBY_RACE_MODES,
   LOBBY_STATUS,
   MAX_LOBBY_PLAYERS,
@@ -113,6 +114,14 @@ test('exports stable drag sprint race mode values for lobby settings', () => {
   assert.equal(LOBBY_RACE_MODES.finishLine, 'finish-line');
   assert.equal(LOBBY_RACE_MODES.bestOf3, 'best-of-3');
   assert.equal(LOBBY_RACE_MODES.survival, 'survival');
+});
+
+test('exports the current lobby selection startability policy', () => {
+  assert.equal(isLobbySelectionStartable('lights', null), true);
+  assert.equal(isLobbySelectionStartable('penalty', null), true);
+  assert.equal(isLobbySelectionStartable('race', 'sprint-circuit'), true);
+  assert.equal(isLobbySelectionStartable('race', 'drag-sprint'), false);
+  assert.equal(isLobbySelectionStartable('race', null), false);
 });
 
 test('exports the expected race snapshot shape', () => {

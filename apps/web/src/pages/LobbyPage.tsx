@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Outlet, useNavigate, useParams } from 'react-router-dom';
 
 import {
+  isLobbySelectionStartable,
   LOBBY_RACE_MODES,
   PARTY_GAMES,
   PARTY_GAME_VARIANTS,
@@ -80,8 +81,7 @@ export function LobbyIndexPage() {
   const canStartSession = Boolean(
     joinedLobby &&
       readyToLaunch &&
-      (joinedLobby.selectedGame !== PARTY_GAMES.race ||
-        joinedLobby.selectedVariant === PARTY_GAME_VARIANTS.sprintCircuit),
+      isLobbySelectionStartable(joinedLobby.selectedGame, joinedLobby.selectedVariant),
   );
   const selectedRaceMode = joinedLobby?.settings.raceMode ?? null;
 
@@ -161,7 +161,7 @@ export function LobbyIndexPage() {
               <p className="lobby-meta">{`Scelto: ${gameLabel(joinedLobby.selectedGame)}`}</p>
               <div className="action-row">
                 <button
-                  className={`button ${joinedLobby.selectedGame === 'lights' ? 'button-primary' : 'button-secondary'}`}
+                  className={`button ${joinedLobby.selectedGame === PARTY_GAMES.lights ? 'button-primary' : 'button-secondary'}`}
                   type="button"
                   disabled={!isHost || isBusy}
                   onClick={() => selectGame(PARTY_GAMES.lights, null)}

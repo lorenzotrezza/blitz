@@ -80,3 +80,14 @@ export interface PartyLobbyState {
 }
 
 export type LobbyState = PartyLobbyState;
+
+export function isLobbySelectionStartable(
+  game: PartyGame,
+  variant: PartyGameVariant,
+): boolean {
+  if (game !== PARTY_GAMES.race) {
+    return true;
+  }
+
+  return variant === PARTY_GAME_VARIANTS.sprintCircuit;
+}

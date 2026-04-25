@@ -2,6 +2,7 @@ import type { Server as HttpServer } from 'node:http';
 import { randomUUID } from 'node:crypto';
 
 import {
+  isLobbySelectionStartable,
   LOBBY_STATUS,
   SOCKET_EVENTS,
   ClientToServerEvents,
@@ -110,6 +111,10 @@ export function registerSockets(
 
     if (lobby.players.length === 0 || lobby.players.some((player) => !player.ready)) {
       throw new LobbyServiceError('players-not-ready', 'All players must be ready');
+    }
+
+    if (!isLobbySelectionStartable(lobby.selectedGame, lobby.selectedVariant)) {
+      throw new LobbyServiceError('game-not-supported', 'Selected game is not supported');
     }
 
     const gameEntry = gameRegistry.resolve(lobby.selectedGame, lobby.selectedVariant);
