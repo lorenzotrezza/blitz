@@ -415,15 +415,15 @@ submitInput({
 
 | # | Claim | Section | Risk if Wrong |
 |---|-------|---------|---------------|
-| A1 | Adding `@testing-library/user-event` is acceptable if pointer sequence tests need it. [ASSUMED] | Standard Stack | Planner may choose existing `fireEvent` instead to avoid dependency changes. |
+| A1 | Keep Phase 1 tests dependency-free by default; use existing Testing Library `fireEvent` unless implementation proves it cannot express the required pointer/keyboard cases. [RESOLVED] | Standard Stack | If `fireEvent` proves insufficient during execution, add `@testing-library/user-event@14.6.1` as a focused dev dependency and record the reason in the plan summary. |
 | A2 | Research remains valid until 2026-05-25 for local architecture and browser APIs, with npm versions rechecked before dependency changes. [ASSUMED] | Metadata | Planner may rely on stale npm version data if dependency work starts later. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Should Phase 1 add `@testing-library/user-event` or keep tests dependency-free?** [ASSUMED]
+1. **Should Phase 1 add `@testing-library/user-event` or keep tests dependency-free?** [RESOLVED]
    - What we know: Existing web tests use Vitest and Testing Library React, and `user-event` is current at `14.6.1`. [VERIFIED: apps/web/src/pages/SprintCircuitPage.test.tsx; npm registry via `npm view @testing-library/user-event`]
-   - What's unclear: Whether the team wants a new dev dependency for better pointer/keyboard sequence tests. [ASSUMED]
-   - Recommendation: Add it only if shell/control behavior tests become awkward with existing `fireEvent`; otherwise keep dependencies unchanged. [ASSUMED]
+   - Resolution: Keep Phase 1 tests dependency-free by default and use existing Testing Library `fireEvent`, `render`, `renderHook`, and `act`. Add `@testing-library/user-event@14.6.1` only if `fireEvent` cannot express a required pointer/keyboard sequence during execution. [RESOLVED]
+   - Plan impact: Plan 02 Task 1 explicitly instructs the executor to use `fireEvent` and avoid adding `@testing-library/user-event` unless existing tools cannot express the required events. [RESOLVED]
 
 ## Environment Availability
 
