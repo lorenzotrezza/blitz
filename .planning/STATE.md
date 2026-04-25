@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Executing Phase 01
-last_updated: "2026-04-25T19:47:00Z"
+status: Phase 01 complete
+last_updated: "2026-04-25T20:04:16.077Z"
 progress:
   total_phases: 6
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 16
-  completed_plans: 3
-  percent: 19
+  completed_plans: 4
+  percent: 25
 ---
 
 # State: Blitz Playable Minigames
@@ -19,7 +19,7 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-04-25)
 
 **Core value:** Every minigame must feel manually playable on a phone.
-**Current focus:** Phase 01 — fullscreen-game-shell-and-input-foundation
+**Current focus:** Phase 02 — drag-gear-race
 
 ## Current Status
 
@@ -33,7 +33,8 @@ See: `.planning/PROJECT.md` (updated 2026-04-25)
 - Phase 1 Plan 01 completed in `.planning/phases/01-fullscreen-game-shell-and-input-foundation/01-01-SUMMARY.md`.
 - Phase 1 Plan 02 completed in `.planning/phases/01-fullscreen-game-shell-and-input-foundation/01-02-SUMMARY.md`.
 - Phase 1 Plan 03 completed in `.planning/phases/01-fullscreen-game-shell-and-input-foundation/01-03-SUMMARY.md`.
-- Next recommended plan: `01-04-PLAN.md` — live race route integration and phase gate verification.
+- Phase 1 Plan 04 completed in `.planning/phases/01-fullscreen-game-shell-and-input-foundation/01-04-SUMMARY.md`.
+- Next recommended phase: Phase 02 — drag-gear-race.
 
 ## Active Phase
 
@@ -41,9 +42,9 @@ See: `.planning/PROJECT.md` (updated 2026-04-25)
 |-------|-------|
 | Phase | 1 |
 | Name | Fullscreen Game Shell And Input Foundation |
-| Status | In progress; 3 of 4 plans complete |
+| Status | Complete; 4 of 4 plans complete |
 | UI hint | yes |
-| Plans | 3 / 4 complete |
+| Plans | 4 / 4 complete |
 
 ## Quick Tasks Completed
 
@@ -65,6 +66,8 @@ See: `.planning/PROJECT.md` (updated 2026-04-25)
 - Pointer controls set functional touch-action/user-select safeguards inline until Plan 03 adds complete styling.
 - Gameplay shell uses fixed viewport containment and safe-area padding so race screens are not normal scroll pages.
 - HUD values are React-rendered text with a polite live region; canvas children remain visual only.
+- The live race route is a top-level router branch so AppLayout topbar, viewport, panel, and card chrome do not constrain gameplay.
+- SprintCircuitPage adapts authoritative RaceSnapshot data into RaceShellSnapshot HUD text; client controls emit intent only.
 
 ## Performance Metrics
 
@@ -73,13 +76,14 @@ See: `.planning/PROJECT.md` (updated 2026-04-25)
 | 01-fullscreen-game-shell-and-input-foundation | 01 | 5m 23s | 2 | 3 |
 | 01-fullscreen-game-shell-and-input-foundation | 02 | 8m 15s | 2 | 6 |
 | 01-fullscreen-game-shell-and-input-foundation | 03 | 4m 40s | 2 | 7 |
+| 01-fullscreen-game-shell-and-input-foundation | 04 | 11m 25s | 3 | 5 |
 
 ## Last Session
 
 | Field | Value |
 |-------|-------|
-| Timestamp | 2026-04-25T19:47:00Z |
-| Stopped At | Completed 01-03-PLAN.md |
+| Timestamp | 2026-04-25T20:02:35Z |
+| Stopped At | Completed 01-04-PLAN.md |
 | Resume File | None |
 
 ## Open Risks
