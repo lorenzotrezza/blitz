@@ -287,7 +287,68 @@ test('registerSockets starts a neutral session for the selected game in a ready 
   }
 });
 
-test('registerSockets rejects drag sprint start until its runtime is available', async () => {
+test('registerSockets starts drag sprint in finish-line mode', async () => {
+  const httpServer = createHttpServer();
+  const io = registerSockets(
+    httpServer,
+    { socketCorsOrigin: '*' },
+    {
+      lobbyService: createLobbyService({
+        generateLobbyCode: () => 'ABCD12',
+      }),
+    },
+  );
+  const { roomEmits, install } = captureRoomBroadcasts();
+  install(io as unknown as { to: (room: string) => { emit: (event: string, payload: unknown) => void } });
+
+  try {
+    const connectionHandler = getConnectionHandler(io);
+    const host = createFakeSocket('socket-host');
+    const guest = createFakeSocket('socket-guest');
+
+    connectionHandler(host.socket);
+    connectionHandler(guest.socket);
+
+    await host.trigger(SOCKET_EVENTS.client.createLobby, {
+      nickname: 'Host',
+      carId: 'car-red',
+    });
+    await guest.trigger(SOCKET_EVENTS.client.joinLobby, {
+      code: 'ABCD12',
+      nickname: 'Guest',
+      carId: 'car-blue',
+    });
+    await host.trigger(SOCKET_EVENTS.client.selectGame, {
+      code: 'ABCD12',
+      game: 'race',
+      variant: 'drag-sprint',
+    });
+    await host.trigger(SOCKET_EVENTS.client.updateLobbySettings, {
+      code: 'ABCD12',
+      settings: {
+        raceMode: LOBBY_RACE_MODES.finishLine,
+      },
+    });
+    await host.trigger(SOCKET_EVENTS.client.setReady, { ready: true });
+    await guest.trigger(SOCKET_EVENTS.client.setReady, { ready: true });
+
+    roomEmits.length = 0;
+    host.emitted.length = 0;
+
+    await host.trigger(SOCKET_EVENTS.client.startSession, {
+      code: 'ABCD12',
+    });
+
+    assert.equal(
+      roomEmits.some((entry) => entry.event === SOCKET_EVENTS.server.sessionStarted),
+      true,
+    );
+  } finally {
+    io.close();
+  }
+});
+
+test('registerSockets rejects drag sprint best-of-3 mode until its runtime is available', async () => {
   const httpServer = createHttpServer();
   const io = registerSockets(
     httpServer,
@@ -331,6 +392,113 @@ test('registerSockets rejects drag sprint start until its runtime is available',
     });
     await host.trigger(SOCKET_EVENTS.client.setReady, { ready: true });
     await guest.trigger(SOCKET_EVENTS.client.setReady, { ready: true });
+
+    roomEmits.length = 0;
+    host.emitted.length = 0;
+
+    await host.trigger(SOCKET_EVENTS.client.startSession, {
+      code: 'ABCD12',
+    });
+
+    assert.equal(
+      roomEmits.some((entry) => entry.event === SOCKET_EVENTS.server.sessionStarted),
+      false,
+    );
+    assert.equal(host.emitted.length, 1);
+    assert.equal(host.emitted[0]?.event, SOCKET_EVENTS.server.lobbyError);
+    assert.deepEqual(host.emitted[0]?.payload as LobbyErrorPayload, {
+      code: 'game-not-supported',
+      message: 'Selected game is not supported',
+    });
+
+    roomEmits.length = 0;
+    host.emitted.length = 0;
+
+    await host.trigger(SOCKET_EVENTS.client.updateLobbySettings, {
+      code: 'ABCD12',
+      settings: {
+        raceMode: LOBBY_RACE_MODES.survival,
+      },
+    });
+    await host.trigger(SOCKET_EVENTS.client.startSession, {
+      code: 'ABCD12',
+    });
+
+    assert.equal(
+      roomEmits.some((entry) => entry.event === SOCKET_EVENTS.server.sessionStarted),
+      false,
+    );
+    assert.equal(host.emitted.length, 1);
+    assert.equal(host.emitted[0]?.event, SOCKET_EVENTS.server.lobbyError);
+    assert.deepEqual(host.emitted[0]?.payload as LobbyErrorPayload, {
+      code: 'game-not-supported',
+      message: 'Selected game is not supported',
+    });
+  } finally {
+    io.close();
+  }
+});
+
+test('registerSockets rejects drag sprint when more than three players are ready', async () => {
+  const httpServer = createHttpServer();
+  const io = registerSockets(
+    httpServer,
+    { socketCorsOrigin: '*' },
+    {
+      lobbyService: createLobbyService({
+        generateLobbyCode: () => 'ABCD12',
+      }),
+    },
+  );
+  const { roomEmits, install } = captureRoomBroadcasts();
+  install(io as unknown as { to: (room: string) => { emit: (event: string, payload: unknown) => void } });
+
+  try {
+    const connectionHandler = getConnectionHandler(io);
+    const host = createFakeSocket('socket-host');
+    const guest = createFakeSocket('socket-guest');
+    const third = createFakeSocket('socket-third');
+    const fourth = createFakeSocket('socket-fourth');
+
+    connectionHandler(host.socket);
+    connectionHandler(guest.socket);
+    connectionHandler(third.socket);
+    connectionHandler(fourth.socket);
+
+    await host.trigger(SOCKET_EVENTS.client.createLobby, {
+      nickname: 'Host',
+      carId: 'car-red',
+    });
+    await guest.trigger(SOCKET_EVENTS.client.joinLobby, {
+      code: 'ABCD12',
+      nickname: 'Guest',
+      carId: 'car-blue',
+    });
+    await third.trigger(SOCKET_EVENTS.client.joinLobby, {
+      code: 'ABCD12',
+      nickname: 'Third',
+      carId: 'car-black',
+    });
+    await fourth.trigger(SOCKET_EVENTS.client.joinLobby, {
+      code: 'ABCD12',
+      nickname: 'Fourth',
+      carId: 'car-white',
+    });
+    await host.trigger(SOCKET_EVENTS.client.selectGame, {
+      code: 'ABCD12',
+      game: 'race',
+      variant: 'drag-sprint',
+    });
+    await host.trigger(SOCKET_EVENTS.client.updateLobbySettings, {
+      code: 'ABCD12',
+      settings: {
+        raceMode: LOBBY_RACE_MODES.finishLine,
+      },
+    });
+    await host.trigger(SOCKET_EVENTS.client.setReady, { ready: true });
+    await guest.trigger(SOCKET_EVENTS.client.setReady, { ready: true });
+    await third.trigger(SOCKET_EVENTS.client.setReady, { ready: true });
+    await fourth.trigger(SOCKET_EVENTS.client.setReady, { ready: true });
 
     roomEmits.length = 0;
     host.emitted.length = 0;

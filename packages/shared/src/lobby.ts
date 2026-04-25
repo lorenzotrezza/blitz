@@ -84,10 +84,20 @@ export type LobbyState = PartyLobbyState;
 export function isLobbySelectionStartable(
   game: PartyGame,
   variant: PartyGameVariant,
+  raceMode: DragSprintMode | null = null,
+  playerCount: number | null = null,
 ): boolean {
   if (game !== PARTY_GAMES.race) {
     return true;
   }
 
-  return variant === PARTY_GAME_VARIANTS.sprintCircuit;
+  if (variant === PARTY_GAME_VARIANTS.sprintCircuit) {
+    return true;
+  }
+
+  if (variant === PARTY_GAME_VARIANTS.dragSprint) {
+    return raceMode === LOBBY_RACE_MODES.finishLine && playerCount !== null && playerCount <= 3;
+  }
+
+  return false;
 }

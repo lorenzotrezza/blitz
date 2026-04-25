@@ -113,7 +113,14 @@ export function registerSockets(
       throw new LobbyServiceError('players-not-ready', 'All players must be ready');
     }
 
-    if (!isLobbySelectionStartable(lobby.selectedGame, lobby.selectedVariant)) {
+    if (
+      !isLobbySelectionStartable(
+        lobby.selectedGame,
+        lobby.selectedVariant,
+        lobby.settings.raceMode ?? null,
+        lobby.players.length,
+      )
+    ) {
       throw new LobbyServiceError('game-not-supported', 'Selected game is not supported');
     }
 

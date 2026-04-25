@@ -155,7 +155,7 @@ describe('LobbyPage', () => {
     expect(screen.getByRole('button', { name: /kick subratapal/i })).toBeInTheDocument();
   });
 
-  test('keeps start session disabled for drag sprint until its runtime is available', () => {
+  test('enables start session only for drag sprint finish-line mode', () => {
     const readyPlayers = createLobbySnapshot({
       selectedVariant: PARTY_GAME_VARIANTS.dragSprint,
       settings: {
@@ -166,6 +166,23 @@ describe('LobbyPage', () => {
         ready: true,
       })),
     }).players;
+    const overfilledReadyPlayers = [
+      ...readyPlayers,
+      {
+        id: 'socket-third',
+        nickname: 'Piero',
+        carId: 'tesla',
+        ready: true,
+        connectionState: PLAYER_CONNECTION_STATE.connected,
+      },
+      {
+        id: 'socket-fourth',
+        nickname: 'Lella',
+        carId: 'giulia',
+        ready: true,
+        connectionState: PLAYER_CONNECTION_STATE.connected,
+      },
+    ];
 
     mockUseLobbySocket.mockImplementation(() => ({
       draft: {
@@ -201,7 +218,7 @@ describe('LobbyPage', () => {
       copiedInvite: false,
     }));
 
-    const view = renderRoute('/lobby/ABCD12');
+    let view = renderRoute('/lobby/ABCD12');
 
     expect(screen.getByRole('button', { name: /avvia sessione/i })).toBeEnabled();
 
@@ -243,9 +260,93 @@ describe('LobbyPage', () => {
     }));
 
     view.unmount();
-    renderRoute('/lobby/ABCD12');
+    view = renderRoute('/lobby/ABCD12');
 
     expect(screen.getByRole('button', { name: /avvia sessione/i })).toBeDisabled();
+
+    mockUseLobbySocket.mockImplementation(() => ({
+      draft: {
+        nickname: 'Blitz',
+        carId: 'f812',
+      },
+      error: null,
+      isBusy: false,
+      isConnected: true,
+      isHost: true,
+      joinedLobby: createLobbySnapshot({
+        players: overfilledReadyPlayers,
+        selectedVariant: PARTY_GAME_VARIANTS.dragSprint,
+        settings: {
+          raceMode: LOBBY_RACE_MODES.finishLine,
+        },
+      }),
+      me: {
+        id: 'socket-host',
+        nickname: 'Blitz',
+        carId: 'f812',
+        ready: true,
+        connectionState: PLAYER_CONNECTION_STATE.connected,
+      },
+      sessionStarted: null,
+      setNickname: vi.fn(),
+      setCarId: vi.fn(),
+      submit: vi.fn(),
+      toggleReady: vi.fn(),
+      leave: vi.fn(),
+      selectGame: vi.fn(),
+      updateSettings: vi.fn(),
+      startSession: vi.fn(),
+      kickPlayer: vi.fn(),
+      copyInviteLink: vi.fn(),
+      copiedInvite: false,
+    }));
+
+    view.unmount();
+    view = renderRoute('/lobby/ABCD12');
+
+    expect(screen.getByRole('button', { name: /avvia sessione/i })).toBeDisabled();
+
+    mockUseLobbySocket.mockImplementation(() => ({
+      draft: {
+        nickname: 'Blitz',
+        carId: 'f812',
+      },
+      error: null,
+      isBusy: false,
+      isConnected: true,
+      isHost: true,
+      joinedLobby: createLobbySnapshot({
+        players: readyPlayers,
+        selectedVariant: PARTY_GAME_VARIANTS.dragSprint,
+        settings: {
+          raceMode: LOBBY_RACE_MODES.finishLine,
+        },
+      }),
+      me: {
+        id: 'socket-host',
+        nickname: 'Blitz',
+        carId: 'f812',
+        ready: true,
+        connectionState: PLAYER_CONNECTION_STATE.connected,
+      },
+      sessionStarted: null,
+      setNickname: vi.fn(),
+      setCarId: vi.fn(),
+      submit: vi.fn(),
+      toggleReady: vi.fn(),
+      leave: vi.fn(),
+      selectGame: vi.fn(),
+      updateSettings: vi.fn(),
+      startSession: vi.fn(),
+      kickPlayer: vi.fn(),
+      copyInviteLink: vi.fn(),
+      copiedInvite: false,
+    }));
+
+    view.unmount();
+    view = renderRoute('/lobby/ABCD12');
+
+    expect(screen.getByRole('button', { name: /avvia sessione/i })).toBeEnabled();
   });
 
   test('host can pick both race variants and drag sprint rulesets through lobby UI transitions', () => {

@@ -78,12 +78,17 @@ export function LobbyIndexPage() {
   } = useLobbySocket(formattedCode);
   const effectiveCode = joinedLobby?.code ?? formattedCode;
   const readyToLaunch = allDriversReady(joinedLobby);
+  const selectedRaceMode = joinedLobby?.settings.raceMode ?? null;
   const canStartSession = Boolean(
     joinedLobby &&
       readyToLaunch &&
-      isLobbySelectionStartable(joinedLobby.selectedGame, joinedLobby.selectedVariant),
+      isLobbySelectionStartable(
+        joinedLobby.selectedGame,
+        joinedLobby.selectedVariant,
+        selectedRaceMode,
+        joinedLobby.players.length,
+      ),
   );
-  const selectedRaceMode = joinedLobby?.settings.raceMode ?? null;
 
   useEffect(() => {
     if (isCreateRoute && joinedLobby?.code && joinedLobby.code !== 'NEW') {

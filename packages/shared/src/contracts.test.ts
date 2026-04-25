@@ -120,7 +120,23 @@ test('exports the current lobby selection startability policy', () => {
   assert.equal(isLobbySelectionStartable('lights', null), true);
   assert.equal(isLobbySelectionStartable('penalty', null), true);
   assert.equal(isLobbySelectionStartable('race', 'sprint-circuit'), true);
-  assert.equal(isLobbySelectionStartable('race', 'drag-sprint'), false);
+  assert.equal(
+    isLobbySelectionStartable('race', 'drag-sprint', LOBBY_RACE_MODES.finishLine, 3),
+    true,
+  );
+  assert.equal(
+    isLobbySelectionStartable('race', 'drag-sprint', LOBBY_RACE_MODES.finishLine, 4),
+    false,
+  );
+  assert.equal(
+    isLobbySelectionStartable('race', 'drag-sprint', LOBBY_RACE_MODES.bestOf3, 3),
+    false,
+  );
+  assert.equal(
+    isLobbySelectionStartable('race', 'drag-sprint', LOBBY_RACE_MODES.survival, 3),
+    false,
+  );
+  assert.equal(isLobbySelectionStartable('race', 'drag-sprint', null, 3), false);
   assert.equal(isLobbySelectionStartable('race', null), false);
 });
 

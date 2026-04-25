@@ -1,31 +1,51 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import {
-  isLobbySelectionStartable,
-  PARTY_GAMES,
-  PARTY_GAME_VARIANTS,
-} from '@blitz/shared';
+import { LOBBY_RACE_MODES, isLobbySelectionStartable, PARTY_GAMES, PARTY_GAME_VARIANTS } from '@blitz/shared';
 
 import { createGameRuntimeRegistry } from './registry.js';
 
-test('game registry support matches shared lobby startability for current known selections', () => {
+test('game registry exposes the current playable variants while shared startability stays mode-aware', () => {
   const registry = createGameRuntimeRegistry();
-  const selections = [
-    { game: PARTY_GAMES.lights, variant: null },
-    { game: PARTY_GAMES.penalty, variant: null },
-    { game: PARTY_GAMES.race, variant: PARTY_GAME_VARIANTS.sprintCircuit },
-    { game: PARTY_GAMES.race, variant: PARTY_GAME_VARIANTS.dragSprint },
-  ] as const;
+  assert.equal(registry.resolve(PARTY_GAMES.lights, null) !== null, true);
+  assert.equal(registry.resolve(PARTY_GAMES.penalty, null) !== null, true);
+  assert.equal(registry.resolve(PARTY_GAMES.race, PARTY_GAME_VARIANTS.sprintCircuit) !== null, true);
+  assert.equal(registry.resolve(PARTY_GAMES.race, PARTY_GAME_VARIANTS.dragSprint) !== null, true);
 
-  for (const selection of selections) {
-    const supportedByRegistry = registry.resolve(selection.game, selection.variant) !== null;
-    const startableInLobby = isLobbySelectionStartable(selection.game, selection.variant);
-
-    assert.equal(
-      supportedByRegistry,
-      startableInLobby,
-      `registry/startability drift for ${selection.game}:${selection.variant ?? 'default'}`,
-    );
-  }
+  assert.equal(
+    isLobbySelectionStartable(
+      PARTY_GAMES.race,
+      PARTY_GAME_VARIANTS.dragSprint,
+      LOBBY_RACE_MODES.finishLine,
+      3,
+    ),
+    true,
+  );
+  assert.equal(
+    isLobbySelectionStartable(
+      PARTY_GAMES.race,
+      PARTY_GAME_VARIANTS.dragSprint,
+      LOBBY_RACE_MODES.survival,
+      3,
+    ),
+    false,
+  );
+  assert.equal(
+    isLobbySelectionStartable(
+      PARTY_GAMES.race,
+      PARTY_GAME_VARIANTS.dragSprint,
+      LOBBY_RACE_MODES.bestOf3,
+      3,
+    ),
+    false,
+  );
+  assert.equal(
+    isLobbySelectionStartable(
+      PARTY_GAMES.race,
+      PARTY_GAME_VARIANTS.dragSprint,
+      LOBBY_RACE_MODES.finishLine,
+      4,
+    ),
+    false,
+  );
 });
