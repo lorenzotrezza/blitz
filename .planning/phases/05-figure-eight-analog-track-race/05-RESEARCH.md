@@ -413,16 +413,14 @@ const shellSnapshot: RaceShellSnapshot = {
 | A2 | A single center checkpoint cannot distinguish both intended center passes. | Architecture Patterns / Anti-Patterns | If wrong, fewer gates could work, but tests would still need to prove no lobe-skipping ambiguity. [VERIFIED: `.planning/phases/05-figure-eight-analog-track-race/05-CONTEXT.md`] |
 | A3 | Equal visual hierarchy at the crossing will confuse players. | Common Pitfalls | If wrong, simpler rendering may be acceptable, but user decisions require intentional crossing treatment. [VERIFIED: `.planning/phases/05-figure-eight-analog-track-race/05-CONTEXT.md`] |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Should Phase 5 block until Phase 4 source exists?** [VERIFIED: `.planning/STATE.md`; VERIFIED: `find apps/server/src/games/race ...`]
+1. **RESOLVED: Phase 5 blocks until Phase 4 source exists.** [VERIFIED: `.planning/STATE.md`; VERIFIED: `find apps/server/src/games/race ...`; VERIFIED: `.planning/phases/05-figure-eight-analog-track-race/05-01-PLAN.md`]
    - What we know: Phase 4 plans define `circleTrackRules.ts`, `circleTrack.ts`, and `CircleTrackPage.tsx`, but those files are absent in the current source tree. [VERIFIED: `.planning/phases/04-circular-analog-track-race/04-02-PLAN.md`; VERIFIED: `find apps/server/src/games/race apps/web/src/game apps/web/src/pages packages/shared/src`]
-   - What's unclear: Whether the planner will run after Phase 4 execution or before it. [ASSUMED]
-   - Recommendation: Add a Wave 0 prerequisite gate that reads Phase 4 summaries/source and either reuses landed helpers or blocks with a clear message. [VERIFIED: `.planning/phases/05-figure-eight-analog-track-race/05-CONTEXT.md`]
-2. **Exact gate count and route geometry remain discretionary.** [VERIFIED: `.planning/phases/05-figure-eight-analog-track-race/05-CONTEXT.md`]
+   - Resolution: Plan `05-01` includes the prerequisite gate. Execution must read Phase 4 summaries/source and either reuse landed helpers or stop with a clear checkpoint instead of inventing conflicting Phase 4 equivalents. [VERIFIED: `.planning/phases/05-figure-eight-analog-track-race/05-01-PLAN.md`]
+2. **RESOLVED: Initial geometry is planner/executor discretion within fixed first-pass constraints.** [VERIFIED: `.planning/phases/05-figure-eight-analog-track-race/05-CONTEXT.md`; VERIFIED: `.planning/phases/05-figure-eight-analog-track-race/05-02-PLAN.md`]
    - What we know: Gates must include lobe-specific gates and center-crossing gates. [VERIFIED: `.planning/phases/05-figure-eight-analog-track-race/05-CONTEXT.md`]
-   - What's unclear: The exact number and coordinates are intentionally left to the agent. [VERIFIED: `.planning/phases/05-figure-eight-analog-track-race/05-CONTEXT.md`]
-   - Recommendation: Use broad road width, eight to ten ordered gates including directional center gates, and tests that drive a full expected sequence plus skipped-lobe rejection. [ASSUMED]
+   - Resolution: Plan `05-02` locks the initial implementation direction to a broad 560x380 figure-eight layout, road width 96, and an ordered gate sequence with lobe-specific and directional center gates. Exact coordinates remain executor discretion as long as tests prove full sequence traversal, skipped-lobe rejection, center-cut rejection, lap completion, and circle regression. [VERIFIED: `.planning/phases/05-figure-eight-analog-track-race/05-02-PLAN.md`]
 
 ## Environment Availability
 
