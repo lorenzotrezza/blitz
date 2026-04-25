@@ -1,10 +1,35 @@
 export const MAX_LOBBY_PLAYERS = 8;
 
+export const PARTY_MODES = {
+  single: 'single',
+  multiplayer: 'multiplayer',
+} as const;
+
+export type PartyMode = (typeof PARTY_MODES)[keyof typeof PARTY_MODES];
+
+export const PARTY_GAMES = {
+  lights: 'lights',
+  penalty: 'penalty',
+  race: 'race',
+} as const;
+
+export type PartyGame = (typeof PARTY_GAMES)[keyof typeof PARTY_GAMES];
+
+export const PARTY_GAME_VARIANTS = {
+  sprintCircuit: 'sprint-circuit',
+  trafficSurvival: 'traffic-survival',
+  dragSprint: 'drag-sprint',
+} as const;
+
+export type PartyGameVariant =
+  | (typeof PARTY_GAME_VARIANTS)[keyof typeof PARTY_GAME_VARIANTS]
+  | null;
+
 export const LOBBY_STATUS = {
   waiting: 'waiting',
   countdown: 'countdown',
-  racing: 'racing',
-  finished: 'finished',
+  inSession: 'in-session',
+  results: 'results',
 } as const;
 
 export type LobbyStatus = (typeof LOBBY_STATUS)[keyof typeof LOBBY_STATUS];
@@ -26,15 +51,23 @@ export interface PlayerInfo {
 }
 
 export interface LobbySettings {
-  trackId: string;
-  botCount: number;
   maxPlayers: number;
+  trackId?: string | null;
+  botCount?: number;
+  rounds?: number | null;
+  laps?: number | null;
+  [key: string]: string | number | boolean | null | undefined;
 }
 
-export interface LobbyState {
+export interface PartyLobbyState {
   code: string;
   hostId: string;
+  mode: PartyMode;
+  selectedGame: PartyGame;
+  selectedVariant: PartyGameVariant;
   players: PlayerInfo[];
   settings: LobbySettings;
   status: LobbyStatus;
 }
+
+export type LobbyState = PartyLobbyState;

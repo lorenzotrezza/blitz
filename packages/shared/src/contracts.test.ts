@@ -14,6 +14,7 @@ import {
 import type {
   ClientToServerEvents,
   LobbyState,
+  PartyLobbyState,
   PlayerInfo,
   PlayerInput,
   RaceBotState,
@@ -36,6 +37,9 @@ function createLobby(host: PlayerInfo): LobbyState {
   return {
     code: 'ABCD12',
     hostId: host.id,
+    mode: 'multiplayer',
+    selectedGame: 'lights',
+    selectedVariant: null,
     players: [host],
     settings: {
       trackId: 'track-oval',
@@ -50,8 +54,8 @@ test('exports the valid lobby and race status values', () => {
   assert.deepEqual(LOBBY_STATUS, {
     waiting: 'waiting',
     countdown: 'countdown',
-    racing: 'racing',
-    finished: 'finished',
+    inSession: 'in-session',
+    results: 'results',
   });
   assert.equal(MAX_LOBBY_PLAYERS, 8);
   assert.equal(RACE_STATUS.racing, 'racing');
@@ -62,8 +66,34 @@ test('exports stable socket event names', () => {
   assert.equal(SOCKET_EVENTS.client.joinLobby, 'client:join-lobby');
   assert.equal(SOCKET_EVENTS.client.leaveLobby, 'client:leave-lobby');
   assert.equal(SOCKET_EVENTS.client.setReady, 'client:set-ready');
+  assert.equal(SOCKET_EVENTS.client.selectGame, 'client:select-game');
+  assert.equal(SOCKET_EVENTS.client.updateLobbySettings, 'client:update-lobby-settings');
+  assert.equal(SOCKET_EVENTS.client.startSession, 'client:start-session');
+  assert.equal(SOCKET_EVENTS.client.postGameAction, 'client:post-game-action');
   assert.equal(SOCKET_EVENTS.server.lobbyUpdated, 'server:lobby-updated');
+  assert.equal(SOCKET_EVENTS.server.sessionStarted, 'server:session-started');
+  assert.equal(SOCKET_EVENTS.server.sessionState, 'server:session-state');
+  assert.equal(SOCKET_EVENTS.server.sessionFinished, 'server:session-finished');
   assert.equal(SOCKET_EVENTS.server.raceSnapshot, 'server:race-snapshot');
+});
+
+test('exports a party lobby shape with selected game metadata', () => {
+  const lobby: PartyLobbyState = {
+    code: 'ABCD12',
+    hostId: 'host',
+    mode: 'multiplayer',
+    selectedGame: 'lights',
+    selectedVariant: null,
+    status: 'waiting',
+    players: [],
+    settings: {
+      maxPlayers: MAX_LOBBY_PLAYERS,
+    },
+  };
+
+  assert.equal(lobby.mode, 'multiplayer');
+  assert.equal(lobby.selectedGame, 'lights');
+  assert.equal(lobby.selectedVariant, null);
 });
 
 test('exports the expected race snapshot shape', () => {
@@ -103,7 +133,7 @@ test('exports the expected race snapshot shape', () => {
   const snapshot: RaceSnapshot = {
     sessionId: 'session-1',
     lobbyCode: lobby.code,
-    trackId: lobby.settings.trackId,
+    trackId: lobby.settings.trackId ?? 'track-oval',
     status: RACE_STATUS.racing,
     tick: 12,
     startedAt: 1_713_980_000_000,
@@ -146,7 +176,7 @@ test('exports typed socket contracts for client and server event payloads', () =
   const snapshot: RaceSnapshot = {
     sessionId: 'session-1',
     lobbyCode: lobby.code,
-    trackId: lobby.settings.trackId,
+    trackId: lobby.settings.trackId ?? 'track-oval',
     status: RACE_STATUS.racing,
     tick: 14,
     startedAt: 1_713_980_000_000,
@@ -200,6 +230,23 @@ test('exports typed socket contracts for client and server event payloads', () =
     [SOCKET_EVENTS.client.setReady]: (payload) => {
       assert.equal(payload.ready, true);
     },
+    [SOCKET_EVENTS.client.selectGame]: (payload) => {
+      assert.equal(payload.game, 'lights');
+      assert.equal(payload.variant, null);
+    },
+    [SOCKET_EVENTS.client.updateLobbySettings]: (payload) => {
+      assert.equal(payload.code, 'ABCD12');
+      assert.equal(payload.settings.rounds, 3);
+    },
+    [SOCKET_EVENTS.client.startSession]: (payload) => {
+      assert.equal(payload.code, 'ABCD12');
+    },
+    [SOCKET_EVENTS.client.gameInput]: (payload) => {
+      assert.equal(payload.reactionAtMs, 180);
+    },
+    [SOCKET_EVENTS.client.postGameAction]: (payload) => {
+      assert.equal(payload.action, 'return-to-lobby');
+    },
     [SOCKET_EVENTS.client.startRace]: (payload) => {
       assert.equal(payload.code, 'ABCD12');
     },
@@ -216,6 +263,21 @@ test('exports typed socket contracts for client and server event payloads', () =
     [SOCKET_EVENTS.server.lobbyError]: (payload) => {
       assert.equal(payload.code, 'lobby-full');
       assert.equal(payload.message, 'Lobby is full');
+    },
+    [SOCKET_EVENTS.server.sessionStarted]: (payload) => {
+      assert.equal(payload.game, 'lights');
+      assert.equal(payload.variant, null);
+    },
+    [SOCKET_EVENTS.server.sessionState]: (payload) => {
+      assert.equal(payload.status, 'active');
+      assert.equal(payload.game, 'lights');
+    },
+    [SOCKET_EVENTS.server.sessionFinished]: (payload) => {
+      assert.equal(payload.results.rankings[0]?.playerId, host.id);
+    },
+    [SOCKET_EVENTS.server.postGameUpdated]: (payload) => {
+      assert.equal(payload.action, 'return-to-lobby');
+      assert.equal(payload.lobby.code, lobby.code);
     },
     [SOCKET_EVENTS.server.raceStarted]: (payload) => {
       assert.equal(payload.sessionId, 'session-1');
@@ -238,6 +300,23 @@ test('exports typed socket contracts for client and server event payloads', () =
   });
   clientEvents[SOCKET_EVENTS.client.leaveLobby]({ code: 'ABCD12' });
   clientEvents[SOCKET_EVENTS.client.setReady]({ ready: true });
+  clientEvents[SOCKET_EVENTS.client.selectGame]({
+    code: 'ABCD12',
+    game: 'lights',
+    variant: null,
+  });
+  clientEvents[SOCKET_EVENTS.client.updateLobbySettings]({
+    code: 'ABCD12',
+    settings: {
+      rounds: 3,
+    },
+  });
+  clientEvents[SOCKET_EVENTS.client.startSession]({ code: 'ABCD12' });
+  clientEvents[SOCKET_EVENTS.client.gameInput]({ reactionAtMs: 180 });
+  clientEvents[SOCKET_EVENTS.client.postGameAction]({
+    code: 'ABCD12',
+    action: 'return-to-lobby',
+  });
   clientEvents[SOCKET_EVENTS.client.startRace]({ code: 'ABCD12' });
   clientEvents[SOCKET_EVENTS.client.playerInput]({
     tick: 13,
@@ -251,10 +330,47 @@ test('exports typed socket contracts for client and server event payloads', () =
     code: 'lobby-full',
     message: 'Lobby is full',
   });
+  serverEvents[SOCKET_EVENTS.server.sessionStarted]({
+    sessionId: 'session-1',
+    lobbyCode: lobby.code,
+    game: 'lights',
+    variant: null,
+    countdown: 3,
+  });
+  serverEvents[SOCKET_EVENTS.server.sessionState]({
+    sessionId: 'session-1',
+    lobbyCode: lobby.code,
+    game: 'lights',
+    variant: null,
+    status: 'active',
+    countdown: 0,
+    state: {
+      round: 1,
+    },
+    results: null,
+  });
+  serverEvents[SOCKET_EVENTS.server.sessionFinished]({
+    sessionId: 'session-1',
+    lobbyCode: lobby.code,
+    game: 'lights',
+    variant: null,
+    results: {
+      rankings: [
+        {
+          playerId: host.id,
+          rank: 1,
+        },
+      ],
+    },
+  });
+  serverEvents[SOCKET_EVENTS.server.postGameUpdated]({
+    action: 'return-to-lobby',
+    lobby,
+  });
   serverEvents[SOCKET_EVENTS.server.raceStarted]({
     sessionId: 'session-1',
     lobbyCode: lobby.code,
-    trackId: lobby.settings.trackId,
+    trackId: lobby.settings.trackId ?? 'track-oval',
     countdown: 3,
   });
   serverEvents[SOCKET_EVENTS.server.raceSnapshot](snapshot);
