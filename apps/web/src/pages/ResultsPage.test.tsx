@@ -86,6 +86,37 @@ function createDragFinishedPayload(): SessionFinishedPayload {
   };
 }
 
+function createDodgeFinishedPayload(
+  details: { finishTimeMs: number | null; obstacleHits: number } | null = {
+    finishTimeMs: 12_340,
+    obstacleHits: 2,
+  },
+): SessionFinishedPayload {
+  return {
+    sessionId: 'session-dodge',
+    lobbyCode: 'ABCD12',
+    game: 'race',
+    variant: PARTY_GAME_VARIANTS.straightObstacle,
+    results: {
+      rankings: [
+        {
+          playerId: 'socket-host',
+          rank: 1,
+          label: '12.3s · 2 hits',
+          value: 12_340,
+          ...(details ? { details } : {}),
+        },
+      ],
+      summary: {
+        mode: 'straight-obstacle',
+        track: 'straight-obstacle',
+        distanceTarget: 900,
+        bestDodger: 'socket-host',
+      },
+    },
+  };
+}
+
 beforeEach(() => {
   window.sessionStorage.clear();
   mockUsePostGameActions.mockReset();
@@ -155,10 +186,38 @@ describe('ResultsPage', () => {
     expect(screen.getByRole('button', { name: /rigioca/i })).toBeInTheDocument();
   });
 
+  test('renders straight obstacle finish time and hit count', () => {
+    renderRoute('/results/session-dodge', createDodgeFinishedPayload());
+
+    expect(screen.getByRole('heading', { name: 'Best dodger' })).toBeInTheDocument();
+    expect(screen.getByText('Finish time')).toBeInTheDocument();
+    expect(screen.getAllByText('12.3s').length).toBeGreaterThan(0);
+    expect(screen.getByText('Obstacle hits')).toBeInTheDocument();
+    expect(screen.getAllByText('2').length).toBeGreaterThan(0);
+    expect(screen.getByText('12.3s · 2 hits')).toBeInTheDocument();
+  });
+
+  test('renders dodge empty summary when obstacle details are missing', () => {
+    renderRoute('/results/session-dodge', createDodgeFinishedPayload(null));
+
+    expect(
+      screen.getByText('No obstacle summary received. Finish order is still recorded.'),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('Obstacle hits')).not.toBeInTheDocument();
+    expect(screen.getByText('12.3s · 2 hits')).toBeInTheDocument();
+  });
+
   test('does not render drag shift summary for non-drag results', () => {
     renderRoute('/results/session-1', createFinishedPayload());
 
     expect(screen.queryByRole('heading', { name: 'Shift Summary' })).not.toBeInTheDocument();
+  });
+
+  test('does not render dodge summary for other results', () => {
+    renderRoute('/results/session-drag', createDragFinishedPayload());
+
+    expect(screen.queryByText('Obstacle hits')).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Best dodger' })).not.toBeInTheDocument();
   });
 
   test('ignores corrupt stored results payloads', () => {
