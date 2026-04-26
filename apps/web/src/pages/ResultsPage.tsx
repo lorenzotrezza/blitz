@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import type { RaceFinishedPayload, SessionFinishedPayload } from '@blitz/shared';
 
+import { DragResultsSummary } from '../components/game/DragResultsSummary';
 import { resolveSessionRoute } from '../lib/sessionRoutes';
 import { usePostGameActions } from '../lib/usePostGameActions';
 
@@ -71,6 +72,7 @@ export function ResultsPage() {
   const roster = readLobbyRoster();
   const { lobby, isHost, pendingAction, postGameUpdate, sessionStarted, submitAction } =
     usePostGameActions(payload?.lobbyCode ?? null);
+  const winningRanking = payload?.results.rankings[0];
 
   useEffect(() => {
     if (!postGameUpdate?.lobby.code) {
@@ -118,6 +120,13 @@ export function ResultsPage() {
           <p>Apri una gara live dalla lobby per riempire la board finale.</p>
         </article>
       )}
+
+      {payload?.game === 'race' && payload.variant === 'drag-sprint' ? (
+        <DragResultsSummary
+          summary={payload.results.summary}
+          rankingLabel={winningRanking?.label ?? winningRanking?.value ?? null}
+        />
+      ) : null}
 
       <div className="action-row">
         {isHost && lobby ? (
