@@ -23,6 +23,8 @@ import {
 
 const DEFAULT_COUNTDOWN_MS = 3_000;
 const TRACK_ID = 'straight-obstacle';
+const OBSTACLE_PREVIEW_BACKFILL = 24;
+const OBSTACLE_PREVIEW_DISTANCE = 180;
 
 type IntervalHandle = ReturnType<typeof setInterval>;
 type TimeoutHandle = ReturnType<typeof setTimeout>;
@@ -135,11 +137,27 @@ export function createStraightObstacleRuntime(
       serverTimeMs: now(),
       warning: ruleState.warning,
       playersState: ruleState.players.map((player) => ({ ...player })),
-      activeObstacles: ruleState.obstacles.map((obstacle) => ({
+      activeObstacles: getPreviewObstacles().map((obstacle) => ({
         ...obstacle,
         hitPlayerIds: [...obstacle.hitPlayerIds],
       })),
     };
+  }
+
+  function getPreviewObstacles() {
+    if (ruleState.players.length === 0) {
+      return [];
+    }
+
+    const distances = ruleState.players.map((player) => player.distance);
+    const minDistance = Math.min(...distances);
+    const maxDistance = Math.max(...distances);
+
+    return ruleState.obstacles.filter(
+      (obstacle) =>
+        obstacle.distance >= minDistance - OBSTACLE_PREVIEW_BACKFILL &&
+        obstacle.distance <= maxDistance + OBSTACLE_PREVIEW_DISTANCE,
+    );
   }
 
   function setState(status: RaceStatus, results: GameResults | null = state.results) {
@@ -218,6 +236,8 @@ export function createStraightObstacleRuntime(
 
     ruleState = advanceStraightObstacleRace(ruleState, latestIntentByPlayerId, {
       nowMs: currentTimeMs,
+      elapsedMs:
+        startedAtMs === null ? 0 : Math.max(0, currentTimeMs - startedAtMs),
       deltaMs,
     });
     lastAdvancedAtMs = currentTimeMs;

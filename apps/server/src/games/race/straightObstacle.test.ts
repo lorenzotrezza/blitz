@@ -47,11 +47,12 @@ function createLobby(): LobbyState {
 
 function createRuntimeHarness(
   options: {
+    initialNowMs?: number;
     distanceTarget?: number;
     obstacles?: StraightObstacleSnapshot['activeObstacles'];
   } = {},
 ) {
-  let nowMs = 1_000;
+  let nowMs = options.initialNowMs ?? 1_000;
   const tickCallbacks: Array<() => void> = [];
   const clearedTimers: unknown[] = [];
   const states: Array<GameSessionEnvelope<StraightObstacleSnapshot>> = [];
@@ -228,6 +229,7 @@ test('advances neutral steering through server tick', () => {
 
 test('finishes with obstacle hit result details', () => {
   const { runtime, advanceTime, tick, finishedPayloads } = createRuntimeHarness({
+    initialNowMs: 1_777_202_004_000,
     distanceTarget: 20,
     obstacles: [
       {
@@ -254,9 +256,58 @@ test('finishes with obstacle hit result details', () => {
   assert.ok(payload);
   assert.equal(payload.game, 'race');
   assert.equal(payload.variant, 'straight-obstacle');
-  assert.match(payload.results.rankings[0]?.label ?? '', /hits$/);
+  assert.match(payload.results.rankings[0]?.label ?? '', /^0\.8s · \d hits$/);
   const details = payload.results.rankings[0]?.details;
 
   assert.ok(details);
+  assert.equal(details.finishTimeMs, 800);
   assert.equal(typeof details.obstacleHits, 'number');
+});
+
+test('filters active obstacles to the road preview window', () => {
+  const { runtime, advanceTime, tick } = createRuntimeHarness({
+    obstacles: [
+      {
+        id: 'passed-obstacle',
+        waveId: 'wave-1',
+        centerX: -0.8,
+        width: 0.24,
+        distance: 20,
+        depth: 6,
+        warningDistance: 150,
+        hitPlayerIds: [],
+      },
+      {
+        id: 'upcoming-obstacle',
+        waveId: 'wave-2',
+        centerX: 0.35,
+        width: 0.24,
+        distance: 150,
+        depth: 6,
+        warningDistance: 150,
+        hitPlayerIds: [],
+      },
+      {
+        id: 'far-obstacle',
+        waveId: 'wave-3',
+        centerX: -0.35,
+        width: 0.24,
+        distance: 320,
+        depth: 6,
+        warningDistance: 150,
+        hitPlayerIds: [],
+      },
+    ],
+  });
+
+  runtime.start();
+  advanceTime(1_000);
+  tick();
+  advanceTime(1_000);
+  tick();
+  advanceTime(1_000);
+  const ticked = tick();
+  const obstacleIds = ticked.state.activeObstacles.map((obstacle) => obstacle.id);
+
+  assert.deepEqual(obstacleIds, ['upcoming-obstacle']);
 });

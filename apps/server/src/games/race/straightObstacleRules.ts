@@ -43,6 +43,7 @@ export interface CreateStraightObstacleStateOptions {
 export interface StraightObstacleFrame {
   nowMs: number;
   deltaMs: number;
+  elapsedMs?: number;
 }
 
 export type StraightObstacleIntent =
@@ -216,12 +217,17 @@ export function advanceStraightObstacleRace(
     }
 
     if (nextPlayer.distance >= state.distanceTarget) {
+      const finishTimeMs =
+        typeof frame.elapsedMs === 'number' && Number.isFinite(frame.elapsedMs)
+          ? Math.max(0, frame.elapsedMs)
+          : nowMs;
+
       nextPlayer = {
         ...nextPlayer,
         distance: state.distanceTarget,
         progress: 1,
         status: 'finished',
-        finishedAtMs: nextPlayer.finishedAtMs ?? nowMs,
+        finishedAtMs: nextPlayer.finishedAtMs ?? finishTimeMs,
       };
     }
 
