@@ -1,10 +1,11 @@
 ---
 phase: 6
 slug: lobby-results-and-regression-polish
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-04-26
+reviewed_at: 2026-04-26T10:24:50Z
 ---
 
 # Phase 6 - UI Design Contract
@@ -133,6 +134,7 @@ Fallback result copy: if mode-specific fields are missing, render only shared ra
 
 ### Lobby Race Catalog
 
+- Primary lobby focal point is the selected race catalog card, followed by the enabled `Avvia Sessione` CTA.
 - Render the race catalog as compact selectable cards or rows, not as a second row of bare buttons.
 - Each race option must expose exactly: label, objective, control, and skill focus.
 - Race option order is fixed: Drag Gear, Straight Obstacle, Circle Track, Figure-Eight Track.
