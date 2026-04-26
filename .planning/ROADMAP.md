@@ -156,6 +156,15 @@ Plans:
 - This is where old duplicate race labels/routes should be removed or renamed.
 - Verify mobile viewport manually before considering the milestone done.
 
+**Plans:** 5 plans
+
+Plans:
+- [ ] 06-01-PLAN.md — Canonical shared/server race variant foundation
+- [ ] 06-02-PLAN.md — Mobile-readable lobby race catalog
+- [ ] 06-03-PLAN.md — Variant-aware fullscreen session routing
+- [ ] 06-04-PLAN.md — Mode-specific results and graceful degradation
+- [ ] 06-05-PLAN.md — Security regression and final mobile gate
+
 ## Coverage
 
 - v1 requirements: 28 total
