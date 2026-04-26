@@ -93,7 +93,7 @@ Plans:
 - [x] 03-02-PLAN.md — Deterministic steering, obstacle waves, collisions, slowdown, and rankings
 - [x] 03-03-PLAN.md — Authoritative straight-obstacle runtime and registry integration
 - [x] 03-04-PLAN.md — Dodge road, HUD, steering controls, keyboard fallback, and CSS
-- [ ] 03-05-PLAN.md — Fullscreen straight-obstacle route and session routing
+- [x] 03-05-PLAN.md — Fullscreen straight-obstacle route and session routing
 - [ ] 03-06-PLAN.md — Dodge results summary and final verification gate
 
 ## Phase 4: Circular Analog Track Race

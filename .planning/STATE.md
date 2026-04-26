@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Executing Phase 03
-last_updated: "2026-04-26T11:37:55.512Z"
+last_updated: "2026-04-26T11:49:26.874Z"
 progress:
   total_phases: 6
   completed_phases: 2
   total_plans: 31
-  completed_plans: 14
-  percent: 45
+  completed_plans: 15
+  percent: 48
 ---
 
 # State: Blitz Playable Minigames
@@ -43,6 +43,7 @@ See: `.planning/PROJECT.md` (updated 2026-04-25)
 - Phase 3 Plan 02 completed in `.planning/phases/03-straight-obstacle-race/03-02-SUMMARY.md`.
 - Phase 3 Plan 03 completed in `.planning/phases/03-straight-obstacle-race/03-03-SUMMARY.md`.
 - Phase 3 Plan 04 completed in `.planning/phases/03-straight-obstacle-race/03-04-SUMMARY.md`.
+- Phase 3 Plan 05 completed in `.planning/phases/03-straight-obstacle-race/03-05-SUMMARY.md`.
 
 ## Active Phase
 
@@ -50,9 +51,9 @@ See: `.planning/PROJECT.md` (updated 2026-04-25)
 |-------|-------|
 | Phase | 03 |
 | Name | straight-obstacle-race |
-| Status | In progress; 4 of 6 plans complete |
+| Status | In progress; 5 of 6 plans complete |
 | UI hint | yes |
-| Plans | 4 / 6 complete |
+| Plans | 5 / 6 complete |
 
 ## Quick Tasks Completed
 
@@ -92,6 +93,9 @@ See: `.planning/PROJECT.md` (updated 2026-04-25)
 - Dodge frontend controls emit only normalized StraightObstacleInput steering intent.
 - Dodge warning, hits, speed, distance, and slowdown are React-rendered text for tests and assistive technology.
 - Dodge steering resets to neutral on pointer, blur, visibility, disabled, and unmount lifecycles.
+- Straight obstacle sessions use a dedicated top-level fullscreen route at `/race/straight-obstacle/:sessionId` outside AppLayout chrome.
+- StraightObstacleRacePage renders only server-owned straight-obstacle snapshots and submits steering intent through generic `client:game-input`.
+- StraightObstacleRacePage rewrites steering sequence values with a route-local monotonic counter so neutral reset packets cannot make later same-session input stale.
 
 ## Performance Metrics
 
@@ -107,13 +111,14 @@ See: `.planning/PROJECT.md` (updated 2026-04-25)
 | 03-straight-obstacle-race | 02 | 5m 59s | 2 | 3 |
 | 03-straight-obstacle-race | 03 | 7m 17s | 2 | 5 |
 | 03-straight-obstacle-race | 04 | 7m 22s | 2 | 10 |
+| 03-straight-obstacle-race | 05 | 8m 12s | 2 | 5 |
 
 ## Last Session
 
 | Field | Value |
 |-------|-------|
-| Timestamp | 2026-04-26T11:35:48Z |
-| Stopped At | Completed 03-04-PLAN.md |
+| Timestamp | 2026-04-26T11:48:10Z |
+| Stopped At | Completed 03-05-PLAN.md |
 | Resume File | None |
 
 ## Open Risks
