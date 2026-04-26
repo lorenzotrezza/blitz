@@ -402,22 +402,16 @@ Registry tests should stay paired with shared startability tests because server 
 | A1 | Final canonical ids can be `drag-gear`, `straight-obstacle`, `circle-track`, and `figure-eight-track` if prior phases have not already locked different ids. [ASSUMED] | Architecture Patterns / Code Examples | Planner may need to preserve existing ids from Phases 2-5 and only change labels/copy. |
 | A2 | Adding small result-summary components is preferred over keeping all summary rendering inline in `ResultsPage`. [ASSUMED] | Architecture Patterns | Inline implementation may be acceptable for small scope, but helpers reduce future branching risk. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Which variant ids exist after Phases 3-5 execute?**
-   - What we know: current source has `sprint-circuit`, `traffic-survival`, and `drag-sprint`; Phase 3 research/plans recommend `straight-obstacle`, Phase 4 recommends `circle-track`, and Phase 5 recommends `figure-eight-track`. [VERIFIED: packages/shared/src/lobby.ts; VERIFIED: .planning/phases/03-straight-obstacle-race/03-RESEARCH.md; VERIFIED: .planning/phases/04-circular-analog-track-race/04-CONTEXT.md; VERIFIED: .planning/phases/05-figure-eight-analog-track-race/05-RESEARCH.md]
-   - What's unclear: Phase 06 may run after additional code changes not present in this worktree. [VERIFIED: git status --short]
-   - Recommendation: Planner should include a Wave 0 prerequisite audit that reads `PARTY_GAME_VARIANTS`, registry entries, and route mappings before assigning final rename tasks. [VERIFIED: packages/shared/src/lobby.ts; VERIFIED: apps/server/src/games/registry.ts; VERIFIED: apps/web/src/lib/sessionRoutes.ts]
+   - Resolution: Phase 06 plans use these canonical final ids from shared constants: `drag-gear`, `straight-obstacle`, `circle-track`, and `figure-eight-track`. Before production source edits, Plan 06-01 now performs a Wave 0 prerequisite audit of `PARTY_GAME_VARIANTS`, server registry runtime factories, route mappings, and fullscreen page files. If any Phase 3-5 runtime or page is missing, execution stops and final variants are not made startable. [VERIFIED: .planning/phases/06-lobby-results-and-regression-polish/06-01-PLAN.md; VERIFIED: .planning/phases/03-straight-obstacle-race/03-05-PLAN.md; VERIFIED: .planning/phases/04-circular-analog-track-race/04-04-PLAN.md; VERIFIED: .planning/phases/05-figure-eight-analog-track-race/05-04-PLAN.md]
 
 2. **Should legacy ids remain as compatibility aliases?**
-   - What we know: Phase 06 allows legacy ids only if needed during migration. [VERIFIED: .planning/phases/06-lobby-results-and-regression-polish/06-CONTEXT.md]
-   - What's unclear: No durable server store exists, but a browser tab may hold old session result payloads. [VERIFIED: apps/web/src/pages/ResultsPage.tsx; VERIFIED: grep blitz-results]
-   - Recommendation: Keep result rendering tolerant of old variants, but avoid exposing old labels in the primary lobby catalog. [VERIFIED: .planning/phases/06-lobby-results-and-regression-polish/06-CONTEXT.md]
+   - Resolution: Legacy ids may remain exported only as source-compatibility aliases when current code still imports them, but they must not be primary lobby labels, final startability examples, or final route/result branches. Results rendering remains tolerant of old or partial stored payloads through existing `GameResults.summary`, ranking `label`, and ranking `value` fields, with no new entry-level details contract field. [VERIFIED: .planning/phases/06-lobby-results-and-regression-polish/06-CONTEXT.md; VERIFIED: .planning/phases/06-lobby-results-and-regression-polish/06-04-PLAN.md; VERIFIED: packages/shared/src/contracts.ts]
 
 3. **Should `useLiveRaceSocket` be removed, generalized, or left only for compatibility?**
-   - What we know: generic `useGameSessionSocket()` accepts all session envelopes, while `useLiveRaceSocket()` filters only sprint-circuit. [VERIFIED: apps/web/src/lib/useGameSessionSocket.ts; VERIFIED: apps/web/src/lib/useLiveRaceSocket.ts]
-   - What's unclear: Future analog pages may already have replaced it by the time Phase 06 executes. [VERIFIED: current worktree lacks Phase 3-5 summaries]
-   - Recommendation: Prefer variant-aware generic session hooks for final race pages; leave `useLiveRaceSocket` only if a legacy sprint page still needs it. [VERIFIED: apps/web/src/lib/useGameSessionSocket.ts; VERIFIED: .planning/phases/06-lobby-results-and-regression-polish/06-CONTEXT.md]
+   - Resolution: Final race pages should use the generic `useGameSessionSocket()` path and the active session event family (`client:game-input`, `server:session-state`, `server:session-finished`). `useLiveRaceSocket` should be left only for legacy compatibility if a legacy sprint page still needs it; Phase 06 should not broaden it unless an existing final page still depends on it after the Wave 0 prerequisite audit. [VERIFIED: apps/web/src/lib/useGameSessionSocket.ts; VERIFIED: apps/web/src/lib/useLiveRaceSocket.ts; VERIFIED: .planning/phases/06-lobby-results-and-regression-polish/06-CONTEXT.md]
 
 ## Environment Availability
 
