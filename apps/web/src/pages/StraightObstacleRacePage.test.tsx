@@ -293,7 +293,9 @@ describe('StraightObstacleRacePage', () => {
     mockDodgeSession({ snapshot: null });
     const waiting = renderRoute();
 
-    expect(screen.getByText('Waiting for dodge race')).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Waiting for dodge race' }),
+    ).toBeInTheDocument();
     expect(
       screen.getByText(
         'No live dodge snapshot yet. Keep this screen open; the countdown appears when the server starts the session.',

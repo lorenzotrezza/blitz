@@ -13,5 +13,9 @@ export function resolveSessionRoute(payload: SessionStartedPayload): string {
     return `/race/drag/${payload.sessionId}`;
   }
 
+  if (payload.game === 'race' && payload.variant === 'straight-obstacle') {
+    return `/race/straight-obstacle/${payload.sessionId}`;
+  }
+
   return `/race/live/${payload.sessionId}`;
 }

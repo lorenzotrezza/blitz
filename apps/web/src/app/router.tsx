@@ -11,6 +11,7 @@ import { ModeSelectPage } from '../pages/ModeSelectPage';
 import { PenaltySessionPage } from '../pages/PenaltySessionPage';
 import { ResultsPage } from '../pages/ResultsPage';
 import { SprintCircuitPage } from '../pages/SprintCircuitPage';
+import { StraightObstacleRacePage } from '../pages/StraightObstacleRacePage';
 
 type AppRouterOptions = {
   initialEntries?: Array<
@@ -114,6 +115,10 @@ function buildRoutes() {
     {
       path: '/race/drag/:sessionId',
       element: <DragGearRacePage />,
+    },
+    {
+      path: '/race/straight-obstacle/:sessionId',
+      element: <StraightObstacleRacePage />,
     },
   ];
 }
