@@ -178,6 +178,49 @@ test('held throttle progresses without repeated client packets', () => {
   assert.ok(laterPlayer.distanceM > pressedPlayer.distanceM);
 });
 
+test('broadcasts held throttle progress from the server race tick', () => {
+  let nowMs = 12_000;
+  const scheduledCallbacks: Array<() => void> = [];
+  const snapshots: DragGearRuntimeSnapshot[] = [];
+  const runtime = createDragSprintRuntime(createLobby(), 'session-drag', {
+    countdownMs: 0,
+    now: () => nowMs,
+    schedule(callback) {
+      scheduledCallbacks.push(callback);
+      return {} as ReturnType<typeof setTimeout>;
+    },
+    cancel() {},
+    onState(envelope) {
+      snapshots.push(envelope.state as unknown as DragGearRuntimeSnapshot);
+    },
+  });
+
+  runtime.start();
+
+  assert.equal(scheduledCallbacks.length, 0);
+
+  runtime.applyInput('socket-host', {
+    kind: 'drag-throttle',
+    pressed: true,
+    sequence: 1,
+    clientTimeMs: 1,
+  });
+
+  assert.equal(scheduledCallbacks.length, 1);
+
+  const pressedPlayer = snapshots.at(-1)?.playersState[0];
+  nowMs += 500;
+  scheduledCallbacks.shift()?.();
+
+  const tickedPlayer = snapshots.at(-1)?.playersState[0];
+
+  assert.ok(pressedPlayer);
+  assert.ok(tickedPlayer);
+  assert.ok(tickedPlayer.rpm > pressedPlayer.rpm);
+  assert.ok(tickedPlayer.speedKmh > pressedPlayer.speedKmh);
+  assert.ok(tickedPlayer.distanceM > pressedPlayer.distanceM);
+});
+
 test('shift after elapsed hold time scores from updated RPM', () => {
   let nowMs = 20_000;
   const runtime = createDragSprintRuntime(createLobby(), 'session-drag', {

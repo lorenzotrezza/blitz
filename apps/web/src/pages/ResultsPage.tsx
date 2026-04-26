@@ -56,19 +56,27 @@ function readLobbyRoster() {
   }
 }
 
+function readStoredResults(sessionId: string) {
+  const raw = window.sessionStorage.getItem(`blitz-results:${sessionId}`);
+
+  if (!raw) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(raw) as SessionFinishedPayload | RaceFinishedPayload;
+  } catch {
+    return null;
+  }
+}
+
 export function ResultsPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const { sessionId = 'pending' } = useParams();
   const locationPayload =
     (location.state as SessionFinishedPayload | RaceFinishedPayload | null) ?? null;
-  const storedPayload = window.sessionStorage.getItem(`blitz-results:${sessionId}`);
-  const payload = normalizePayload(
-    locationPayload ??
-      (storedPayload
-        ? (JSON.parse(storedPayload) as SessionFinishedPayload | RaceFinishedPayload)
-        : null),
-  );
+  const payload = normalizePayload(locationPayload ?? readStoredResults(sessionId));
   const roster = readLobbyRoster();
   const { lobby, isHost, pendingAction, postGameUpdate, sessionStarted, submitAction } =
     usePostGameActions(payload?.lobbyCode ?? null);

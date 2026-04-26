@@ -26,6 +26,7 @@ import {
 } from './dragGearRules.js';
 
 const DEFAULT_COUNTDOWN_MS = 3_000;
+const DRAG_RACE_TICK_MS = 50;
 const TRACK_ID = 'straight-drag-gear';
 
 type TimerHandle = ReturnType<typeof setTimeout> | null;
@@ -92,7 +93,13 @@ export function createDragSprintRuntime(
   const now = options.now ?? (() => Date.now());
   const schedule =
     options.schedule ??
-    ((callback: () => void, delayMs: number) => setTimeout(callback, delayMs));
+    ((callback: () => void, delayMs: number) => {
+      const timer = setTimeout(callback, delayMs);
+
+      timer.unref?.();
+
+      return timer;
+    });
   const cancel =
     options.cancel ??
     ((timer: Exclude<TimerHandle, null>) => {
@@ -103,6 +110,7 @@ export function createDragSprintRuntime(
   );
 
   let countdownTimer: TimerHandle = null;
+  let raceTimer: TimerHandle = null;
   let startedAtMs: number | null = null;
   let lastAdvancedAtMs: number | null = null;
   let tick = 0;
@@ -194,6 +202,54 @@ export function createDragSprintRuntime(
     countdownTimer = null;
   }
 
+  function clearRaceTimer() {
+    if (raceTimer === null) {
+      return;
+    }
+
+    cancel(raceTimer);
+    raceTimer = null;
+  }
+
+  function hasActiveThrottle() {
+    return players.some(
+      (player) =>
+        activePlayerIds.has(player.playerId) &&
+        !player.finished &&
+        player.throttlePressed,
+    );
+  }
+
+  function scheduleRaceTick() {
+    if (
+      raceTimer !== null ||
+      state.state.status !== RACE_STATUS.racing ||
+      !hasActiveThrottle()
+    ) {
+      return;
+    }
+
+    raceTimer = schedule(() => {
+      raceTimer = null;
+
+      if (state.state.status !== RACE_STATUS.racing) {
+        return;
+      }
+
+      advanceDragPlayersToNow();
+
+      const finishedState = maybeFinishAfterAdvance();
+
+      if (finishedState) {
+        return;
+      }
+
+      setState(RACE_STATUS.racing, null);
+      emitState();
+      scheduleRaceTick();
+    }, DRAG_RACE_TICK_MS);
+  }
+
   function activateRace() {
     const currentTimeMs = now();
 
@@ -206,6 +262,7 @@ export function createDragSprintRuntime(
     }));
     setState(RACE_STATUS.racing, null);
     emitState();
+    scheduleRaceTick();
 
     return state;
   }
@@ -277,6 +334,7 @@ export function createDragSprintRuntime(
 
     const results = buildResults(winner);
 
+    clearRaceTimer();
     updateRanks(results.rankings);
     setState(RACE_STATUS.finished, results);
     emitState();
@@ -380,6 +438,7 @@ export function createDragSprintRuntime(
       tick += 1;
       setState(RACE_STATUS.racing, null);
       emitState();
+      scheduleRaceTick();
 
       return state;
     },
@@ -395,6 +454,7 @@ export function createDragSprintRuntime(
         throttlePressed: false,
       });
       activePlayerIds.delete(playerId);
+      clearRaceTimer();
 
       const remainingRacers = players.filter(
         (entry) => activePlayerIds.has(entry.playerId) && !entry.finished,
@@ -417,9 +477,11 @@ export function createDragSprintRuntime(
 
       setState(state.state.status, state.results);
       emitState();
+      scheduleRaceTick();
     },
     dispose() {
       clearCountdown();
+      clearRaceTimer();
     },
   };
 }

@@ -87,6 +87,7 @@ function createDragFinishedPayload(): SessionFinishedPayload {
 }
 
 beforeEach(() => {
+  window.sessionStorage.clear();
   mockUsePostGameActions.mockReset();
   mockUsePostGameActions.mockReturnValue({
     isConnected: true,
@@ -157,6 +158,15 @@ describe('ResultsPage', () => {
   test('does not render drag shift summary for non-drag results', () => {
     renderRoute('/results/session-1', createFinishedPayload());
 
+    expect(screen.queryByRole('heading', { name: 'Shift Summary' })).not.toBeInTheDocument();
+  });
+
+  test('ignores corrupt stored results payloads', () => {
+    window.sessionStorage.setItem('blitz-results:session-bad', '{not valid json');
+
+    renderRoute('/results/session-bad');
+
+    expect(screen.getByRole('heading', { name: /nessun dato/i })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Shift Summary' })).not.toBeInTheDocument();
   });
 });
