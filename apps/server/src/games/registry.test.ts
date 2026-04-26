@@ -11,6 +11,10 @@ test('game registry exposes the current playable variants while shared startabil
   assert.equal(registry.resolve(PARTY_GAMES.penalty, null) !== null, true);
   assert.equal(registry.resolve(PARTY_GAMES.race, PARTY_GAME_VARIANTS.sprintCircuit) !== null, true);
   assert.equal(registry.resolve(PARTY_GAMES.race, PARTY_GAME_VARIANTS.dragSprint) !== null, true);
+  assert.equal(
+    registry.resolve(PARTY_GAMES.race, PARTY_GAME_VARIANTS.straightObstacle)?.key,
+    'race:straight-obstacle',
+  );
 
   assert.equal(
     isLobbySelectionStartable(
