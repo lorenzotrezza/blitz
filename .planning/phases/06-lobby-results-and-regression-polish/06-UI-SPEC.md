@@ -86,7 +86,7 @@ Additional existing colors may be retained with constrained meanings: `#00aadd` 
 | Element | Copy |
 |---------|------|
 | Primary CTA | Avvia Sessione |
-| Empty state heading | Nessun Dato |
+| Empty state heading | Apri Una Gara Live |
 | Empty state body | Apri una gara live dalla lobby per riempire la board finale. |
 | Error state | Errore Box. Controlla lobby, connessione o selezione gioco e riprova. |
 | Destructive confirmation | No new modal confirmations in Phase 6. Keep existing immediate host/player actions: `Lascia Lobby` and `Kick {nickname}`. |
