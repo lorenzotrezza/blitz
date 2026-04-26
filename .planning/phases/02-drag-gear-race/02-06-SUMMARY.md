@@ -96,7 +96,8 @@ completed: 2026-04-26
 
 ## Issues Encountered
 
-None beyond the auto-fixed assertion issue above.
+- Code review found that held throttle needed a server-side race tick to keep RPM/speed/distance snapshots moving without extra client packets. Fixed in `02395c6`.
+- Code review found that corrupt stored results JSON could crash `ResultsPage` during render. Fixed in `02395c6`.
 
 ## User Setup Required
 
@@ -109,10 +110,14 @@ None - no external service configuration required.
 - `pnpm --filter @blitz/web test -- DragGearRacePage.test.tsx ResultsPage.test.tsx` - passed; 17 test files, 54 tests.
 - `pnpm test` - passed; includes lint, build, bootstrap smoke, shared tests, server tests, web tests, and root Node tests.
 - `pnpm run build` - passed; shared build, server TypeScript build, and web Vite build.
+- Post-review `pnpm --filter @blitz/server test -- src/games/race/dragSprint.test.ts` - passed; includes server race tick coverage.
+- Post-review `pnpm --filter @blitz/web test -- ResultsPage.test.tsx` - passed; includes corrupt stored payload coverage.
+- Post-review `pnpm test` - passed; server tests now 47, web tests now 55.
+- Post-review `pnpm run build` - passed.
 
 ## Next Phase Readiness
 
-Phase 2 now has all six plan summaries and can proceed to code review, regression, and phase-goal verification.
+Phase 2 now has all six plan summaries, code review fixes, passing root verification gates, and can proceed to phase-goal verification.
 
 ---
 *Phase: 02-drag-gear-race*
