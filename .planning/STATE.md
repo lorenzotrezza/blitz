@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Executing Phase 03
-last_updated: "2026-04-26T11:49:26.874Z"
+status: Phase 03 complete
+last_updated: "2026-04-26T11:59:05.269Z"
 progress:
   total_phases: 6
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 31
-  completed_plans: 15
-  percent: 48
+  completed_plans: 16
+  percent: 52
 ---
 
 # State: Blitz Playable Minigames
@@ -19,7 +19,7 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-04-25)
 
 **Core value:** Every minigame must feel manually playable on a phone.
-**Current focus:** Phase 03 — straight-obstacle-race
+**Current focus:** Phase 03 — straight-obstacle-race complete; ready for next planned phase.
 
 ## Current Status
 
@@ -44,6 +44,7 @@ See: `.planning/PROJECT.md` (updated 2026-04-25)
 - Phase 3 Plan 03 completed in `.planning/phases/03-straight-obstacle-race/03-03-SUMMARY.md`.
 - Phase 3 Plan 04 completed in `.planning/phases/03-straight-obstacle-race/03-04-SUMMARY.md`.
 - Phase 3 Plan 05 completed in `.planning/phases/03-straight-obstacle-race/03-05-SUMMARY.md`.
+- Phase 3 Plan 06 completed in `.planning/phases/03-straight-obstacle-race/03-06-SUMMARY.md`; focused shared/server/web tests, `pnpm test`, and `pnpm run build` passed.
 
 ## Active Phase
 
@@ -51,9 +52,9 @@ See: `.planning/PROJECT.md` (updated 2026-04-25)
 |-------|-------|
 | Phase | 03 |
 | Name | straight-obstacle-race |
-| Status | In progress; 5 of 6 plans complete |
+| Status | Complete; 6 of 6 plans complete |
 | UI hint | yes |
-| Plans | 5 / 6 complete |
+| Plans | 6 / 6 complete |
 
 ## Quick Tasks Completed
 
@@ -96,6 +97,9 @@ See: `.planning/PROJECT.md` (updated 2026-04-25)
 - Straight obstacle sessions use a dedicated top-level fullscreen route at `/race/straight-obstacle/:sessionId` outside AppLayout chrome.
 - StraightObstacleRacePage renders only server-owned straight-obstacle snapshots and submits steering intent through generic `client:game-input`.
 - StraightObstacleRacePage rewrites steering sequence values with a route-local monotonic counter so neutral reset packets cannot make later same-session input stale.
+- Dodge result summaries render only for `race:straight-obstacle` finished payloads.
+- Finish time and obstacle hits are read from server-owned `results.rankings[0].details`, not parsed from ranking label text.
+- Missing straight-obstacle details show a dodge-specific empty summary while preserving generic finish order rankings.
 
 ## Performance Metrics
 
@@ -112,13 +116,14 @@ See: `.planning/PROJECT.md` (updated 2026-04-25)
 | 03-straight-obstacle-race | 03 | 7m 17s | 2 | 5 |
 | 03-straight-obstacle-race | 04 | 7m 22s | 2 | 10 |
 | 03-straight-obstacle-race | 05 | 8m 12s | 2 | 5 |
+| 03-straight-obstacle-race | 06 | 6m 15s | 3 | 4 |
 
 ## Last Session
 
 | Field | Value |
 |-------|-------|
-| Timestamp | 2026-04-26T11:48:10Z |
-| Stopped At | Completed 03-05-PLAN.md |
+| Timestamp | 2026-04-26T11:56:59Z |
+| Stopped At | Completed 03-06-PLAN.md |
 | Resume File | None |
 
 ## Open Risks
