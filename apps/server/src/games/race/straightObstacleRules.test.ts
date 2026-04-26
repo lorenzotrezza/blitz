@@ -193,5 +193,8 @@ test('builds finish rankings with obstacle hit details', () => {
   assert.equal(results.rankings[0]?.playerId, 'player-fast');
   assert.equal(results.rankings[1]?.playerId, 'player-slow');
   assert.equal(results.rankings[1]?.label, '12.3s · 2 hits');
-  assert.equal(results.rankings[1]?.details?.obstacleHits, 2);
+  const details = results.rankings[1]?.details;
+
+  assert.ok(details);
+  assert.equal(details.obstacleHits, 2);
 });
