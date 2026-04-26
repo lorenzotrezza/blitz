@@ -273,6 +273,8 @@ describe('DragGearRacePage', () => {
     rerender(<RouterProvider router={createAppRouter({ initialEntries: ['/race/drag/session-drag'] })} />);
 
     mockSubmitInput.mockClear();
+    mockDragSession();
+    rerender(<RouterProvider router={createAppRouter({ initialEntries: ['/race/drag/session-drag'] })} />);
     fireEvent.keyDown(window, { key: ' ', code: 'Space' });
     mockDragSession({ isConnected: false });
     rerender(<RouterProvider router={createAppRouter({ initialEntries: ['/race/drag/session-drag'] })} />);

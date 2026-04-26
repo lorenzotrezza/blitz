@@ -9,5 +9,9 @@ export function resolveSessionRoute(payload: SessionStartedPayload): string {
     return `/session/penalty/${payload.sessionId}`;
   }
 
+  if (payload.game === 'race' && payload.variant === 'drag-sprint') {
+    return `/race/drag/${payload.sessionId}`;
+  }
+
   return `/race/live/${payload.sessionId}`;
 }

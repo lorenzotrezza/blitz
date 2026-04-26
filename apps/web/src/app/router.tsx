@@ -2,6 +2,7 @@ import { Link, NavLink, Outlet, createBrowserRouter, createMemoryRouter } from '
 
 import { HubPage } from '../pages/HubPage';
 import { LandingPage } from '../pages/LandingPage';
+import { DragGearRacePage } from '../pages/DragGearRacePage';
 import { LightsSessionPage } from '../pages/LightsSessionPage';
 import { LobbyIndexPage, LobbyPage } from '../pages/LobbyPage';
 import { MinigameLightsPage } from '../pages/MinigameLightsPage';
@@ -109,6 +110,10 @@ function buildRoutes() {
     {
       path: '/race/live/:sessionId',
       element: <SprintCircuitPage />,
+    },
+    {
+      path: '/race/drag/:sessionId',
+      element: <DragGearRacePage />,
     },
   ];
 }
