@@ -4,6 +4,7 @@ import { createLightsRuntime } from './lights/runtime.js';
 import { createPenaltyRuntime } from './penalty/runtime.js';
 import { createDragSprintRuntime } from './race/dragSprint.js';
 import { createSprintCircuitRuntime } from './race/sprintCircuit.js';
+import { createStraightObstacleRuntime } from './race/straightObstacle.js';
 import type { GameRuntimeFactory } from './runtime.js';
 
 export interface GameRegistryEntry {
@@ -75,6 +76,22 @@ const DEFAULT_GAME_REGISTRY: GameRegistryEntry[] = [
     countdown: 3,
     createRuntime(lobby: LobbyState, sessionId: string, callbacks) {
       return createDragSprintRuntime(lobby, sessionId, {
+        onState(payload) {
+          callbacks.onState?.(payload);
+        },
+        onFinished(payload) {
+          callbacks.onFinished?.(payload);
+        },
+      });
+    },
+  },
+  {
+    key: 'race:straight-obstacle',
+    game: 'race',
+    variant: 'straight-obstacle',
+    countdown: 3,
+    createRuntime(lobby: LobbyState, sessionId: string, callbacks) {
+      return createStraightObstacleRuntime(lobby, sessionId, {
         onState(payload) {
           callbacks.onState?.(payload);
         },

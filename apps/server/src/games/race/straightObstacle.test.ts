@@ -67,7 +67,9 @@ function createRuntimeHarness(
         assert.equal(delayMs, 50);
         tickCallbacks.push(callback);
 
-        return { timer: tickCallbacks.length };
+        return { timer: tickCallbacks.length } as unknown as ReturnType<
+          typeof setInterval
+        >;
       },
       clearInterval(timer: unknown) {
         clearedTimers.push(timer);
@@ -169,7 +171,7 @@ test('stores latest clamped steering intent and ignores stale malformed input', 
   runtime.applyInput('socket-host', {
     mode: 'straight-obstacle',
     kind: 'steer',
-    steerX: -1,
+    steerX: 99,
     sequence: 5,
     clientTimeMs: 7,
     speed: 9_999,
