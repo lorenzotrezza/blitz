@@ -10,6 +10,7 @@ import {
   LOBBY_RACE_MODES,
   LOBBY_STATUS,
   MAX_LOBBY_PLAYERS,
+  PARTY_GAME_VARIANTS,
   RACE_STATUS,
   SOCKET_EVENTS,
   SOFT_COLLISION_PUSHBACK,
@@ -31,6 +32,7 @@ import type {
   DragSprintPlayerStatus,
   DragSprintPowerUpType,
   DragSprintSnapshot,
+  GameResultEntry,
   GameInputPayload,
   LobbyState,
   PartyLobbyState,
@@ -45,6 +47,9 @@ import type {
   RaceShellStatus,
   RaceSnapshot,
   ServerToClientEvents,
+  StraightObstacleInput,
+  StraightObstacleResultDetails,
+  StraightObstacleSnapshot,
 } from './index.js';
 
 function createPlayer(): PlayerInfo {
@@ -572,6 +577,103 @@ test('exports drag shift summary shape', () => {
   assert.equal(summary.perfect, 3);
   assert.equal(summary.late, 4);
   assert.equal(summary.total, 10);
+});
+
+test('exports straight obstacle input snapshot and result contracts', () => {
+  const input: StraightObstacleInput = {
+    mode: 'straight-obstacle',
+    kind: 'steer',
+    steerX: -0.42,
+    sequence: 7,
+    clientTimeMs: 1000,
+  };
+  const snapshot: StraightObstacleSnapshot = {
+    sessionId: 'session-dodge',
+    lobbyCode: 'ABCD12',
+    trackId: 'straight-obstacle',
+    mode: 'straight-obstacle',
+    status: RACE_STATUS.racing,
+    tick: 12,
+    startedAt: 1_713_980_000_000,
+    countdown: 0,
+    distanceTarget: 800,
+    serverTimeMs: 1_713_980_001_000,
+    warning: 'Obstacle ahead',
+    playersState: [
+      {
+        playerId: 'player-1',
+        nickname: 'Host',
+        x: -0.25,
+        distance: 320,
+        speed: 28,
+        progress: 0.4,
+        obstacleHits: 1,
+        slowdownUntilMs: 1_713_980_002_000,
+        finishedAtMs: null,
+        status: 'racing',
+      },
+    ],
+    activeObstacles: [
+      {
+        id: 'obstacle-1',
+        waveId: 'wave-1',
+        centerX: 0.35,
+        width: 0.28,
+        distance: 380,
+        depth: 16,
+        warningDistance: 120,
+        hitPlayerIds: [],
+      },
+    ],
+  };
+  const details: StraightObstacleResultDetails = {
+    finishTimeMs: 12340,
+    obstacleHits: 2,
+  };
+  const result: GameResultEntry = {
+    playerId: 'player-1',
+    rank: 1,
+    details,
+  };
+  const authoritativeFields = [
+    'speed',
+    'distance',
+    'hitCount',
+    'slowdown',
+    'finishTimeMs',
+    'rank',
+    'results',
+  ];
+
+  assert.equal(input.mode, 'straight-obstacle');
+  assert.equal(input.kind, 'steer');
+  assert.equal(input.steerX, -0.42);
+  assert.equal(input.sequence, 7);
+  assert.equal(input.clientTimeMs, 1000);
+
+  for (const field of authoritativeFields) {
+    assert.equal(field in input, false);
+  }
+
+  assert.equal(snapshot.trackId, 'straight-obstacle');
+  assert.equal(snapshot.status, RACE_STATUS.racing);
+  assert.equal(snapshot.playersState[0]?.x, -0.25);
+  assert.equal(snapshot.playersState[0]?.distance, 320);
+  assert.equal(snapshot.playersState[0]?.speed, 28);
+  assert.equal(snapshot.playersState[0]?.obstacleHits, 1);
+  assert.equal(snapshot.playersState[0]?.slowdownUntilMs, 1_713_980_002_000);
+  assert.equal(snapshot.warning, 'Obstacle ahead');
+  assert.equal(snapshot.activeObstacles[0]?.centerX, 0.35);
+  assert.equal(details.finishTimeMs, 12340);
+  assert.equal(details.obstacleHits, 2);
+  assert.deepEqual(result.details, { finishTimeMs: 12340, obstacleHits: 2 });
+});
+
+test('marks straight obstacle race startable', () => {
+  assert.equal(
+    isLobbySelectionStartable('race', PARTY_GAME_VARIANTS.straightObstacle, null, 4),
+    true,
+  );
 });
 
 test('exports race input guard and analog clamp helpers', () => {
