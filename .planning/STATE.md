@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Executing Phase 02
-last_updated: "2026-04-26T10:19:11.787Z"
+status: Human verification required
+last_updated: "2026-04-26T10:47:17Z"
 progress:
   total_phases: 6
   completed_phases: 1
   total_plans: 26
-  completed_plans: 8
-  percent: 31
+  completed_plans: 14
+  percent: 54
 ---
 
 # State: Blitz Playable Minigames
@@ -19,7 +19,7 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-04-25)
 
 **Core value:** Every minigame must feel manually playable on a phone.
-**Current focus:** Phase 02 — drag-gear-race
+**Current focus:** Phase 02 — drag-gear-race human UAT
 
 ## Current Status
 
@@ -35,16 +35,20 @@ See: `.planning/PROJECT.md` (updated 2026-04-25)
 - Phase 1 Plan 03 completed in `.planning/phases/01-fullscreen-game-shell-and-input-foundation/01-03-SUMMARY.md`.
 - Phase 1 Plan 04 completed in `.planning/phases/01-fullscreen-game-shell-and-input-foundation/01-04-SUMMARY.md`.
 - Next recommended phase: Phase 02 — drag-gear-race.
+- Phase 2 execution completed with all 6 plans summarized in `.planning/phases/02-drag-gear-race/`.
+- Phase 2 code review completed in `.planning/phases/02-drag-gear-race/02-REVIEW.md`; actionable warnings fixed in `.planning/phases/02-drag-gear-race/02-REVIEW-FIX.md`.
+- Phase 2 automated verification completed in `.planning/phases/02-drag-gear-race/02-VERIFICATION.md` with status `human_needed`.
+- Phase 2 human checks are tracked in `.planning/phases/02-drag-gear-race/02-HUMAN-UAT.md`.
 
 ## Active Phase
 
 | Field | Value |
 |-------|-------|
-| Phase | 1 |
-| Name | Fullscreen Game Shell And Input Foundation |
-| Status | Complete; 4 of 4 plans complete |
+| Phase | 02 |
+| Name | drag-gear-race |
+| Status | Human verification required; 6 of 6 plans complete |
 | UI hint | yes |
-| Plans | 4 / 4 complete |
+| Plans | 6 / 6 complete |
 
 ## Quick Tasks Completed
 
@@ -68,6 +72,10 @@ See: `.planning/PROJECT.md` (updated 2026-04-25)
 - HUD values are React-rendered text with a polite live region; canvas children remain visual only.
 - The live race route is a top-level router branch so AppLayout topbar, viewport, panel, and card chrome do not constrain gameplay.
 - SprintCircuitPage adapts authoritative RaceSnapshot data into RaceShellSnapshot HUD text; client controls emit intent only.
+- Drag sprint now runs as a straight drag gear race under the existing `race:drag-sprint` registry key.
+- Drag inputs remain intent-only: hold throttle and one-shot shift; no client-authored speed, RPM, distance, rank, or result fields.
+- Drag runtime advances held throttle on an authoritative server tick so RPM, speed, and distance update without repeated client packets.
+- Drag results render only server-finished payload summary values for finish time and shift counts.
 
 ## Performance Metrics
 
@@ -77,13 +85,15 @@ See: `.planning/PROJECT.md` (updated 2026-04-25)
 | 01-fullscreen-game-shell-and-input-foundation | 02 | 8m 15s | 2 | 6 |
 | 01-fullscreen-game-shell-and-input-foundation | 03 | 4m 40s | 2 | 7 |
 | 01-fullscreen-game-shell-and-input-foundation | 04 | 11m 25s | 3 | 5 |
+| 02-drag-gear-race | 05 | 18m | 2 | 4 |
+| 02-drag-gear-race | 06 | 24m | 3 | 3 |
 
 ## Last Session
 
 | Field | Value |
 |-------|-------|
-| Timestamp | 2026-04-25T20:02:35Z |
-| Stopped At | Completed 01-04-PLAN.md |
+| Timestamp | 2026-04-26T10:47:17Z |
+| Stopped At | Phase 2 automated verification complete; human UAT pending |
 | Resume File | None |
 
 ## Open Risks
