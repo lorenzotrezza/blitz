@@ -182,6 +182,65 @@ export interface DragGearSnapshot extends Record<string, unknown> {
   playersState: DragGearPlayerState[];
 }
 
+export interface StraightObstacleInput extends Record<string, unknown> {
+  mode: 'straight-obstacle';
+  kind: 'steer';
+  steerX: number;
+  sequence: number;
+  clientTimeMs: number;
+}
+
+export type StraightObstacleWarningState =
+  | 'Road clear'
+  | 'Obstacle ahead'
+  | 'Hit - recovering'
+  | 'Slowdown';
+
+export interface StraightObstaclePlayerState {
+  playerId: string;
+  nickname: string;
+  x: number;
+  distance: number;
+  speed: number;
+  progress: number;
+  obstacleHits: number;
+  slowdownUntilMs: number | null;
+  finishedAtMs: number | null;
+  status: 'racing' | 'finished';
+}
+
+export interface StraightObstacleObstacle {
+  id: string;
+  waveId: string;
+  centerX: number;
+  width: number;
+  distance: number;
+  depth: number;
+  warningDistance: number;
+  hitPlayerIds: string[];
+}
+
+export interface StraightObstacleSnapshot extends Record<string, unknown> {
+  sessionId: string;
+  lobbyCode: string;
+  trackId: 'straight-obstacle';
+  mode: 'straight-obstacle';
+  status: RaceStatus;
+  tick: number;
+  startedAt: number | null;
+  countdown: number | null;
+  distanceTarget: number;
+  serverTimeMs: number;
+  warning: StraightObstacleWarningState;
+  playersState: StraightObstaclePlayerState[];
+  activeObstacles: StraightObstacleObstacle[];
+}
+
+export type StraightObstacleResultDetails = {
+  finishTimeMs: number | null;
+  obstacleHits: number;
+} & Record<string, string | number | boolean | null>;
+
 export interface RaceEntrantState {
   nickname: string;
   x: number;

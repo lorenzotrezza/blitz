@@ -3,6 +3,7 @@ import type {
   PlayerInput,
   RaceGameInput,
   RaceSnapshot,
+  StraightObstacleInput,
 } from './game.js';
 import type {
   LobbySettings,
@@ -81,6 +82,7 @@ export interface StartRacePayload {
 }
 
 export type GameInputPayload =
+  | StraightObstacleInput
   | DragGearInput
   | RaceGameInput
   | PlayerInput
@@ -105,6 +107,7 @@ export interface GameResultEntry {
   rank: number;
   label?: string | null;
   value?: number | null;
+  details?: Record<string, string | number | boolean | null>;
 }
 
 export interface GameResults {

@@ -21,6 +21,7 @@ export const PARTY_GAME_VARIANTS = {
   sprintCircuit: 'sprint-circuit',
   trafficSurvival: 'traffic-survival',
   dragSprint: 'drag-sprint',
+  straightObstacle: 'straight-obstacle',
 } as const;
 
 export const LOBBY_RACE_MODES = {
@@ -101,6 +102,10 @@ export function isLobbySelectionStartable(
       playerCount <= 3 &&
       (raceMode === LOBBY_RACE_MODES.finishLine || raceMode === LOBBY_RACE_MODES.bestOf3)
     );
+  }
+
+  if (variant === PARTY_GAME_VARIANTS.straightObstacle) {
+    return true;
   }
 
   return false;
