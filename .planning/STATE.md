@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Executing Phase 03
-last_updated: "2026-04-26T11:26:11.345Z"
+last_updated: "2026-04-26T11:37:55.512Z"
 progress:
   total_phases: 6
   completed_phases: 2
   total_plans: 31
-  completed_plans: 13
-  percent: 42
+  completed_plans: 14
+  percent: 45
 ---
 
 # State: Blitz Playable Minigames
@@ -42,6 +42,7 @@ See: `.planning/PROJECT.md` (updated 2026-04-25)
 - Phase 3 Plan 01 completed in `.planning/phases/03-straight-obstacle-race/03-01-SUMMARY.md`.
 - Phase 3 Plan 02 completed in `.planning/phases/03-straight-obstacle-race/03-02-SUMMARY.md`.
 - Phase 3 Plan 03 completed in `.planning/phases/03-straight-obstacle-race/03-03-SUMMARY.md`.
+- Phase 3 Plan 04 completed in `.planning/phases/03-straight-obstacle-race/03-04-SUMMARY.md`.
 
 ## Active Phase
 
@@ -49,9 +50,9 @@ See: `.planning/PROJECT.md` (updated 2026-04-25)
 |-------|-------|
 | Phase | 03 |
 | Name | straight-obstacle-race |
-| Status | In progress; 3 of 6 plans complete |
+| Status | In progress; 4 of 6 plans complete |
 | UI hint | yes |
-| Plans | 3 / 6 complete |
+| Plans | 4 / 6 complete |
 
 ## Quick Tasks Completed
 
@@ -88,6 +89,9 @@ See: `.planning/PROJECT.md` (updated 2026-04-25)
 - Straight obstacle runtime advances on a server-owned interval using the latest valid steering intent per player.
 - Runtime input accepts only straight-obstacle steer packets with finite increasing sequence values and finite steerX.
 - Client-claimed speed, distance, hits, slowdown, finish, and rank fields are ignored because the runtime stores only clamped steering intent.
+- Dodge frontend controls emit only normalized StraightObstacleInput steering intent.
+- Dodge warning, hits, speed, distance, and slowdown are React-rendered text for tests and assistive technology.
+- Dodge steering resets to neutral on pointer, blur, visibility, disabled, and unmount lifecycles.
 
 ## Performance Metrics
 
@@ -102,13 +106,14 @@ See: `.planning/PROJECT.md` (updated 2026-04-25)
 | 03-straight-obstacle-race | 01 | 3m 11s | 3 | 5 |
 | 03-straight-obstacle-race | 02 | 5m 59s | 2 | 3 |
 | 03-straight-obstacle-race | 03 | 7m 17s | 2 | 5 |
+| 03-straight-obstacle-race | 04 | 7m 22s | 2 | 10 |
 
 ## Last Session
 
 | Field | Value |
 |-------|-------|
-| Timestamp | 2026-04-26T11:24:29Z |
-| Stopped At | Completed 03-03-PLAN.md |
+| Timestamp | 2026-04-26T11:35:48Z |
+| Stopped At | Completed 03-04-PLAN.md |
 | Resume File | None |
 
 ## Open Risks
