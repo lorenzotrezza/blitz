@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Executing Phase 03
-last_updated: "2026-04-26T11:04:55.281Z"
+last_updated: "2026-04-26T11:15:22.255Z"
 progress:
   total_phases: 6
   completed_phases: 2
-  total_plans: 26
-  completed_plans: 11
-  percent: 42
+  total_plans: 31
+  completed_plans: 12
+  percent: 39
 ---
 
 # State: Blitz Playable Minigames
@@ -40,6 +40,7 @@ See: `.planning/PROJECT.md` (updated 2026-04-25)
 - Phase 2 automated verification completed in `.planning/phases/02-drag-gear-race/02-VERIFICATION.md` with status `human_needed`.
 - Phase 2 human checks are tracked in `.planning/phases/02-drag-gear-race/02-HUMAN-UAT.md`.
 - Phase 3 Plan 01 completed in `.planning/phases/03-straight-obstacle-race/03-01-SUMMARY.md`.
+- Phase 3 Plan 02 completed in `.planning/phases/03-straight-obstacle-race/03-02-SUMMARY.md`.
 
 ## Active Phase
 
@@ -47,9 +48,9 @@ See: `.planning/PROJECT.md` (updated 2026-04-25)
 |-------|-------|
 | Phase | 03 |
 | Name | straight-obstacle-race |
-| Status | In progress; 1 of 6 plans complete |
+| Status | In progress; 2 of 6 plans complete |
 | UI hint | yes |
-| Plans | 1 / 6 complete |
+| Plans | 2 / 6 complete |
 
 ## Quick Tasks Completed
 
@@ -80,6 +81,9 @@ See: `.planning/PROJECT.md` (updated 2026-04-25)
 - Straight obstacle client input contains steering intent only: mode, kind, steerX, sequence, and client timestamp.
 - Straight obstacle snapshots and result details own distance, speed, warnings, obstacles, hit count, slowdown, finish time, and result values.
 - `race:straight-obstacle` is startable through shared lobby validation without removing the existing `traffic-survival` variant.
+- Straight obstacle rules stay pure and side-effect free: no timers, Socket.IO, DOM, or mutable globals.
+- Obstacle waves use seeded deterministic templates with continuous normalized x collision bounds.
+- Obstacle hits are counted once per player/obstacle and produce server-owned slowdown and result details.
 
 ## Performance Metrics
 
@@ -92,13 +96,14 @@ See: `.planning/PROJECT.md` (updated 2026-04-25)
 | 02-drag-gear-race | 05 | 18m | 2 | 4 |
 | 02-drag-gear-race | 06 | 24m | 3 | 3 |
 | 03-straight-obstacle-race | 01 | 3m 11s | 3 | 5 |
+| 03-straight-obstacle-race | 02 | 5m 59s | 2 | 3 |
 
 ## Last Session
 
 | Field | Value |
 |-------|-------|
-| Timestamp | 2026-04-26T11:04:55Z |
-| Stopped At | Completed 03-01-PLAN.md |
+| Timestamp | 2026-04-26T11:15:22Z |
+| Stopped At | Completed 03-02-PLAN.md |
 | Resume File | None |
 
 ## Open Risks

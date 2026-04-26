@@ -90,7 +90,7 @@ Plans:
 
 Plans:
 - [x] 03-01-PLAN.md — Phase prerequisites, shared straight-obstacle contracts, and startability
-- [ ] 03-02-PLAN.md — Deterministic steering, obstacle waves, collisions, slowdown, and rankings
+- [x] 03-02-PLAN.md — Deterministic steering, obstacle waves, collisions, slowdown, and rankings
 - [ ] 03-03-PLAN.md — Authoritative straight-obstacle runtime and registry integration
 - [ ] 03-04-PLAN.md — Dodge road, HUD, steering controls, keyboard fallback, and CSS
 - [ ] 03-05-PLAN.md — Fullscreen straight-obstacle route and session routing

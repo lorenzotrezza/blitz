@@ -22,11 +22,11 @@
 
 ### Straight Obstacle Race
 
-- [ ] **DODGE-01**: Player can race on a straight map with active lane or horizontal positioning controls.
-- [ ] **DODGE-02**: The runtime spawns readable obstacle patterns on the straight map.
-- [ ] **DODGE-03**: Hitting an obstacle visibly slows the player and affects final result.
+- [x] **DODGE-01**: Player can race on a straight map with active lane or horizontal positioning controls.
+- [x] **DODGE-02**: The runtime spawns readable obstacle patterns on the straight map.
+- [x] **DODGE-03**: Hitting an obstacle visibly slows the player and affects final result.
 - [ ] **DODGE-04**: Player can see obstacle warnings, current speed, distance, and slowdown/penalty state.
-- [ ] **DODGE-05**: Results show finish time and obstacle hit count.
+- [x] **DODGE-05**: Results show finish time and obstacle hit count.
 
 ### Analog Track Races
 
@@ -88,11 +88,11 @@
 | DRAG-03 | Phase 2 | Pending |
 | DRAG-04 | Phase 2 | Pending |
 | DRAG-05 | Phase 2 | Pending |
-| DODGE-01 | Phase 3 | Pending |
-| DODGE-02 | Phase 3 | Pending |
-| DODGE-03 | Phase 3 | Pending |
+| DODGE-01 | Phase 3 | Complete |
+| DODGE-02 | Phase 3 | Complete |
+| DODGE-03 | Phase 3 | Complete |
 | DODGE-04 | Phase 3 | Pending |
-| DODGE-05 | Phase 3 | Pending |
+| DODGE-05 | Phase 3 | Complete |
 | ANLG-01 | Phase 4 | Pending |
 | ANLG-02 | Phase 4 | Pending |
 | ANLG-04 | Phase 4 | Pending |
