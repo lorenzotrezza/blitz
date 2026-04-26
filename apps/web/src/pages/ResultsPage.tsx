@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import type { RaceFinishedPayload, SessionFinishedPayload } from '@blitz/shared';
 
+import { DodgeResultsSummary } from '../components/game/DodgeResultsSummary';
 import { DragResultsSummary } from '../components/game/DragResultsSummary';
 import { resolveSessionRoute } from '../lib/sessionRoutes';
 import { usePostGameActions } from '../lib/usePostGameActions';
@@ -135,6 +136,8 @@ export function ResultsPage() {
           rankingLabel={winningRanking?.label ?? winningRanking?.value ?? null}
         />
       ) : null}
+
+      {payload ? <DodgeResultsSummary payload={payload} /> : null}
 
       <div className="action-row">
         {isHost && lobby ? (
