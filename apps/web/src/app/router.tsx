@@ -1,4 +1,11 @@
-import { Link, NavLink, Outlet, createBrowserRouter, createMemoryRouter } from 'react-router-dom';
+import {
+  Link,
+  NavLink,
+  Outlet,
+  createBrowserRouter,
+  createMemoryRouter,
+  useLocation,
+} from 'react-router-dom';
 
 import { HubPage } from '../pages/HubPage';
 import { LandingPage } from '../pages/LandingPage';
@@ -25,7 +32,39 @@ type AppRouterOptions = {
   >;
 };
 
+function flagIsOn(value: string | null) {
+  return value === '1' || value === 'true' || value === 'on' || value === 'yes';
+}
+
+function flagIsOff(value: string | null) {
+  return value === '0' || value === 'false' || value === 'off' || value === 'no';
+}
+
+function readFlag(params: URLSearchParams, name: string, defaultValue: boolean) {
+  const value = params.get(name);
+
+  if (flagIsOn(value)) {
+    return true;
+  }
+
+  if (flagIsOff(value)) {
+    return false;
+  }
+
+  return defaultValue;
+}
+
+function shouldShowHomeHubLinks(search: string) {
+  const params = new URLSearchParams(search);
+  const giftOnly = readFlag(params, 'giftOnly', readFlag(params, 'gift', false));
+
+  return readFlag(params, 'hub', readFlag(params, 'homeHub', !giftOnly));
+}
+
 function AppLayout() {
+  const location = useLocation();
+  const showHomeHubLinks = shouldShowHomeHubLinks(location.search);
+
   return (
     <div className="app-shell">
       <div className="scanlines" aria-hidden="true" />
@@ -35,10 +74,12 @@ function AppLayout() {
           <span className="brand-kicker">SUBRATAAL PRESENTA</span>
           <span className="brand-title">Subrata Race Club</span>
         </Link>
-        <nav className="topnav" aria-label="Primary">
-          <NavLink to="/">Home</NavLink>
-          <NavLink to="/hub">Hub</NavLink>
-        </nav>
+        {showHomeHubLinks ? (
+          <nav className="topnav" aria-label="Primary">
+            <NavLink to="/">Home</NavLink>
+            <NavLink to="/hub">Hub</NavLink>
+          </nav>
+        ) : null}
       </header>
       <main className="viewport">
         <Outlet />

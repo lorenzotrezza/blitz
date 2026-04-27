@@ -172,7 +172,7 @@ function createTimerHarness() {
   };
 }
 
-function loadGame() {
+function loadGame(search = '') {
   const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
   const scriptMatch = html.match(/<script>([\s\S]*?)<\/script>\s*<\/body>/);
   assert.ok(scriptMatch, 'inline game script not found');
@@ -192,7 +192,7 @@ function loadGame() {
   const documentListeners = {};
   const location = {
     href: 'http://localhost/',
-    search: '',
+    search,
   };
 
   const document = {
@@ -307,10 +307,24 @@ test('result screen states the actual gift voucher for the selected car', () => 
 
   assert.equal(
     game.elements.get('res-gift-title').textContent,
-    '1 GIRO VERI SULLA A.N. GIANNI DE LUCA',
+    '1 GIRO VERO SULLA A.N. GIANNI DE LUCA',
   );
-  assert.match(game.elements.get('res-gift-body').textContent, /Voucher non simbolico/i);
+  assert.match(game.elements.get('res-gift-body').textContent, /regalo ufficiale/i);
   assert.match(game.elements.get('res-gift-body').textContent, /V12/i);
+});
+
+test('gift-only mode hides hub exits and result link buttons', () => {
+  const game = loadGame('?giftOnly=1');
+
+  assert.equal(game.context.window.__SUBRATA_DISPLAY.giftOnly, true);
+  assert.equal(game.context.window.__SUBRATA_DISPLAY.showHub, false);
+  assert.equal(game.context.window.__SUBRATA_DISPLAY.showLinks, false);
+  assert.equal(game.elements.get('btn-hub-intro').style.display, 'none');
+  assert.equal(game.elements.get('btn-hub-result').style.display, 'none');
+  assert.equal(game.elements.get('share-btn').style.display, 'none');
+  assert.equal(game.elements.get('btn-change').style.display, 'none');
+  assert.equal(game.elements.get('btn-penalty').style.display, 'none');
+  assert.equal(game.elements.get('result-actions').style.display, 'none');
 });
 
 test('locked tracks are clickable and backed by ignorant modal copy', () => {

@@ -62,6 +62,15 @@ describe('createAppRouter', () => {
     expect(screen.getByTitle(/subrata race club/i)).toBeInTheDocument();
   });
 
+  test('passes gift-only mode to the legacy gift experience', () => {
+    renderRoute('/?giftOnly=1');
+
+    expect(screen.getByTitle(/subrata race club/i)).toHaveAttribute(
+      'src',
+      '/legacy/index.html?giftOnly=1',
+    );
+  });
+
   test('renders party mode entrypoints at /hub', () => {
     renderRoute('/hub');
 
@@ -73,6 +82,14 @@ describe('createAppRouter', () => {
       '/hub/multiplayer',
     );
     expect(screen.queryByRole('link', { name: /bot race/i })).not.toBeInTheDocument();
+  });
+
+  test('can hide Home and Hub chrome links for gift-only sharing', () => {
+    renderRoute('/hub?giftOnly=1');
+
+    expect(screen.getByRole('heading', { name: /scegli modalita/i })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /^home$/i })).toBeNull();
+    expect(screen.queryByRole('link', { name: /^hub$/i })).toBeNull();
   });
 
   test('renders a persistent return-to-lobby entry when a lobby is stored', () => {

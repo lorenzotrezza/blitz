@@ -22,6 +22,8 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 .btn-napoli:hover{box-shadow:6px 6px 0 #000,-2px -2px 0 #005577}
 .btn-green{background:var(--green);color:#000;box-shadow:4px 4px 0 #000,-2px -2px 0 #006622}
 .btn-green:hover{box-shadow:6px 6px 0 #000,-2px -2px 0 #006622}
+.gift-intro-note{font-size:7px;line-height:2.1;color:var(--green);border:2px solid var(--green);background:#07140d;padding:10px 12px;margin:0 auto 18px;max-width:520px;box-shadow:4px 4px 0 #000}
+body.gift-only .gift-mode-hide{display:none!important}
 
 /* INTRO */
 #screen-intro{justify-content:center;text-align:center;background:radial-gradient(ellipse at center,#1a0a2e 0%,var(--bg) 70%)}
@@ -236,13 +238,14 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
       <div class="intro-title">🏎️ SUBRATA<br>RACE CLUB 🏁</div>
       <div class="intro-sub">PRESENTED BY SUBRATAAL™ · EST. 2024</div>
     </div>
+    <div class="gift-intro-note">REGALO REALE PER BLITZ: scegli l'auto, poi scopri il voucher dei giri veri in pista.</div>
     <div style="font-size:6px;color:#334;margin-bottom:16px">[ CLICCA IL LOGO 4 VOLTE PER UN SEGRETO ]</div>
     <div class="num4" id="num4">4</div>
     <div style="margin:22px 0">
       <button class="btn" id="btn-start">🚀 AVVIA IL MOTORE, BLITZ</button>
     </div>
     <div style="margin:0 0 16px">
-      <button class="btn btn-napoli" id="btn-hub-intro">🎮 HUB MINIGIOCHI</button>
+      <button class="btn btn-napoli gift-mode-hide" id="btn-hub-intro">🎮 HUB MINIGIOCHI</button>
     </div>
     <div class="intro-footer">
       Powered by idrocarburi · No Tesla allowed · SubrataPal approved<br>
@@ -278,7 +281,7 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 <!-- ═══ CAR SELECT ═══ -->
 <section id="screen-cars" class="screen">
   <div class="screen-title">🏎️ SCEGLI LA TUA BESTIA</div>
-  <div class="screen-sub">sfoglia il catalogo ufficiale · il prezzo non si dice · il 4 decide</div>
+  <div class="screen-sub">stai scegliendo il regalo · l'auto decide quanti giri veri riceverai</div>
   <div class="car-carousel" aria-label="Selezione macchina">
     <button class="car-arrow" id="btn-car-prev" aria-label="Macchina precedente">◄</button>
     <div class="car-stage" id="car-stage">
@@ -397,9 +400,9 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 <!-- ═══ RESULT ═══ -->
 <section id="screen-result" class="screen">
   <div style="z-index:1;text-align:center;padding:20px;max-width:640px">
-    <div class="res-lbl">IL SUBRATA RACE CLUB PRESENTA:</div>
+    <div class="res-lbl">IL SUBRATA RACE CLUB REGALA A BLITZ:</div>
     <div class="res-gift" id="res-gift">
-      <div class="res-gift-k">REGALO UFFICIALE</div>
+      <div class="res-gift-k">REGALO REALE · VOUCHER UFFICIALE</div>
       <div class="res-gift-title" id="res-gift-title">GIRI VERI IN PISTA</div>
       <div class="res-gift-body" id="res-gift-body">Il box 4 sta preparando il voucher.</div>
     </div>
@@ -415,10 +418,10 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
       <div class="res-msg">🚗 La Panda di Piero è al sicuro.</div>
     </div>
     <div style="margin:16px 0"><span class="res4">4</span></div>
-    <div style="margin:18px 0;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+    <div id="result-actions" style="margin:18px 0;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
       <button class="btn-napoli btn" id="share-btn">📤 CONDIVIDI</button>
       <button class="btn btn-red" id="btn-change">🔄 CAMBIA IDEA</button>
-      <button class="btn btn-napoli" id="btn-hub-result">🎮 HUB MINIGIOCHI</button>
+      <button class="btn btn-napoli gift-mode-hide" id="btn-hub-result">🎮 HUB MINIGIOCHI</button>
       <button class="btn btn-napoli" id="btn-penalty" style="background:#006633">⚽ RIGORI vs SUBRATAAL</button>
     </div>
     <div class="res-fine">
@@ -608,6 +611,31 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 </div>
 
 <script>
+// ── Display mode ──
+function flagOn(value){
+  return value==='1'||value==='true'||value==='on'||value==='yes';
+}
+function flagOff(value){
+  return value==='0'||value==='false'||value==='off'||value==='no';
+}
+function readToggle(params,name,defaultValue){
+  var value=params.get(name);
+  if(flagOn(value))return true;
+  if(flagOff(value))return false;
+  return defaultValue;
+}
+function readDisplayMode(){
+  var params=new URLSearchParams(window.location.search);
+  var giftOnly=readToggle(params,'giftOnly',readToggle(params,'gift',false));
+  return {
+    giftOnly:giftOnly,
+    showHub:readToggle(params,'hub',readToggle(params,'homeHub',!giftOnly)),
+    showLinks:readToggle(params,'links',!giftOnly)
+  };
+}
+const DISPLAY=readDisplayMode();
+window.__SUBRATA_DISPLAY=DISPLAY;
+
 // ── State ──
 const S={
   screen:'intro', selectedCar:null, carIndex:0,
@@ -867,13 +895,20 @@ function onEnter(id){
     var gift=lapGift(carId);
     ic.textContent=S.selectedCar?CAR_ICONS[S.selectedCar]:'🏎️';
     nm.textContent=S.selectedCar?CAR_NAMES[S.selectedCar].toUpperCase():'???';
-    document.getElementById('res-gift-title').textContent=gift.laps.replace('REGALO: ','')+' VERI SULLA A.N. GIANNI DE LUCA';
-    document.getElementById('res-gift-body').textContent='Voucher non simbolico: '+gift.note;
+    document.getElementById('res-gift-title').textContent=giftTitle(gift.laps);
+    document.getElementById('res-gift-body').textContent='Questo e il regalo ufficiale: '+gift.note;
     startConfetti();
   }
 }
 
 // ── Car slideshow ──
+function giftTitle(lapsText){
+  var laps=lapsText.replace('REGALO: ','');
+  if(laps==='1 GIRO')return '1 GIRO VERO SULLA A.N. GIANNI DE LUCA';
+  if(laps==='0 GIRI')return 'SCEGLI UNA MACCHINA VERA PER IL REGALO';
+  return laps+' VERI SULLA A.N. GIANNI DE LUCA';
+}
+
 function visibleCars(){
   return CAR_ORDER.filter(function(id){return S.easterUnlocked||!CAR_DETAILS[id].easter;});
 }
@@ -1097,6 +1132,20 @@ function clearBoatTimer(){
 function openModal(id){document.getElementById(id).classList.add('active');}
 function closeModal(id){document.getElementById(id).classList.remove('active');}
 
+function setVisible(id,visible){
+  var el=document.getElementById(id);
+  if(el)el.style.display=visible?'':'none';
+}
+function applyDisplayMode(){
+  if(document.body)document.body.classList.toggle('gift-only',DISPLAY.giftOnly);
+  setVisible('btn-hub-intro',DISPLAY.showHub);
+  setVisible('btn-hub-result',DISPLAY.showHub);
+  setVisible('share-btn',DISPLAY.showLinks);
+  setVisible('btn-change',DISPLAY.showLinks);
+  setVisible('btn-penalty',DISPLAY.showLinks);
+  setVisible('result-actions',DISPLAY.showLinks||DISPLAY.showHub);
+}
+
 // ── Access granted anim ──
 function showAccessAnim(){
   var el=document.getElementById('access-ov');
@@ -1107,6 +1156,7 @@ function showAccessAnim(){
 }
 
 function goToHub(){
+  if(!DISPLAY.showHub)return;
   window.top.location.href='/hub';
 }
 
@@ -1541,6 +1591,7 @@ function shareResult(){
     alert(txt);
   }
 }
+applyDisplayMode();
 bootFromQuery();
 </script>
 </body>
